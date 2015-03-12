@@ -3,13 +3,14 @@
 
 name:                collection-json
 version:             0.1.0.0
--- synopsis:            
--- description:         
+synopsis:            Collection+JSON hypermedia type tools
+homepage:            https://github.com/danchoi/collection-json.hs
+description:         Collection+JSON hypermedia type tools
 license:             MIT
 license-file:        LICENSE
 author:              Daniel Choi
 maintainer:          dhchoi@gmail.com
--- copyright:           
+copyright:           2015 Daniel Choi
 category:            Web
 build-type:          Simple
 -- extra-source-files:  
