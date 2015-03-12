@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings, RecordWildCards #-} 
-module Text.JSON.CollectionJSON where
+module Text.JSON.CollectionJSON.Types where
 import Data.Aeson hiding (Error)
 import Data.Text (Text)
 import Control.Applicative
