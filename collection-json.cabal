@@ -17,10 +17,16 @@ extra-source-files:  ChangeLog.md
 cabal-version:       >=1.10
 tested-with:         GHC ==8.0.1
 
+source-repository head
+  type:                git
+  location:            https://github.com/alunduil/collection+json.hs
+  branch:              develop
+
 library
   exposed-modules:     Data.CollectionJSON
-  -- other-modules:       
-  -- other-extensions:    
+  other-modules:       Internal.Network.URI
+  other-extensions:    OverloadedStrings
+                     , RecordWildCards
   build-depends:       aeson      >=0.8 && <1.1
                      , base       >=4.6 && <4.10
                      , bytestring ==0.10.*
