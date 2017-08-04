@@ -36,8 +36,8 @@ install:
 - |
   case "${BUILD}" in
     cabal)
-      cabal --version
-      travis_retry cabal update
+      cabal --version && \
+      travis_retry cabal update && \
       cabal install -j --only-dependencies -ffast --enable-tests --enable-benchmarks --force-reinstalls --ghc-options=-O0 --reorder-goals --max-backjumps=-1 ${CABALARGS}
       ;;
   esac
@@ -46,11 +46,12 @@ script:
 - |
   case "${BUILD}" in
     cabal)
-      cabal check
-      cabal sdist --output-directory=sdist.d
-      cd sdist.d
-      cabal configure --enable-tests --enable-benchmarks -v2 -ffast --ghc-options="-O0 -Wall -Werror"
-      cabal build
-      cabal test
+      cabal check && \
+      cabal sdist --output-directory=sdist.d && \
+      cd sdist.d && \
+      cabal configure --enable-tests --enable-benchmarks -v2 -ffast --ghc-options="-O0 -Wall -Werror -fwarn-tabs -fwarn-monomorphism-restriction -fwarn-unused-do-bind" && \
+      cabal build && \
+      cabal test && \
+      cabal haddock
       ;;
   esac
