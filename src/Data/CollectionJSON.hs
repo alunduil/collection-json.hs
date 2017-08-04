@@ -14,7 +14,7 @@ Full documentation for @application/vnd.collection+json@ can be found at
 -}
 module Data.CollectionJSON where
 
-import Data.Aeson ((.:), (.:?), (.!=))
+import Data.Aeson ((.=), (.:?), (.!=), (.:), FromJSON (parseJSON), object, ToJSON (toJSON), withObject)
 import Data.Text (Text)
 import Network.URI (URI)
 
@@ -24,7 +24,7 @@ import Internal.Network.URI ()
 
 -- | The top-level object for an @application/vnd.collection+json@ resource.
 data Collection = Collection
-  { cVersion  :: Text           -- ^ Always "1.0".
+  { cVersion  :: Text           -- ^ Currently, always "1.0".
   , cHref     :: URI            -- ^ Address used to retrieve the 'Collection'
                                 --   and to add new elements.
   , cLinks    :: [Link]
@@ -38,7 +38,7 @@ instance FromJSON Collection where
   parseJSON = withObject "Collection" $ \ c -> do
     v <- c .: "collection"
 
-    cVersion  <- v .:  "version"
+    cVersion  <- v .:? "version"  .!= "1.0"
     cHref     <- v .:  "href"
     cLinks    <- v .:? "links"    .!= []
     cItems    <- v .:? "items"    .!= []
@@ -139,9 +139,9 @@ data Query = Query
                           --   * [IANA Link Relations](http://www.iana.org/assignments/link-relations/link-relations.xml)
                           --   * [Microformat Existing Rel Values](http://microformats.org/wiki/existing-rel-values)
                           --   * [RFC5988](http://tools.ietf.org/html/rfc5988)
-  , qName   :: Maybe Text -- ^ Identifier for this 'Query'
+  , qName   :: Maybe Text -- ^ Identifier for this 'Query'.
   , qPrompt :: Maybe Text -- ^ Suggested user prompt.
-  , qData   :: [Datum]
+  , qData   :: [Datum]    -- ^ Query parameters for this 'Query'.
   }
 
 instance FromJSON Query where

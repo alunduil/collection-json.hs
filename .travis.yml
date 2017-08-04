@@ -51,6 +51,7 @@ script:
       cd sdist.d && \
       cabal configure --enable-tests --enable-benchmarks -v2 -ffast --ghc-options="-O0 -Wall -Werror -fwarn-tabs -fwarn-monomorphism-restriction -fwarn-unused-do-bind" && \
       cabal build && \
-      cabal test
+      cabal test && \
+      cabal haddock
       ;;
   esac
