@@ -32,26 +32,16 @@ before_install:
 
 install:
 - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
-- if [ -f configure.ac ]; then autoreconf -i; fi
-- |
-  case "${BUILD}" in
-    cabal)
-      cabal --version && \
-      travis_retry cabal update && \
-      cabal install -j --only-dependencies -ffast --enable-tests --enable-benchmarks --force-reinstalls --ghc-options=-O0 --reorder-goals --max-backjumps=-1 ${CABALARGS}
-      ;;
-  esac
+- [ -f configure.ac ] && autoreconf -i
+- [ "${BUILD}" = "cabal" ] && cabal --version
+- [ "${BUILD}" = "cabal" ] && travis_retry cabal update
+- [ "${BUILD}" = "cabal" ] && cabal install -j --only-dependencies -ffast --enable-tests --enable-benchmarks --force-reinstalls --ghc-options=-O0 --reorder-goals --max-backjumps=-1 ${CABALARGS}
 
 script:
-- |
-  case "${BUILD}" in
-    cabal)
-      cabal check && \
-      cabal sdist --output-directory=sdist.d && \
-      cd sdist.d && \
-      cabal configure --enable-tests --enable-benchmarks -v2 -ffast --ghc-options="-O0 -Wall -Werror -fwarn-tabs -fwarn-monomorphism-restriction -fwarn-unused-do-bind" && \
-      cabal build && \
-      cabal test && \
-      cabal haddock
-      ;;
-  esac
+- [ "${BUILD}" = "cabal" ] && cabal check
+- [ "${BUILD}" = "cabal" ] && cabal haddock
+- [ "${BUILD}" = "cabal" ] && cabal sdist --output-directory=sdist.d
+- [ "${BUILD}" = "cabal" ] && cd sdist.d && \
+                              cabal configure -j -ffast --enable-tests --enable-benchmarks --ghc-options="-O0 -Wall -Werror -fwarn-tabs -fwarn-monomorphism-restriction -fwarn-unused-do-bind" && \
+                              cabal build -j && \
+                              cabal test -j

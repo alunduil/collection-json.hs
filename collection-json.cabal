@@ -63,7 +63,7 @@ test-suite TestSuite
   hs-source-dirs:   src test
   test-module:      TestSuite
 
-  ghc-options: -Wall -fwarn-tabs -fwarn-monomorphism-restriction
+  ghc-options: -threaded -Wall -fwarn-tabs -fwarn-monomorphism-restriction
                -fwarn-unused-do-bind
 
   other-modules:
