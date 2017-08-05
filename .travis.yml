@@ -38,7 +38,7 @@ install:
     cabal)
       cabal --version && \
       travis_retry cabal update && \
-      cabal install -j --only-dependencies -ffast --enable-tests --enable-benchmarks --force-reinstalls --ghc-options=-O0 --reorder-goals --max-backjumps=-1 ${CABALARGS}
+      cabal install --only-dependencies --force-reinstalls -j -ffast --enable-tests --enable-benchmarks --reorder-goals --max-backjumps=-1 ${CABALARGS}
       ;;
   esac
 
@@ -49,9 +49,9 @@ script:
       cabal check && \
       cabal sdist --output-directory=sdist.d && \
       cd sdist.d && \
-      cabal configure --enable-tests --enable-benchmarks -v2 -ffast --ghc-options="-O0 -Wall -Werror -fwarn-tabs -fwarn-monomorphism-restriction -fwarn-unused-do-bind" && \
-      cabal build && \
-      cabal test && \
+      cabal configure -ffast --enable-tests --enable-benchmarks --ghc-options="-Werror" && \
+      cabal build -j && \
+      cabal test -j && \
       cabal haddock
       ;;
   esac
