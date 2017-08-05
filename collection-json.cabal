@@ -25,9 +25,8 @@ extra-source-files:
   , README.md
   , Setup.hs
   , test/Data/CollectionJSON/Tests.hs
-  , test/Internal/Distribution/TestSuite/Compat/QuickCheck.hs
   , test/Internal/Network/URI/Tests.hs
-  , test/TestSuite.hs
+  , test/Main.hs
 
 source-repository head
   type:     git
@@ -57,11 +56,12 @@ library
       OverloadedStrings
     , RecordWildCards
 
-test-suite TestSuite
+test-suite Properties
   default-language: Haskell2010
-  type:             detailed-0.9
   hs-source-dirs:   src test
-  test-module:      TestSuite
+
+  type:             exitcode-stdio-1.0
+  main-is:          Main.hs
 
   ghc-options: -Wall -fwarn-tabs -fwarn-monomorphism-restriction
                -fwarn-unused-do-bind
@@ -70,14 +70,12 @@ test-suite TestSuite
       Data.CollectionJSON
       Data.CollectionJSON.Tests
 
-      Internal.Distribution.TestSuite.Compat.QuickCheck
       Internal.Network.URI
       Internal.Network.URI.Tests
 
   build-depends:
       aeson                >= 0.8 && < 1.1
     , base                 >= 4.6 && < 4.10
-    , Cabal                == 1.24.*
     , network-uri          == 2.6.*
     , QuickCheck           == 2.9.*
     , quickcheck-instances == 0.3.*
@@ -87,3 +85,4 @@ test-suite TestSuite
   other-extensions:
       OverloadedStrings
     , RecordWildCards
+    , TemplateHaskell

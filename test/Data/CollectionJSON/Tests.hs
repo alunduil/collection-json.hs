@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 {-|
 Module      : Data.CollectionJSON.Tests
@@ -11,29 +11,17 @@ License     : MIT
 
 Tests for "Data.CollectionJSON".
 -}
-module Data.CollectionJSON.Tests (tests) where
+module Data.CollectionJSON.Tests (runTests) where
 
 import Data.Aeson (decode, encode)
 import Data.Maybe (fromJust)
 import Data.Text (pack)
-import Distribution.TestSuite (Test)
 import Test.Invariant ((<=>))
-import Test.QuickCheck (Arbitrary (arbitrary))
+import Test.QuickCheck (Arbitrary (arbitrary), quickCheckAll)
 import Test.QuickCheck.Instances ()
 
 import Data.CollectionJSON
-import Internal.Distribution.TestSuite.Compat.QuickCheck (qcTest)
 import Internal.Network.URI.Tests ()
-
-tests :: [Test]
-tests = [ qcTest "fromJSON . toJSON == id—Collection" [] prop_id_c
-        , qcTest "fromJSON . toJSON == id—Link)"      [] prop_id_l
-        , qcTest "fromJSON . toJSON == id—Item)"      [] prop_id_i
-        , qcTest "fromJSON . toJSON == id—Query)"     [] prop_id_q
-        , qcTest "fromJSON . toJSON == id—Template)"  [] prop_id_t
-        , qcTest "fromJSON . toJSON == id—Error)"     [] prop_id_e
-        , qcTest "fromJSON . toJSON == id—Datum)"     [] prop_id_d
-        ]
 
 prop_id_c :: Collection -> Bool
 prop_id_c = fromJust . decode . encode <=> id
@@ -55,6 +43,10 @@ prop_id_e = fromJust . decode . encode <=> id
 
 prop_id_d :: Datum -> Bool
 prop_id_d = fromJust . decode . encode <=> id
+
+return []
+runTests :: IO Bool
+runTests = $quickCheckAll
 
 instance Arbitrary Collection where
   arbitrary =
