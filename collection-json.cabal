@@ -24,6 +24,10 @@ extra-source-files:
   , LICENSE
   , README.md
   , Setup.hs
+  , test/Data/CollectionJSON/Tests.hs
+  , test/Internal/Distribution/TestSuite/Compat/QuickCheck.hs
+  , test/Internal/Network/URI/Tests.hs
+  , test/TestSuite.hs
 
 source-repository head
   type:     git
