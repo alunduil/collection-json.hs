@@ -32,7 +32,7 @@ data Collection = Collection
   , cQueries  :: [Query]
   , cTemplate :: Maybe Template
   , cError    :: Maybe Error
-  }
+  } deriving (Eq, Show)
 
 instance FromJSON Collection where
   parseJSON = withObject "Collection" $ \ c -> do
@@ -76,7 +76,7 @@ data Link = Link
   , lName   :: Maybe Text
   , lRender :: Maybe Text
   , lPrompt :: Maybe Text
-  }
+  } deriving (Eq, Show)
 
 instance FromJSON Link where
   parseJSON = withObject "Link" $ \ v -> do
@@ -103,7 +103,7 @@ data Item = Item
                      --   delete the element.
   , iData  :: [Datum]
   , iLinks :: [Link]
-  }
+  } deriving (Eq, Show)
 
 instance FromJSON Item where
   parseJSON = withObject "Item" $ \ v -> do
@@ -142,7 +142,7 @@ data Query = Query
   , qName   :: Maybe Text -- ^ Identifier for this 'Query'.
   , qPrompt :: Maybe Text -- ^ Suggested user prompt.
   , qData   :: [Datum]    -- ^ Query parameters for this 'Query'.
-  }
+  } deriving (Eq, Show)
 
 instance FromJSON Query where
   parseJSON = withObject "Query" $ \ v -> do
@@ -166,7 +166,7 @@ instance ToJSON Query where
 -- | A fillable template for creation of a new object in the 'Collection'.
 newtype Template = Template
   { tData :: [Datum]
-  }
+  } deriving (Eq, Show)
 
 instance FromJSON Template where
   parseJSON = withObject "Template" $ \ v -> do
@@ -185,7 +185,7 @@ data Error = Error
   , eCode    :: Maybe Text -- ^ Unique identifier (e.g. session identifier,
                            --   request tracker, etc).
   , eMessage :: Maybe Text
-  }
+  } deriving (Eq, Show)
 
 instance FromJSON Error where
   parseJSON = withObject "Error" $ \ v -> do
@@ -207,7 +207,7 @@ data Datum = Datum
   { dName   :: Text       -- ^ Identifier for this 'Datum'.
   , dValue  :: Maybe Text
   , dPrompt :: Maybe Text -- ^ Suggested user prompt.
-  }
+  } deriving (Eq, Show)
 
 instance FromJSON Datum where
   parseJSON = withObject "Datum" $ \ v -> do
