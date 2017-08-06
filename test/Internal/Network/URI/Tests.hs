@@ -1,7 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-{-# LANGUAGE RecordWildCards #-}
-
 {-|
 Module      : Internal.Network.URI.Tests
 Description : URI Arbitrary Instances
