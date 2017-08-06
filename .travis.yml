@@ -1,0 +1,57 @@
+# Referenced from: https://www.fpcomplete.com/blog/2016/02/updated-haskell-travis-config
+
+sudo: false
+language: generic
+
+cache:
+  directories:
+  - "${HOME}/.ghc"
+  - "${HOME}/.cabal"
+
+matrix:
+  include:
+  - env: BUILD=cabal GHCVER=8.0.2 CABALVER=1.24
+    compiler: ": #GHC 8.0.2"
+    addons: {apt: {packages: [cabal-install-1.24, ghc-8.0.2], sources: [hvr-ghc]}}
+
+  - env: BUILD=cabal GHCVER=head  CABALVER=head
+    compiler: ": #GHC HEAD"
+    addons: {apt: {packages: [cabal-install-head, ghc-head], sources: [hvr-ghc]}}
+
+  allow_failures:
+    - env: BUILD=cabal GHCVER=head  CABALVER=head
+
+  fast_finish: true
+
+before_install:
+- unset CC
+
+- CABALARGS=""
+- if [ "x${GHCVER}" = "xhead" ]; then CABALARGS="--allow-newer"; fi
+- export PATH="${PATH}:/opt/ghc/${GHCVER}/bin:/opt/cabal/${CABALVER}/bin:${HOME}/.local/bin:${HOME}/.cabal/bin"
+
+install:
+- echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
+- if [ -f configure.ac ]; then autoreconf -i; fi
+- |
+  case "${BUILD}" in
+    cabal)
+      cabal --version && \
+      travis_retry cabal update && \
+      cabal install --only-dependencies --force-reinstalls -j -ffast --enable-tests --enable-benchmarks --reorder-goals --max-backjumps=-1 ${CABALARGS}
+      ;;
+  esac
+
+script:
+- |
+  case "${BUILD}" in
+    cabal)
+      cabal check && \
+      cabal sdist --output-directory=sdist.d && \
+      cd sdist.d && \
+      cabal configure -ffast --enable-tests --enable-benchmarks --ghc-options="-Werror" && \
+      cabal build -j && \
+      cabal test -j && \
+      cabal haddock
+      ;;
+  esac
