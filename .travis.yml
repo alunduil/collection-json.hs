@@ -1,8 +1,5 @@
-# Referenced from: https://www.fpcomplete.com/blog/2016/02/updated-haskell-travis-config
-
 sudo: false
 language: generic
-
 cache:
   directories:
   - "${HOME}/.ghc"
@@ -19,13 +16,12 @@ matrix:
     addons: {apt: {packages: [cabal-install-head, ghc-head], sources: [hvr-ghc]}}
 
   allow_failures:
-    - env: BUILD=cabal GHCVER=head  CABALVER=head
+  - env: BUILD=cabal GHCVER=head  CABALVER=head
 
   fast_finish: true
 
 before_install:
 - unset CC
-
 - CABALARGS=""
 - if [ "x${GHCVER}" = "xhead" ]; then CABALARGS="--allow-newer"; fi
 - export PATH="${PATH}:/opt/ghc/${GHCVER}/bin:/opt/cabal/${CABALVER}/bin:${HOME}/.local/bin:${HOME}/.cabal/bin"
@@ -55,3 +51,12 @@ script:
       cabal haddock
       ;;
   esac
+
+deploy:
+  provider: hackage
+  username: alunduil
+  password:
+    secure: aUFO3zOMyN93m7m1bU7it3Xvf+471jZJSfYhehl9ZlWvp6UjU5UJBiRCbaMHe5ez9m0Mfh6XZms+1hOx+xYizsNGO+pGKhH5kZsnBpBwulAehBaH4q1IiWhxv9N2f9r+RgD/vHJ1cozRjEDG/lEfvFIOpmMp8BN+PDfxdxRN4P2yX+/xfeb30X7acTQ1g7PKmsEd8wc8Zz8uGHvhJkQV0Y+IXjxTJrt+UulSDVwfmurPpCJda91qNcVlw9DK4MGB3pb9LMuaCIRq8GR6+VLQ8AVOZZUTww1r7tX3mAcRWH423O/M2Evuy+Qo0aIT302i85K7Qg3mBa/wYmbqxKz2z6nO7LgaX4GkAEGGh12PujpmMQB9qWP4g30o7pyUb5kBEGA6Yv3zGf/FQjtHiTi1mgCqj5kAHmBOoOu8pbZshYBbiHYtdpVO9jEqe4VJ6ax1H+82VGijcqBQZabckPVrRYcODfg5o4iZM45gxuUxsNC0kK0Be9G54wgbBtghf3IX5exwLHEe8wUe6eW0kpieyCZZZuLJRRDyBoGFbXkzKd8lw/s+E2b4s8GjLOHmfoqbTfsvVOuuI2+f5I+I7trh10fA4o5iPPYxi5xfZGnL+dLOBYIEpkHM3l5XsqNKrPAGW6DcBNLNWBq13deVuiL35SZlRXQkGVqcVDBgesFJ5Vo=
+  on:
+    repo: alunduil/collection-json.hs
+    tags: true
