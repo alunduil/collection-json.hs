@@ -47,7 +47,7 @@ library
       Internal.Network.URI
 
   build-depends:
-      aeson       >= 0.8 && < 1.1
+      aeson       >= 0.8 && < 1.2
     , base        >= 4.6 && < 4.11
     , network-uri == 2.6.*
     , text        == 1.2.*
@@ -74,7 +74,7 @@ test-suite Properties
       Internal.Network.URI.Tests
 
   build-depends:
-      aeson                >= 0.8 && < 1.1
+      aeson                >= 0.8 && < 1.2
     , base                 >= 4.6 && < 4.11
     , network-uri          == 2.6.*
     , QuickCheck           == 2.9.*
