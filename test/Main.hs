@@ -7,6 +7,7 @@ License     : MIT
 -}
 module Main where
 
+import Control.Applicative ((<$>))
 import System.Exit (exitFailure, exitSuccess)
 
 import qualified Data.CollectionJSON.Tests

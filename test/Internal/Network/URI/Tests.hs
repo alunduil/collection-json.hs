@@ -1,6 +1,4 @@
-{-# OPTIONS_GHC -Wno-orphans #-}
-
-{-# LANGUAGE RecordWildCards #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 {-|
 Module      : Internal.Network.URI.Tests
@@ -12,6 +10,7 @@ A collection of 'Arbitrary' instances for 'URI'.
 -}
 module Internal.Network.URI.Tests where
 
+import Control.Applicative ((<$>))
 import Data.Maybe (fromJust)
 import Network.URI (parseURIReference, URI)
 import Test.QuickCheck (Arbitrary (arbitrary), elements)

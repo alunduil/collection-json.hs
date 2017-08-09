@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -Wno-orphans #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -17,7 +17,7 @@ import Data.Aeson (decode, encode)
 import Data.Maybe (fromJust)
 import Data.Text (pack)
 import Test.Invariant ((<=>))
-import Test.QuickCheck (Arbitrary (arbitrary), quickCheckAll)
+import Test.QuickCheck (Arbitrary (arbitrary), forAllProperties, maxSize, stdArgs, quickCheckWithResult)
 import Test.QuickCheck.Instances ()
 
 import Data.CollectionJSON
@@ -46,7 +46,7 @@ prop_id_d = fromJust . decode . encode <=> id
 
 return []
 runTests :: IO Bool
-runTests = $quickCheckAll
+runTests = $forAllProperties $ quickCheckWithResult $ stdArgs {maxSize = 50}
 
 instance Arbitrary Collection where
   arbitrary =
