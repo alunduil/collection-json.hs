@@ -15,6 +15,7 @@ Full documentation for @application/vnd.collection+json@ can be found at
 module Data.CollectionJSON where
 
 import Data.Aeson ((.=), (.:?), (.!=), (.:), FromJSON (parseJSON), object, ToJSON (toJSON), withObject)
+import Data.Functor ((<$>))
 import Data.Maybe (catMaybes)
 import Data.Text (Text)
 import Network.URI (URI)
