@@ -47,7 +47,7 @@ library
 
   build-depends:
       aeson       >= 0.8 && < 1.2
-    , base        >= 4.6 && < 4.11
+    , base        >= 4.6 && < 4.12
     , network-uri == 2.6.*
     , text        == 1.2.*
 
@@ -81,7 +81,7 @@ test-suite collection-json-tests
 
   build-depends:
       aeson                >= 0.8 && < 1.2
-    , base                 >= 4.6 && < 4.11
+    , base                 >= 4.6 && < 4.12
     , bytestring           == 0.10.*
     , hspec                == 2.4.*
     , network-uri          == 2.6.*
