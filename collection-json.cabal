@@ -77,7 +77,7 @@ test-suite collection-json-tests
     , Internal.Network.URISpec
 
   build-tool-depends:
-      hspec:hspec-discover == 2.4.*
+      hspec-discover:hspec-discover == 2.4.*
 
   build-depends:
       aeson                >= 0.8 && < 1.2
