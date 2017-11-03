@@ -85,7 +85,7 @@ test-suite collection-json-tests
     , bytestring           == 0.10.*
     , hspec                == 2.4.*
     , network-uri          == 2.6.*
-    , QuickCheck           == 2.9.*
+    , QuickCheck           >= 2.9 && < 2.11
     , quickcheck-instances == 0.3.*
     , test-invariant       == 0.4.*
     , text                 == 1.2.*
