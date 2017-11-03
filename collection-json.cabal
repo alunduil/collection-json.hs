@@ -76,6 +76,9 @@ test-suite collection-json-tests
     , Internal.Network.URI.Arbitrary
     , Internal.Network.URISpec
 
+  build-tool-depends:
+      hspec:hspec-discover == 2.4.*
+
   build-depends:
       aeson                >= 0.8 && < 1.2
     , base                 >= 4.6 && < 4.11
