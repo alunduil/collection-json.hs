@@ -1,14 +1,14 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 {-|
-Module      : Internal.Network.URI.Tests
-Description : URI Arbitrary Instances
+Module      : Internal.Network.URI.Arbitrary
+Description : Arbitrary Instances for Network.URI
 Copyright   : (c) Alex Brandt, 2017
 License     : MIT
 
-A collection of 'Arbitrary' instances for 'URI'.
+Arbitrary instances for "Network.URI".
 -}
-module Internal.Network.URI.Tests where
+module Internal.Network.URI.Arbitrary where
 
 import Control.Applicative ((<$>))
 import Data.Maybe (fromJust)
