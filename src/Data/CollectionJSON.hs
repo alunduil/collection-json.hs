@@ -18,7 +18,7 @@ import Data.Aeson ((.=), (.:?), (.!=), (.:), FromJSON (parseJSON), object, ToJSO
 import Data.Functor ((<$>))
 import Data.Maybe (catMaybes)
 import Data.Text (Text)
-import Network.URI (URI)
+import Network.URI (nullURI, URI)
 
 import Internal.Network.URI ()
 
@@ -41,7 +41,7 @@ instance FromJSON Collection where
     v <- c .: "collection"
 
     cVersion  <- v .:? "version"  .!= "1.0"
-    cHref     <- v .:  "href"
+    cHref     <- v .:? "href"     .!= nullURI
     cLinks    <- v .:? "links"    .!= []
     cItems    <- v .:? "items"    .!= []
     cQueries  <- v .:? "queries"  .!= []
@@ -177,8 +177,8 @@ instance FromJSON Template where
     return Template{..}
 
 instance ToJSON Template where
-  toJSON Template{..} = object $ catMaybes
-    [ if null tData then Nothing else Just $ "data" .= tData
+  toJSON Template{..} = object
+    [ "data" .= tData
     ]
 
 -- | Information about latest error that occured when responding to a request.

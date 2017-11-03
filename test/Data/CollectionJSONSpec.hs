@@ -29,7 +29,14 @@ main = hspec spec
 spec :: Spec
 spec =
   describe "application/vnd.collection+json" $ modifyMaxSize (const 25) $
-    do describe "properties" $
+    do describe "RFC compliance (http://amundsen.com/media-types/collection/format/)" $
+         do prop "'Template' decode JSON string: \"{}\"" $ isJust (decode "{}" :: Maybe Template)
+            prop "'Collection' decode JSON string: \"{\"collection\":{}}\"" $ isJust (decode "{\"collection\":{}}" :: Maybe Collection) 
+
+       describe "common parse errors" $
+         prop "'Collection' errors on \"{}\"" $ isNothing (decode "{}" :: Maybe Collection)
+
+       describe "properties" $
          context "fromJust . decode . encode == id" $
            do prop "Datum"      (fromJust . decode . encode <=> id :: Datum -> Bool)
               prop "Error"      (fromJust . decode . encode <=> id :: Error -> Bool)
@@ -40,10 +47,7 @@ spec =
               prop "Collection" (fromJust . decode . encode <=> id :: Collection -> Bool)
 
        describe "JSON Missing Keys" $
-         do context "common parse errors" $
-              prop "'Collection' errors on {}" $ isNothing (decode "{}" :: Maybe Collection)
-
-            context "decode minimal JSON strings" $
+         do context "decode minimal JSON strings" $
               do prop "Datum"      $ isJust (decode mDatum :: Maybe Datum)
                  prop "Error"      $ isJust (decode mError :: Maybe Error)
                  prop "Template"   $ isJust (decode mTemplate :: Maybe Template)
@@ -78,7 +82,7 @@ spec =
         mLink       = "{\"href\":\"http://example.com\",\"rel\":\"item\"}" :: BL.ByteString
         mItem       = "{\"href\":\"http://example.com\"}" :: BL.ByteString
         mQuery      = "{\"href\":\"http://example.com\",\"rel\":\"item\"}" :: BL.ByteString
-        mTemplate   = "{}" :: BL.ByteString
+        mTemplate   = "{\"data\":[]}" :: BL.ByteString
         mError      = "{}" :: BL.ByteString
         mDatum      = "{\"name\":\"name\"}" :: BL.ByteString
 
