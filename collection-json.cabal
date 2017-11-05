@@ -43,7 +43,7 @@ library
       Data.CollectionJSON
 
   other-modules:
-      Internal.Network.URI
+      Internal.Network.URI.JSON
 
   build-depends:
       aeson       >= 0.8 && < 1.2
@@ -71,10 +71,10 @@ test-suite collection-json-tests
       Data.CollectionJSON
     , Data.CollectionJSON.Arbitrary
     , Data.CollectionJSONSpec
-
-    , Internal.Network.URI
     , Internal.Network.URI.Arbitrary
-    , Internal.Network.URISpec
+    , Internal.Network.URI.ArbitrarySpec
+    , Internal.Network.URI.JSON
+    , Internal.Network.URI.JSONSpec
 
   build-tool-depends:
       hspec-discover:hspec-discover == 2.4.*
