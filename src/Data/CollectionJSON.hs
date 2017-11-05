@@ -15,10 +15,12 @@ Full documentation for @application/vnd.collection+json@ can be found at
 module Data.CollectionJSON where
 
 import Data.Aeson ((.=), (.:?), (.!=), (.:), FromJSON (parseJSON), object, ToJSON (toJSON), withObject)
+import Data.Functor ((<$>))
+import Data.Maybe (catMaybes)
 import Data.Text (Text)
-import Network.URI (URI)
+import Network.URI (nullURI, URI)
 
-import Internal.Network.URI ()
+import Internal.Network.URI.JSON ()
 
 -- * Core Data Types
 
@@ -39,7 +41,7 @@ instance FromJSON Collection where
     v <- c .: "collection"
 
     cVersion  <- v .:? "version"  .!= "1.0"
-    cHref     <- v .:  "href"
+    cHref     <- v .:? "href"     .!= nullURI
     cLinks    <- v .:? "links"    .!= []
     cItems    <- v .:? "items"    .!= []
     cQueries  <- v .:? "queries"  .!= []
@@ -50,16 +52,16 @@ instance FromJSON Collection where
 
 instance ToJSON Collection where
   toJSON Collection{..} = object
-    [ "collection" .= object
-      [ "version"  .= cVersion
-      , "href"     .= cHref
-      , "links"    .= cLinks
-      , "items"    .= cItems
-      , "queries"  .= cQueries
-      , "template" .= cTemplate
-      , "error"    .= cError
+    [ "collection" .= object (catMaybes
+      [ Just $ "version"  .= cVersion
+      , Just $ "href"     .= cHref
+      , if null cLinks   then Nothing else Just $ "links"    .= cLinks
+      , if null cItems   then Nothing else Just $ "items"    .= cItems
+      , if null cQueries then Nothing else Just $ "queries"  .= cQueries
+      , (.=) "template" <$> cTemplate
+      , (.=) "error"    <$> cError
       ]
-    ]
+    ) ]
 
 {-|
 A link to a related resource (not necessarily an
@@ -89,12 +91,12 @@ instance FromJSON Link where
     return Link{..}
 
 instance ToJSON Link where
-  toJSON Link{..} = object
-    [ "href"   .= lHref
-    , "rel"    .= lRel
-    , "name"   .= lName
-    , "render" .= lRender
-    , "prompt" .= lPrompt
+  toJSON Link{..} = object $ catMaybes
+    [ Just $ "href"   .= lHref
+    , Just $ "rel"    .= lRel
+    , (.=) "name"   <$> lName
+    , (.=) "render" <$> lRender
+    , (.=) "prompt" <$> lPrompt
     ]
 
 -- | An element in the 'Collection'
@@ -114,10 +116,10 @@ instance FromJSON Item where
     return Item{..}
 
 instance ToJSON Item where
-  toJSON Item{..} = object
-    [ "href"  .= iHref
-    , "data"  .= iData
-    , "links" .= iLinks
+  toJSON Item{..} = object $ catMaybes
+    [ Just $ "href"  .= iHref
+    , if null iData  then Nothing else Just $ "data"  .= iData
+    , if null iLinks then Nothing else Just $ "links" .= iLinks
     ]
 
 {-|
@@ -155,12 +157,12 @@ instance FromJSON Query where
     return Query{..}
 
 instance ToJSON Query where
-  toJSON Query{..} = object
-    [ "href"   .= qHref
-    , "rel"    .= qRel
-    , "name"   .= qName
-    , "prompt" .= qPrompt
-    , "data"   .= qData
+  toJSON Query{..} = object $ catMaybes
+    [ Just $ "href"   .= qHref
+    , Just $ "rel"    .= qRel
+    , (.=) "name"   <$> qName
+    , (.=) "prompt" <$> qPrompt
+    , if null qData then Nothing else Just $ "data"   .= qData
     ]
 
 -- | A fillable template for creation of a new object in the 'Collection'.
@@ -196,10 +198,10 @@ instance FromJSON Error where
     return Error{..}
 
 instance ToJSON Error where
-  toJSON Error{..} = object
-    [ "title"   .= eTitle
-    , "code"    .= eCode
-    , "message" .= eMessage
+  toJSON Error{..} = object $ catMaybes
+    [ (.=) "title"   <$> eTitle
+    , (.=) "code"    <$> eCode
+    , (.=) "message" <$> eMessage
     ]
 
 -- | Contents of a 'Collection' 'Item'.
@@ -218,10 +220,10 @@ instance FromJSON Datum where
     return Datum{..}
 
 instance ToJSON Datum where
-  toJSON Datum{..} = object
-    [ "name"   .= dName
-    , "value"  .= dValue
-    , "prompt" .= dPrompt
+  toJSON Datum{..} = object $ catMaybes
+    [ Just $ "name"   .= dName
+    , (.=) "value"  <$> dValue
+    , (.=) "prompt" <$> dPrompt
     ]
 
 -- * Type Conversion
