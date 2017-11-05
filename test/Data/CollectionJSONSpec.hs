@@ -16,7 +16,6 @@ import Network.URI (parseURIReference)
 import Test.Hspec (context, describe, hspec, it, shouldBe, Spec)
 import Test.Hspec.QuickCheck (modifyMaxSize, prop)
 import Test.Invariant ((<=>))
-import Test.QuickCheck.Instances ()
 
 import qualified Data.ByteString.Lazy as BL (ByteString)
 
