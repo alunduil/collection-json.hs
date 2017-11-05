@@ -47,13 +47,13 @@ spec =
 
        describe "JSON Missing Keys" $
          do context "decode minimal JSON strings" $
-              do prop "Datum"      $ isJust (decode mDatum :: Maybe Datum)
-                 prop "Error"      $ isJust (decode mError :: Maybe Error)
-                 prop "Template"   $ isJust (decode mTemplate :: Maybe Template)
-                 prop "Query"      $ isJust (decode mQuery :: Maybe Query)
-                 prop "Item"       $ isJust (decode mItem :: Maybe Item)
-                 prop "Link"       $ isJust (decode mLink :: Maybe Link)
-                 prop "Collection" $ isJust (decode mCollection :: Maybe Collection)
+              do it "Datum"      $ isJust (decode mDatum :: Maybe Datum)
+                 it "Error"      $ isJust (decode mError :: Maybe Error)
+                 it "Template"   $ isJust (decode mTemplate :: Maybe Template)
+                 it "Query"      $ isJust (decode mQuery :: Maybe Query)
+                 it "Item"       $ isJust (decode mItem :: Maybe Item)
+                 it "Link"       $ isJust (decode mLink :: Maybe Link)
+                 it "Collection" $ isJust (decode mCollection :: Maybe Collection)
 
             context "encode minimal data to JSON" $
               do it "Datum" $
