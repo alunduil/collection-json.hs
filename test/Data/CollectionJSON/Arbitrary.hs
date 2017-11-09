@@ -16,7 +16,7 @@ import Test.QuickCheck (Arbitrary (arbitrary))
 import Test.QuickCheck.Instances ()
 
 import Data.CollectionJSON
-import Internal.Network.URI.Arbitrary ()
+import External.Network.URI.Arbitrary ()
 
 instance Arbitrary Collection where
   arbitrary = Collection (pack "1.0") <$> arbitrary

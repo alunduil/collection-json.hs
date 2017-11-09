@@ -3,14 +3,14 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 {-|
-Module      : Internal.Network.URI.Arbitrary
+Module      : External.Network.URI.Arbitrary
 Description : Arbitrary Instances for Network.URI
 Copyright   : (c) Alex Brandt, 2017
 License     : MIT
 
 Arbitrary instances for "Network.URI".
 -}
-module Internal.Network.URI.Arbitrary () where
+module External.Network.URI.Arbitrary () where
 
 import Control.Applicative ((<$>), (<*>))
 import Control.Monad (replicateM)

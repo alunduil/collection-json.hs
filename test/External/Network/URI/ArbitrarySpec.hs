@@ -1,18 +1,18 @@
 {-|
-Module      : Internal.Network.URI.ArbitrarySpec
-Description : Tests for Internal.Network.URI.Arbitrary
+Module      : External.Network.URI.ArbitrarySpec
+Description : Tests for External.Network.URI.Arbitrary
 Copyright   : (c) Alex Brandt, 2017
 License     : MIT
 
-Tests for "Internal.Network.URI.Arbitrary".
+Tests for "External.Network.URI.Arbitrary".
 -}
-module Internal.Network.URI.ArbitrarySpec (main, spec) where
+module External.Network.URI.ArbitrarySpec (main, spec) where
 
 import Network.URI (isURIReference, parseURIReference, uriToString)
 import Test.Hspec (describe, hspec, Spec)
 import Test.Hspec.QuickCheck (prop)
 
-import Internal.Network.URI.Arbitrary ()
+import External.Network.URI.Arbitrary ()
 
 main :: IO ()
 main = hspec spec
