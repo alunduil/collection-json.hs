@@ -1,5 +1,13 @@
 # Revision history for collection-json
 
+## 1.1.0.1  -- 2017-11-11
+
+* reduce prop usage by using it correctly
+* add shrink methods to Arbitrary instances
+* move Internal module to External
+* fix git URL
+* remove broken travis deployment
+
 ## 1.1.0.0  -- 2017-11-05
 
 * minimize produced JSON in ToJSON instances
