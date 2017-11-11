@@ -1,5 +1,5 @@
 name:                collection-json
-version:             1.1.0.0
+version:             1.1.0.1
 synopsis:            Collection+JSON—Hypermedia Type Tools
 
 description:
@@ -27,7 +27,7 @@ extra-source-files:
 
 source-repository head
   type:     git
-  location: https://github.com/alunduil/collection+json.hs
+  location: https://github.com/alunduil/collection-json.hs
   branch:   develop
 
 library
@@ -43,7 +43,7 @@ library
       Data.CollectionJSON
 
   other-modules:
-      Internal.Network.URI.JSON
+      External.Network.URI.JSON
 
   build-depends:
       aeson       >= 0.8 && < 1.2
@@ -71,10 +71,10 @@ test-suite collection-json-tests
       Data.CollectionJSON
     , Data.CollectionJSON.Arbitrary
     , Data.CollectionJSONSpec
-    , Internal.Network.URI.Arbitrary
-    , Internal.Network.URI.ArbitrarySpec
-    , Internal.Network.URI.JSON
-    , Internal.Network.URI.JSONSpec
+    , External.Network.URI.Arbitrary
+    , External.Network.URI.ArbitrarySpec
+    , External.Network.URI.JSON
+    , External.Network.URI.JSONSpec
 
   build-tool-depends:
       hspec-discover:hspec-discover == 2.4.*

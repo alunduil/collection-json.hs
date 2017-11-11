@@ -3,20 +3,20 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 {-|
-Module      : Internal.Network.URI.Arbitrary
+Module      : External.Network.URI.Arbitrary
 Description : Arbitrary Instances for Network.URI
 Copyright   : (c) Alex Brandt, 2017
 License     : MIT
 
 Arbitrary instances for "Network.URI".
 -}
-module Internal.Network.URI.Arbitrary () where
+module External.Network.URI.Arbitrary () where
 
 import Control.Applicative ((<$>), (<*>))
 import Control.Monad (replicateM)
 import Data.List (intercalate)
 import Network.URI (URI (..), URIAuth (..))
-import Test.QuickCheck (Arbitrary (arbitrary), choose, elements, Gen, listOf, listOf1, oneof, suchThat)
+import Test.QuickCheck (Arbitrary (arbitrary, shrink), choose, elements, Gen, listOf, listOf1, oneof, suchThat)
 
 instance Arbitrary URI where
   arbitrary =
@@ -29,10 +29,14 @@ instance Arbitrary URI where
        return URI {..}
     where emptyAuthority URIAuth{..} = all null [uriUserInfo, uriRegName, uriPort]
 
+  shrink URI{..} = [ URI uriScheme' uriAuthority' uriPath' uriQuery' uriFragment' | (uriScheme', uriAuthority', uriPath', uriQuery', uriFragment') <- shrink (uriScheme, uriAuthority, uriPath, uriQuery, uriFragment) ]
+
 instance Arbitrary URIAuth where
   arbitrary = URIAuth <$> userinfo
                       <*> host `suchThat` (not . null)
                       <*> port
+
+  shrink URIAuth{..} = [ URIAuth uriUserInfo' uriRegName' uriPort' | (uriUserInfo', uriRegName', uriPort') <- shrink (uriUserInfo, uriRegName, uriPort) ]
 
 -- * RFC 3986 Generators
 --

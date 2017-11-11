@@ -20,7 +20,7 @@ import Data.Maybe (catMaybes)
 import Data.Text (Text)
 import Network.URI (nullURI, URI)
 
-import Internal.Network.URI.JSON ()
+import External.Network.URI.JSON ()
 
 -- * Core Data Types
 
