@@ -18,9 +18,8 @@ import Data.Aeson ((.=), (.:?), (.!=), (.:), FromJSON (parseJSON), object, ToJSO
 import Data.Functor ((<$>))
 import Data.Maybe (catMaybes)
 import Data.Text (Text)
+import Network.URI.JSON ()
 import Network.URI (nullURI, URI)
-
-import External.Network.URI.JSON ()
 
 -- * Core Data Types
 
