@@ -1,5 +1,5 @@
 name:                collection-json
-version:             1.1.0.1
+version:             1.1.0.2
 synopsis:            Collection+JSON—Hypermedia Type Tools
 
 description:
@@ -43,13 +43,13 @@ library
       Data.CollectionJSON
 
   other-modules:
-      External.Network.URI.JSON
 
   build-depends:
-      aeson       >= 0.8 && < 1.2
-    , base        >= 4.6 && < 4.12
-    , network-uri == 2.6.*
-    , text        == 1.2.*
+      aeson            >= 0.8 && < 1.2
+    , base             >= 4.6 && < 4.12
+    , network-uri      == 2.6.*
+    , network-uri-json == 0.1.*
+    , text             == 1.2.*
 
   other-extensions:
       OverloadedStrings
@@ -73,8 +73,6 @@ test-suite collection-json-tests
     , Data.CollectionJSONSpec
     , External.Network.URI.Arbitrary
     , External.Network.URI.ArbitrarySpec
-    , External.Network.URI.JSON
-    , External.Network.URI.JSONSpec
 
   build-tool-depends:
       hspec-discover:hspec-discover == 2.4.*
@@ -85,6 +83,7 @@ test-suite collection-json-tests
     , bytestring           == 0.10.*
     , hspec                == 2.4.*
     , network-uri          == 2.6.*
+    , network-uri-json     == 0.1.*
     , QuickCheck           == 2.9.*
     , quickcheck-instances == 0.3.*
     , test-invariant       == 0.4.*

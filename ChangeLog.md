@@ -1,5 +1,9 @@
 # Revision history for collection-json
 
+## 1.1.0.2  -- 2017-11-17
+
+* use network-uri-json package
+
 ## 1.1.0.1  -- 2017-11-11
 
 * reduce prop usage by using it correctly
