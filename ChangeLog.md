@@ -1,5 +1,9 @@
 # Revision history for collection-json
 
+## 1.1.1.0  -- 2017-12-21
+
+* Bump dependencies on aeson and QuickCheck
+
 ## 1.1.0.2  -- 2017-11-17
 
 * use network-uri-json package
