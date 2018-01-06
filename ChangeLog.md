@@ -1,5 +1,9 @@
 # Revision history for collection-json
 
+## 1.1.2.0  -- 2018-01-06
+
+* Externalize network-arbitrary dependency
+
 ## 1.1.1.0  -- 2017-12-21
 
 * Bump dependencies on aeson and QuickCheck
