@@ -1,5 +1,5 @@
 name:                collection-json
-version:             1.1.1.0
+version:             1.1.2.0
 synopsis:            Collection+JSON—Hypermedia Type Tools
 
 description:
@@ -71,8 +71,6 @@ test-suite collection-json-tests
       Data.CollectionJSON
     , Data.CollectionJSON.Arbitrary
     , Data.CollectionJSONSpec
-    , External.Network.URI.Arbitrary
-    , External.Network.URI.ArbitrarySpec
 
   build-tool-depends:
       hspec-discover:hspec-discover == 2.4.*
@@ -82,6 +80,7 @@ test-suite collection-json-tests
     , base                 >= 4.6 && < 4.12
     , bytestring           == 0.10.*
     , hspec                == 2.4.*
+    , network-arbitrary    == 0.1.*
     , network-uri          == 2.6.*
     , network-uri-json     == 0.1.*
     , QuickCheck           >= 2.9 && < 2.11

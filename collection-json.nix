@@ -7,6 +7,9 @@ let
             collection-json  =
               haskellPackagesNew.callPackage ./default.nix { };
 
+            network-arbitrary =
+              haskellPackagesNew.callPackage ./network-arbitrary.nix { };
+
             network-uri-json =
               haskellPackagesNew.callPackage ./network-uri-json.nix { };
 
