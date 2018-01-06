@@ -14,11 +14,11 @@ module Data.CollectionJSON.Arbitrary where
 
 import Control.Applicative ((<$>), (<*>))
 import Data.Text (pack)
+import Network.URI.Arbitrary ()
 import Test.QuickCheck (Arbitrary (arbitrary, shrink))
 import Test.QuickCheck.Instances ()
 
 import Data.CollectionJSON
-import External.Network.URI.Arbitrary ()
 
 instance Arbitrary Collection where
   arbitrary = Collection (pack "1.0") <$> arbitrary
