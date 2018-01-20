@@ -1,5 +1,9 @@
 # Revision history for collection-json
 
+## 1.1.2.1  -- 2018-01-20
+
+* Bump network-arbitrary dependency
+
 ## 1.1.2.0  -- 2018-01-06
 
 * Externalize network-arbitrary dependency

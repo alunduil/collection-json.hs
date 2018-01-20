@@ -1,5 +1,5 @@
 name:                collection-json
-version:             1.1.2.0
+version:             1.1.2.1
 synopsis:            Collection+JSON—Hypermedia Type Tools
 
 description:
@@ -80,7 +80,7 @@ test-suite collection-json-tests
     , base                 >= 4.6 && < 4.12
     , bytestring           == 0.10.*
     , hspec                == 2.4.*
-    , network-arbitrary    == 0.1.*
+    , network-arbitrary    == 0.3.*
     , network-uri          == 2.6.*
     , network-uri-json     == 0.1.*
     , QuickCheck           >= 2.9 && < 2.11
