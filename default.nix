@@ -1,6 +1,6 @@
-{ mkDerivation, aeson, base, bytestring, hspec, network-arbitrary
-, network-uri, network-uri-json, QuickCheck, quickcheck-instances
-, stdenv, test-invariant, text
+{ mkDerivation, aeson, base, bytestring, hspec, hspec-discover
+, network-arbitrary, network-uri, network-uri-json, QuickCheck
+, quickcheck-instances, stdenv, test-invariant, text
 }:
 mkDerivation {
   pname = "collection-json";
@@ -14,6 +14,7 @@ mkDerivation {
     network-uri-json QuickCheck quickcheck-instances test-invariant
     text
   ];
+  testToolDepends = [ hspec-discover ];
   homepage = "https://github.com/alunduil/collection-json.hs";
   description = "Collection+JSON—Hypermedia Type Tools";
   license = stdenv.lib.licenses.mit;
