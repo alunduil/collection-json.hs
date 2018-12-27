@@ -83,7 +83,7 @@ test-suite collection-json-tests
     , network-arbitrary    == 0.3.*
     , network-uri          == 2.6.*
     , network-uri-json     == 0.1.*
-    , QuickCheck           >= 2.9 && < 2.11
+    , QuickCheck           >= 2.9 && < 2.13
     , quickcheck-instances == 0.3.*
     , test-invariant       == 0.4.*
     , text                 == 1.2.*
