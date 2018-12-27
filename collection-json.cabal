@@ -79,7 +79,7 @@ test-suite collection-json-tests
       aeson                >= 0.8 && < 1.5
     , base                 >= 4.6 && < 4.12
     , bytestring           == 0.10.*
-    , hspec                == 2.4.*
+    , hspec                >= 2.4 && < 2.7
     , network-arbitrary    == 0.3.*
     , network-uri          == 2.6.*
     , network-uri-json     == 0.1.*
