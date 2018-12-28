@@ -1,20 +1,25 @@
 let
   config = {
     packageOverrides = pkgs: rec {
-        haskellPackages = pkgs.haskellPackages.override {
-          overrides = haskellPackagesNew: haskellPackagesOld: rec {
+      haskellPackages =
+        let
+          generatedOverrides = haskellPackagesNew: haskellPackagesOld:
+            let
+              toPackage = file: _: {
+                name = builtins.replaceStrings [ ".nix" ] [ "" ] file;
+                value = haskellPackagesNew.callPackage (./. + "/nix/${file}") { };
+              };
+            in
+              pkgs.lib.mapAttrs' toPackage (builtins.readDir ./nix);
 
-            collection-json  =
-              haskellPackagesNew.callPackage ./default.nix { };
-
-            network-arbitrary =
-              haskellPackagesNew.callPackage ./network-arbitrary.nix { };
-
-            network-uri-json =
-              haskellPackagesNew.callPackage ./network-uri-json.nix { };
-
+          manualOverrides = haskellPackagesNew: haskellPackagesOld: {
+            # See https://github.com/Gabriel439/haskell-nix/blob/master/project4/README.md#composing-overrides
           };
-        };
+        in
+          pkgs.haskellPackages.override {
+            overrides =
+              pkgs.lib.composeExtensions generatedOverrides manualOverrides;
+          };
     };
   };
 

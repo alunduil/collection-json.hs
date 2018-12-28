@@ -5,6 +5,10 @@
 Types, classes, and functions for using the
 [Collection+JSON—Hypermedia Type][Collection+JSON] in [Haskell].
 
+I am providing code in the repository to you under an open source license.
+Because this is my personal repository, the license you receive to my code is
+from me and not my employer (Facebook).
+
 # Getting Started
 
 Documentation is available on [Hackage] and information about
