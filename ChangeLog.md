@@ -1,5 +1,13 @@
 # Revision history for collection-json
 
+## 1.2.0.0  -- 2018-12-28
+
+* Update base, network-uri-json, network-arbitrary, hspec, aeson, QuickCheck,
+  hspec-discover
+* Add disclaimer to README.
+* Add envrc to autoload environment.
+* add cloudbuild configuration to publish to hackage
+
 ## 1.1.2.1  -- 2018-01-20
 
 * Bump network-arbitrary dependency
