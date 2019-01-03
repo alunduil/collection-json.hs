@@ -1,5 +1,10 @@
 # Revision history for collection-json
 
+## 1.3.0.0  -- 2019-01-02
+
+* Update travis configuration.
+* Update network-uri-json.
+
 ## 1.2.0.0  -- 2018-12-28
 
 * Update base, network-uri-json, network-arbitrary, hspec, aeson, QuickCheck,
