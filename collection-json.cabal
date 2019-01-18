@@ -73,7 +73,7 @@ test-suite collection-json-tests
     , Data.CollectionJSONSpec
 
   build-tool-depends:
-      hspec-discover:hspec-discover >= 2.4 && < 2.7
+      hspec-discover:hspec-discover >= 2.4 && < 2.8
 
   build-depends:
       aeson                >= 0.8 && < 1.5
