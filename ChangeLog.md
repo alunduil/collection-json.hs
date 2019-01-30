@@ -1,5 +1,10 @@
 # Revision history for collection-json
 
+## 1.3.1.0  -- 2019-01-22
+
+* Update hspec-discover.
+* Update hspec.
+
 ## 1.3.0.0  -- 2019-01-02
 
 * Update travis configuration.
