@@ -11,4 +11,4 @@ steps:
     args: [ 'cabal', 'sdist' ]
 
   - name: 'haskell'
-    args: [ 'cabal', 'upload', '--publish', 'dist/collection-json-$TAG.tar.gz' ]
+    args: [ 'cabal', 'upload', '--publish', 'dist/collection-json-$TAG_NAME.tar.gz' ]

@@ -1,5 +1,9 @@
 # Revision history for collection-json
 
+## 1.3.1.1  -- 2019-01-31
+
+* Change TAG to TAG_NAME in cloudbuild configuration.
+
 ## 1.3.1.0  -- 2019-01-22
 
 * Update hspec-discover.
