@@ -1,5 +1,9 @@
 # Revision history for collection-json
 
+## 1.3.1.2  -- 2018-02-05
+
+* Change sdist to new-sdist.
+
 ## 1.3.1.1  -- 2019-01-31
 
 * Change TAG to TAG_NAME in cloudbuild configuration.
