@@ -8,7 +8,7 @@ steps:
             '--key=cabal-config' ]
 
   - name: 'haskell'
-    args: [ 'cabal', 'sdist' ]
+    args: [ 'cabal', 'new-sdist' ]
 
   - name: 'haskell'
     args: [ 'cabal', 'upload', '--publish', 'dist/collection-json-$TAG_NAME.tar.gz' ]
