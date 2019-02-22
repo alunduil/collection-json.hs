@@ -2,13 +2,19 @@ steps:
   - name: 'gcr.io/cloud-builders/gcloud'
     args: [ 'kms', 'decrypt',
             '--ciphertext-file=cabal.config.enc',
-            '--plaintext-file=cabal.config',
+            '--plaintext-file=/builder/home/.cabal/config',
             '--location=global',
             '--keyring=hackage',
             '--key=cabal-config' ]
+    volumes:
+      - name: cabal-config
+        path: /builder/home/.cabal
 
   - name: 'haskell'
     args: [ 'cabal', 'new-sdist' ]
 
   - name: 'haskell'
-    args: [ 'cabal', 'upload', '--publish', 'dist/collection-json-$TAG_NAME.tar.gz' ]
+    args: [ 'cabal', 'upload', '--publish', '/workspace/dist-newstyle/sdist/collection-json-$TAG_NAME.tar.gz' ]
+    volumes:
+      - name: cabal-config
+        path: /builder/home/.cabal
