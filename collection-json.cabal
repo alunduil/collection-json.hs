@@ -80,7 +80,7 @@ test-suite collection-json-tests
     , base >=4.6 && <4.23
     , bytestring           == 0.10.*
     , hspec                >= 2.4 && < 2.8
-    , network-arbitrary    >= 0.3 && < 0.5
+    , network-arbitrary >=0.3 && <1.1
     , network-uri          == 2.6.*
     , network-uri-json     >= 0.1 && < 0.4
     , QuickCheck >=2.9 && <2.19
