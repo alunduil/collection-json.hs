@@ -1,6 +1,21 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
+    "config:recommended",
+    ":automergePatch"
+  ],
+  "packageRules": [
+    {
+      "description": "Group test-stack dependency updates",
+      "matchPackageNames": [
+        "hspec",
+        "hspec-discover",
+        "QuickCheck",
+        "quickcheck-instances",
+        "test-invariant",
+        "network-arbitrary"
+      ],
+      "groupName": "test stack"
+    }
   ]
 }
