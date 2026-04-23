@@ -15,8 +15,8 @@ maintainer:          alunduil@alunduil.com
 copyright:           (c) 2017 Alex Brandt
 category:            Data
 build-type:          Simple
-cabal-version:       >= 1.10
-tested-with:         GHC >= 7.6 && < 8.2.1 || > 8.2.1 && < 9.0
+cabal-version:       3.0
+tested-with:         GHC == 9.4.8 || == 9.6.6 || == 9.8.4 || == 9.10.1
 
 extra-source-files:
     ChangeLog.md
@@ -49,7 +49,7 @@ library
     , base >=4.6 && <4.23
     , network-uri      == 2.6.*
     , network-uri-json >=0.1 && <0.5
-    , text             == 1.2.*
+    , text             >=1.2 && <2.2
 
   other-extensions:
       OverloadedStrings
@@ -73,12 +73,12 @@ test-suite collection-json-tests
     , Data.CollectionJSONSpec
 
   build-tool-depends:
-      hspec-discover:hspec-discover >= 2.4 && < 2.8
+      hspec-discover:hspec-discover >= 2.4 && < 2.12
 
   build-depends:
       aeson >=0.8 && <2.3
     , base >=4.6 && <4.23
-    , bytestring           == 0.10.*
+    , bytestring           >=0.10 && <0.13
     , hspec >=2.4 && <2.12
     , network-arbitrary >=0.3 && <1.1
     , network-uri          == 2.6.*
@@ -86,7 +86,7 @@ test-suite collection-json-tests
     , QuickCheck >=2.9 && <2.19
     , quickcheck-instances == 0.3.*
     , test-invariant       == 0.4.*
-    , text                 == 1.2.*
+    , text                 >=1.2 && <2.2
 
   other-extensions:
       OverloadedStrings

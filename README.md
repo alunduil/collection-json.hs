@@ -22,8 +22,8 @@ you've found an error or have a suggestion for a new feature; please, ensure
 that it is reported.
 
 If you would like to contribute a fix or new feature; please, submit a pull
-request.  This project follows [git flow] and utilizes [travis] to automatically
-check pull requests before a manual review.
+request against `main`.  Pull requests are automatically checked by
+[GitHub Actions][ci] before review.
 
 # Contributors
 
@@ -31,9 +31,8 @@ The `COPYRIGHT` file contains a list of contributors with their respective
 copyrights and other information.  If you submit a pull request and would like
 attribution; please, add yourself to the `COPYRIGHT` file.
 
+[ci]: https://github.com/alunduil/collection-json.hs/actions/workflows/ci.yml
 [Collection+JSON]: http://amundsen.com/media-types/collection/
-[git flow]: http://nvie.com/posts/a-successful-git-branching-model/
 [Hackage]: https://hackage.haskell.org/package/collection-json
 [Haskell]: https://www.haskell.org/
 [issues]: https://github.com/alunduil/collection-json.hs/issues
-[travis]: https://travis-ci.org/alunduil/collection-json.hs
