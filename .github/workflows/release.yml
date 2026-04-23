@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: haskell-actions/setup@v2
+        with:
+          ghc-version: '9.10.1'
+          cabal-version: '3.12.1.0'
+
+      - name: Verify tag matches cabal version
+        run: |
+          TAG=${GITHUB_REF#refs/tags/v}
+          CABAL_VERSION=$(awk '/^version:/ {print $2}' collection-json.cabal)
+          if [ "$TAG" != "$CABAL_VERSION" ]; then
+            echo "Tag v$TAG does not match cabal version $CABAL_VERSION"
+            exit 1
+          fi
+
+      - name: Build sdist
+        run: cabal sdist
+
+      - name: Upload to Hackage
+        env:
+          HACKAGE_API_KEY: ${{ secrets.HACKAGE_API_KEY }}
+        run: |
+          cabal upload --publish \
+            --token="$HACKAGE_API_KEY" \
+            dist-newstyle/sdist/collection-json-*.tar.gz
