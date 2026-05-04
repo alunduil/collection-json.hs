@@ -1,5 +1,10 @@
 # Revision history for collection-json
 
+## 1.3.2.0  -- 2026-05-04
+
+* Add `FromCollection` and `ToCollection` instances for `Collection` (both
+  defined as `id`) to ease writing polymorphic functions over either class.
+
 ## 1.3.1.3  -- 2019-02-21
 
 * Update cabal.config.
