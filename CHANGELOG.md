@@ -10,12 +10,8 @@ and this project adheres to the [Haskell Package Versioning Policy
 
 ### Changed
 
-- Widen `aeson` upper bound to allow `2.2.x`.
-- Widen `base` upper bound to allow `4.22.x`.
-- Widen `network-uri-json` upper bound to allow `0.4.x`.
-- Widen `hspec` upper bound to allow `2.11.x` (test suite).
-- Widen `network-arbitrary` upper bound to allow `1.x` (test suite).
-- Widen `QuickCheck` upper bound to allow `2.18.x` (test suite).
+- Compatible with `aeson` 2.2, `base` 4.22, and `network-uri-json` 0.4
+  (no API changes).
 
 ## [1.3.1.3] - 2019-02-21
 
