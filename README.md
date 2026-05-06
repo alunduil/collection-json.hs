@@ -52,7 +52,9 @@ Full API reference on [Hackage].  The Collection+JSON specification is at
 
 ## Contributing
 
-Report bugs and feature requests on the [issue tracker].
+Report bugs and feature requests on the [issue tracker].  See
+[`CONTRIBUTING.md`](CONTRIBUTING.md) for the build, test, formatter, branch,
+and release conventions.
 
 For changes, fork the repository, branch from `main`, and open a pull request
 against `main`.  PRs are squash-merged.  If you'd like attribution, add yourself
