@@ -1,5 +1,5 @@
 steps:
-  - name: 'gcr.io/cloud-builders/gcloud'
+  - name: 'gcr.io/cloud-builders/gcloud@sha256:e682d573f1175b5bef9a2926aa5c514e5cdfc64ac9a1bfcdda303ce90b695118'
     args: [ 'kms', 'decrypt',
             '--ciphertext-file=cabal.config.enc',
             '--plaintext-file=/builder/home/.cabal/config',
@@ -10,10 +10,10 @@ steps:
       - name: cabal-config
         path: /builder/home/.cabal
 
-  - name: 'haskell'
+  - name: 'haskell@sha256:7f9c131238ebf7490b6b7e09046577f97d0b5ad5f43dfddce850706adb7e7cd4'
     args: [ 'cabal', 'new-sdist' ]
 
-  - name: 'haskell'
+  - name: 'haskell@sha256:7f9c131238ebf7490b6b7e09046577f97d0b5ad5f43dfddce850706adb7e7cd4'
     args: [ 'cabal', 'upload', '--publish', '/workspace/dist-newstyle/sdist/collection-json-$TAG_NAME.tar.gz' ]
     volumes:
       - name: cabal-config
