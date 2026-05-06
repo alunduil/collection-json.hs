@@ -231,6 +231,12 @@ instance ToJSON Datum where
 class FromCollection a where
   fromCollection :: Collection -> a
 
+instance FromCollection Collection where
+  fromCollection = id
+
 -- | A type that can be converted to 'Collection'.
 class ToCollection a where
   toCollection :: a -> Collection
+
+instance ToCollection Collection where
+  toCollection = id
