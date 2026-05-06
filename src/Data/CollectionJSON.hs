@@ -51,7 +51,7 @@ instance FromJSON Collection where
     cTemplate <- v .:? "template"
     cError <- v .:? "error"
 
-    return Collection{..}
+    pure Collection{..}
 
 instance ToJSON Collection where
   toJSON Collection{..} =
@@ -99,7 +99,7 @@ instance FromJSON Link where
     lRender <- v .:? "render"
     lPrompt <- v .:? "prompt"
 
-    return Link{..}
+    pure Link{..}
 
 instance ToJSON Link where
   toJSON Link{..} =
@@ -129,7 +129,7 @@ instance FromJSON Item where
     iData <- v .:? "data" .!= []
     iLinks <- v .:? "links" .!= []
 
-    return Item{..}
+    pure Item{..}
 
 instance ToJSON Item where
   toJSON Item{..} =
@@ -179,7 +179,7 @@ instance FromJSON Query where
     qPrompt <- v .:? "prompt"
     qData <- v .:? "data" .!= []
 
-    return Query{..}
+    pure Query{..}
 
 instance ToJSON Query where
   toJSON Query{..} =
@@ -202,7 +202,7 @@ instance FromJSON Template where
   parseJSON = withObject "Template" $ \v -> do
     tData <- v .:? "data" .!= []
 
-    return Template{..}
+    pure Template{..}
 
 instance ToJSON Template where
   toJSON Template{..} =
@@ -227,7 +227,7 @@ instance FromJSON Error where
     eCode <- v .:? "code"
     eMessage <- v .:? "message"
 
-    return Error{..}
+    pure Error{..}
 
 instance ToJSON Error where
   toJSON Error{..} =
@@ -254,7 +254,7 @@ instance FromJSON Datum where
     dValue <- v .:? "value"
     dPrompt <- v .:? "prompt"
 
-    return Datum{..}
+    pure Datum{..}
 
 instance ToJSON Datum where
   toJSON Datum{..} =

@@ -1,6 +1,17 @@
 # HLint configuration for collection-json.
-# Default builtin hints enabled; project-specific overrides below.
-#
 # Reference: https://github.com/ndmitchell/hlint#readme
 
 - arguments: [--color=auto]
+
+- group: {name: future, enabled: true}
+- group: {name: partial, enabled: true}
+
+# unsafePerformIO has no place in a pure data-modelling library.
+- functions:
+    - {name: unsafePerformIO, within: []}
+
+# Hard-coded literal URIs in tests are safe to fromJust; the failure
+# mode would surface on first run, not at a customer.
+- ignore:
+    name: Avoid partial function
+    within: Data.CollectionJSONSpec
