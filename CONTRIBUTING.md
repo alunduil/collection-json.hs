@@ -35,8 +35,6 @@ merge.
 
 ## Pull requests
 
-- Open every PR as a draft; promote to ready once CI is green and
-  you want review.
 - Keep PRs focused. Unrelated cleanup goes in a separate PR.
 - The full CI matrix (`cabal build`, `cabal test`, `cabal check`,
   `cabal haddock`, `fourmolu --mode check`, `hlint`) must pass before
