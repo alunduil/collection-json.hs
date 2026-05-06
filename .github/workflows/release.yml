@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to publish (e.g. v1.3.1.4) — must already exist as a Hackage candidate'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  candidate:
+    name: Upload Hackage candidate
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: haskell-actions/setup@v2
+        with:
+          ghc-version: 'latest'
+          cabal-version: 'latest'
+
+      - run: cabal update
+
+      - run: cabal sdist
+
+      - run: cabal haddock --haddock-for-hackage
+
+      - name: Upload sdist as candidate
+        env:
+          HACKAGE_KEY: ${{ secrets.HACKAGE_TOKEN }}
+        run: cabal upload dist-newstyle/sdist/*.tar.gz
+
+      - name: Upload documentation as candidate
+        env:
+          HACKAGE_KEY: ${{ secrets.HACKAGE_TOKEN }}
+        run: cabal upload --documentation dist-newstyle/*-docs.tar.gz
+
+  publish:
+    name: Publish to Hackage
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: hackage
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
+      - uses: haskell-actions/setup@v2
+        with:
+          ghc-version: 'latest'
+          cabal-version: 'latest'
+
+      - run: cabal update
+
+      - run: cabal sdist
+
+      - run: cabal haddock --haddock-for-hackage
+
+      - name: Publish sdist
+        env:
+          HACKAGE_KEY: ${{ secrets.HACKAGE_TOKEN }}
+        run: cabal upload --publish dist-newstyle/sdist/*.tar.gz
+
+      - name: Publish documentation
+        env:
+          HACKAGE_KEY: ${{ secrets.HACKAGE_TOKEN }}
+        run: cabal upload --publish --documentation dist-newstyle/*-docs.tar.gz
