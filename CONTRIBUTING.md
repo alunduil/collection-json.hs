@@ -35,12 +35,6 @@ so install them locally (`cabal install fourmolu hlint`, or via
 `ghcup`). The pinned versions used by CI live at the top of
 [`.github/workflows/pre-commit.yml`](.github/workflows/pre-commit.yml).
 
-Tool configs:
-
-- [`fourmolu.yaml`](fourmolu.yaml) — formatter rules.
-- [`hlint.yaml`](hlint.yaml) — linter rules.
-- [`.pre-commit-config.yaml`](.pre-commit-config.yaml) — hook list.
-
 ## Branch policy
 
 Trunk-based. `main` is the only long-lived branch and the merge
