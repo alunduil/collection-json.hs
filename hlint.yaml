@@ -1,0 +1,6 @@
+# HLint configuration for collection-json.
+# Default builtin hints enabled; project-specific overrides below.
+#
+# Reference: https://github.com/ndmitchell/hlint#readme
+
+- arguments: [--color=auto]
