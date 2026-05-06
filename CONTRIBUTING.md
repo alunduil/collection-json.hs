@@ -1,8 +1,8 @@
 # Contributing to collection-json
 
-Issues, pull requests, and docs improvements are all welcome. This
-file is the cold-clone briefing: build, test, branch policy, release
-model.
+Issues, pull requests, and docs improvements are welcome. This file
+covers what you need to build, test, and open a PR: commands, branch
+policy, release model.
 
 By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
@@ -62,12 +62,10 @@ version `A.B.C.D`:
   previous `A.B.C` line must remain exported, with the same type, in
   `A.B.(C+1)`.
 - **A.B** (major) — anything that removes, renames, or changes the
-  signature of an exported identifier requires a major bump (either
-  `A` or `B`).
+  signature of an exported identifier requires a major bump.
 
-When in doubt, bump higher. `cabal-diff` or `packdiff` against the
-previously released sdist is the reference check before tagging a
-non-major release.
+When in doubt, bump higher. Run `cabal-diff` or `packdiff` against
+the previously released sdist before tagging a non-major release.
 
 ## Reporting bugs and proposing changes
 
