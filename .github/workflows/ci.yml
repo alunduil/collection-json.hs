@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build:
+    name: GHC ${{ matrix.ghc }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        ghc: ['9.6', '9.8', '9.10', '9.12']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up GHC ${{ matrix.ghc }}
+        uses: haskell-actions/setup@v2
+        id: setup
+        with:
+          ghc-version: ${{ matrix.ghc }}
+          cabal-version: latest
+
+      - name: Update Hackage index
+        run: cabal update
+
+      - name: Generate build plan
+        run: |
+          cabal configure --enable-tests
+          cabal build all --enable-tests --dry-run
+
+      - name: Restore cached dependencies
+        uses: actions/cache/restore@v4
+        id: cache
+        env:
+          key: ${{ runner.os }}-ghc-${{ steps.setup.outputs.ghc-version }}-cabal-${{ steps.setup.outputs.cabal-version }}
+        with:
+          path: ${{ steps.setup.outputs.cabal-store }}
+          key: ${{ env.key }}-plan-${{ hashFiles('dist-newstyle/cache/plan.json') }}
+          restore-keys: ${{ env.key }}-
+
+      - name: Install dependencies
+        run: cabal build all --enable-tests --only-dependencies
+
+      - name: Save cached dependencies
+        uses: actions/cache/save@v4
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          path: ${{ steps.setup.outputs.cabal-store }}
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+
+      - name: Build
+        run: cabal build all --enable-tests
+
+      - name: Test
+        run: cabal test all --enable-tests --test-show-details=direct
+
+      - name: cabal check
+        run: cabal check
+
+      - name: Haddock
+        run: cabal haddock all
+
+      - name: Build sdist
+        run: cabal sdist all
+
+      - name: Smoke test sdist install
+        shell: bash
+        run: |
+          TARBALL=$(ls dist-newstyle/sdist/collection-json-*.tar.gz)
+          WORKDIR=$(mktemp -d)
+          tar xf "$TARBALL" -C "$WORKDIR"
+          cd "$WORKDIR"/collection-json-*
+          cabal build all --enable-tests
+          cabal test all --enable-tests --test-show-details=direct
