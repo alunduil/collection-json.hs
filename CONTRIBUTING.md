@@ -17,15 +17,23 @@ cabal build
 cabal test
 ```
 
-Formatting and linting are enforced in CI:
+## Formatting and linting
+
+Formatting (Fourmolu) and linting (HLint) run through
+[pre-commit](https://pre-commit.com). The `Pre-commit` workflow runs
+the same hooks on every push and PR; merges are blocked until they
+pass.
 
 ```
-fourmolu --mode check src test
-hlint src test
+pre-commit install            # install the git hook (one-off)
+pre-commit run --all-files    # run all hooks against the repo
+pre-commit autoupdate         # bump third-party hook revs
 ```
 
-Run `fourmolu --mode inplace src test` before pushing to keep the
-`format` job green.
+The Haskell hooks shell out to `fourmolu` and `hlint` from `PATH`,
+so install them locally (`cabal install fourmolu hlint`, or via
+`ghcup`). The pinned versions used by CI live at the top of
+[`.github/workflows/pre-commit.yml`](.github/workflows/pre-commit.yml).
 
 ## Branch policy
 
@@ -37,7 +45,7 @@ merge.
 
 - Keep PRs focused. Unrelated cleanup goes in a separate PR.
 - The full CI matrix (`cabal build`, `cabal test`, `cabal check`,
-  `cabal haddock`, `fourmolu --mode check`, `hlint`) must pass before
+  `cabal haddock`, plus the `Pre-commit` workflow) must pass before
   merge. There are no manual overrides.
 
 Don't bump the `version:` field in `collection-json.cabal` in your
