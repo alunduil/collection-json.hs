@@ -1,2 +1,8 @@
 indentation: 2
-comma-style: leading
+
+sort-constraints: true
+sort-derived-classes: true
+sort-deriving-clauses: true
+
+single-constraint-parens: never
+single-deriving-parens: never
