@@ -40,30 +40,8 @@ merge.
   `cabal haddock`, `fourmolu --mode check`, `hlint`) must pass before
   merge. There are no manual overrides.
 
-## Releases
-
-Tag-driven. Pushing a `v*` tag (e.g. `v1.3.1.4`) triggers the release
-workflow, which uploads the sdist and Haddock to Hackage as a
-candidate; a manual `publish` job promotes the candidate to the
-final release. The tag and the `version:` field in
-`collection-json.cabal` must match — CI fails the release otherwise.
-
-## PVP contract
-
-This package follows the
-[Haskell Package Versioning Policy](https://pvp.haskell.org/). For
-version `A.B.C.D`:
-
-- **D** (patch) — bug fixes, cabal metadata, dependency-bound
-  widening. No change to the exported API.
-- **C** (minor) — additions only. Every identifier exported in the
-  previous `A.B.C` line must remain exported, with the same type, in
-  `A.B.(C+1)`.
-- **A.B** (major) — anything that removes, renames, or changes the
-  signature of an exported identifier requires a major bump.
-
-When in doubt, bump higher. Run `cabal-diff` or `packdiff` against
-the previously released sdist before tagging a non-major release.
+Don't bump the `version:` field in `collection-json.cabal` in your
+PR; releases are cut by the maintainer.
 
 ## Reporting bugs and proposing changes
 
