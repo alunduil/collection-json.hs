@@ -1,26 +1,70 @@
-# Contributing
+# Contributing to collection-json
 
-Thanks for your interest in `collection-json`. This file documents the local
-checks CI enforces; everything else lives in the issue/PR you are working on.
+Issues, pull requests, and docs improvements are welcome. This file
+covers what you need to build, test, and open a PR: commands, branch
+policy, release model.
 
-## Pre-commit
+By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-Formatting and linting run through [pre-commit](https://pre-commit.com).
-The `Pre-commit` workflow (`.github/workflows/pre-commit.yml`) runs the same
-hooks on every push and PR; merges are blocked until they pass.
+## Getting started
 
-```sh
-pre-commit install                # install the git hook (one-off)
-pre-commit run --all-files        # run all hooks against the repo
-pre-commit autoupdate             # bump third-party hook revs
+Prerequisites: GHC and `cabal-install`. The supported GHC range is
+declared in [`tested-with`](collection-json.cabal); CI runs the
+matrix on every PR.
+
+```
+cabal build
+cabal test
 ```
 
-The Haskell hooks shell out to `fourmolu` and `hlint` from `PATH`, so install
-them locally (e.g. `cabal install fourmolu hlint` or via `ghcup`). The pinned
-versions used by CI live at the top of the Pre-commit workflow.
+## Formatting and linting
 
-## Configuration
+Formatting (Fourmolu) and linting (HLint) run through
+[pre-commit](https://pre-commit.com). The `Pre-commit` workflow runs
+the same hooks on every push and PR; merges are blocked until they
+pass.
 
-- `fourmolu.yaml` — formatter config (indent=2, leading commas).
-- `hlint.yaml` — linter config.
-- `.pre-commit-config.yaml` — hook list and third-party revs.
+```
+pre-commit install            # install the git hook (one-off)
+pre-commit run --all-files    # run all hooks against the repo
+pre-commit autoupdate         # bump third-party hook revs
+```
+
+The Haskell hooks shell out to `fourmolu` and `hlint` from `PATH`,
+so install them locally (`cabal install fourmolu hlint`, or via
+`ghcup`). The pinned versions used by CI live at the top of
+[`.github/workflows/pre-commit.yml`](.github/workflows/pre-commit.yml).
+
+Tool configs:
+
+- [`fourmolu.yaml`](fourmolu.yaml) — formatter rules.
+- [`hlint.yaml`](hlint.yaml) — linter rules.
+- [`.pre-commit-config.yaml`](.pre-commit-config.yaml) — hook list.
+
+## Branch policy
+
+Trunk-based. `main` is the only long-lived branch and the merge
+target for every PR. Topic branches are short-lived and deleted on
+merge.
+
+## Pull requests
+
+- Keep PRs focused. Unrelated cleanup goes in a separate PR.
+- The full CI matrix (`cabal build`, `cabal test`, `cabal check`,
+  `cabal haddock`, plus the `Pre-commit` workflow) must pass before
+  merge. There are no manual overrides.
+
+Don't bump the `version:` field in `collection-json.cabal` in your
+PR; releases are cut by the maintainer.
+
+## Reporting bugs and proposing changes
+
+File an issue on [GitHub](https://github.com/alunduil/collection-json.hs/issues).
+For bugs, include the GHC version, cabal version, and a minimal
+repro. For proposals, describe the user-visible outcome and what
+problem it solves.
+
+## Attribution
+
+Contributors are listed in [`COPYRIGHT`](COPYRIGHT). Add yourself in
+the same PR as your first contribution if you want attribution.
