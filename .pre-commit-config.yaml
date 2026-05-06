@@ -1,0 +1,36 @@
+# Pre-commit configuration for collection-json.
+#
+# Install:    pre-commit install
+# Run all:    pre-commit run --all-files
+# Update:     pre-commit autoupdate
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+      - id: check-yaml
+        exclude: '^\.github/workflows/'
+
+  # fourmolu and hlint are installed in the dev environment (or in CI by the
+  # Pre-commit workflow) and invoked from PATH. Renovate's pre-commit manager
+  # only tracks third-party hooks with a `rev:` field, so the pinned versions
+  # for these tools live in `.github/workflows/pre-commit.yml`.
+  - repo: local
+    hooks:
+      - id: fourmolu
+        name: fourmolu
+        entry: fourmolu --mode check
+        language: system
+        types: [haskell]
+      - id: hlint
+        name: hlint
+        entry: hlint
+        language: system
+        types: [haskell]
