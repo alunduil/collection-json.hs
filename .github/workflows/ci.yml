@@ -15,15 +15,15 @@ concurrency:
 
 jobs:
   format:
-    name: Format & Lint
+    name: Style
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - name: Run fourmolu
+      - name: Run Fourmolu
         uses: haskell-actions/run-fourmolu@3b7702b41516aa428dfe6e295dc73476ae58f69e # v11
         with:
           version: "0.19.0.1"
