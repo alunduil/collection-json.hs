@@ -12,6 +12,11 @@ and this project adheres to the [Haskell Package Versioning Policy
 
 - Compatible with `aeson` 2.2, `base` 4.22, and `network-uri-json` 0.4
   (no API changes).
+- Modernised `collection-json.cabal`: `cabal-version: 3.0`, `common
+  warnings`/`common language` stanzas, `tested-with` set to GHC 9.6 /
+  9.8 / 9.10 / 9.12, and dependency bounds tightened to honest ranges
+  for that matrix. Test-suite no longer recompiles `src/`; depends on
+  the `collection-json` library directly.
 
 ## [1.3.1.3] - 2019-02-21
 
