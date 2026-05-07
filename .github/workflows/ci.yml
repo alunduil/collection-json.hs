@@ -44,7 +44,7 @@ jobs:
           cabal configure --enable-tests
           cabal build all --enable-tests --dry-run
 
-      - name: Restore cached store
+      - name: Restore cabal store
         id: cache
         uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         env:
@@ -57,7 +57,7 @@ jobs:
       - name: Install dependencies
         run: cabal build all --enable-tests --only-dependencies
 
-      - name: Save cached store
+      - name: Save cabal store
         if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
@@ -70,7 +70,7 @@ jobs:
       - name: Test
         run: cabal test all --enable-tests --test-show-details=direct
 
-      - name: cabal check
+      - name: Check package metadata
         run: cabal check
 
       - name: Haddock
