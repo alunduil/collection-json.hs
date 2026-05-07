@@ -11,7 +11,6 @@ Arbitrary instances for "Data.CollectionJSON".
 -}
 module Data.CollectionJSON.Arbitrary where
 
-import Control.Applicative ((<$>), (<*>))
 import Data.Text (pack)
 import Network.URI.Arbitrary ()
 import Test.QuickCheck (Arbitrary (arbitrary, shrink))
