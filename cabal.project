@@ -1,10 +1,5 @@
 packages: .
 
 -- The dependency tree's upper bounds are stale relative to modern GHC
--- (network-uri-json caps base<4.14, aeson 1.x caps time<1.5, etc.).
--- Relax broadly until the dep tree is republished.
+-- (aeson 1.x caps time<1.5, etc.). Relax broadly until republished.
 allow-newer: all
-
--- aeson 2.2 added FromJSON/ToJSON instances for Network.URI that collide
--- with network-uri-json's. Pin below until network-uri-json is updated.
-constraints: aeson < 2.2

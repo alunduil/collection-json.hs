@@ -56,11 +56,10 @@ library
       Data.CollectionJSON
 
   build-depends:
-      aeson            >= 2.0  && < 2.3
-    , base             >= 4.18 && < 4.22
-    , network-uri      >= 2.6  && < 2.7
-    , network-uri-json >= 0.4  && < 0.5
-    , text             >= 2.0  && < 2.2
+      aeson       >= 2.2  && < 2.3
+    , base        >= 4.18 && < 4.22
+    , network-uri >= 2.6  && < 2.7
+    , text        >= 2.0  && < 2.2
 
   other-extensions:
       OverloadedStrings
@@ -81,14 +80,13 @@ test-suite collection-json-tests
       hspec-discover:hspec-discover >= 2.10 && < 2.12
 
   build-depends:
-      aeson                >= 2.0  && < 2.3
+      aeson                >= 2.2  && < 2.3
     , base                 >= 4.18 && < 4.22
     , bytestring           >= 0.11 && < 0.13
     , collection-json
     , hspec                >= 2.10 && < 2.12
     , network-arbitrary    >= 1.0  && < 1.1
     , network-uri          >= 2.6  && < 2.7
-    , network-uri-json     >= 0.4  && < 0.5
     , QuickCheck           >= 2.14 && < 2.19
     , quickcheck-instances >= 0.3  && < 0.4
     , test-invariant       >= 0.4  && < 0.5

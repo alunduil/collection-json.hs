@@ -16,9 +16,8 @@ module Data.CollectionJSON where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toJSON), object, withObject, (.!=), (.:), (.:?), (.=))
 import Data.Maybe (catMaybes)
-import Data.Text (Text)
-import Network.URI (URI, nullURI)
-import Network.URI.JSON ()
+import Data.Text (Text, unpack)
+import Network.URI (URI, parseURIReference)
 
 -- * Core Data Types
 
@@ -43,7 +42,7 @@ instance FromJSON Collection where
     v <- c .: "collection"
 
     cVersion <- v .:? "version" .!= "1.0"
-    cHref <- v .:? "href" .!= nullURI
+    cHref <- v .:? "href" .!= "" >>= maybe (fail "invalid href URI") pure . parseURIReference . unpack
     cLinks <- v .:? "links" .!= []
     cItems <- v .:? "items" .!= []
     cQueries <- v .:? "queries" .!= []
@@ -92,7 +91,7 @@ data Link = Link
 
 instance FromJSON Link where
   parseJSON = withObject "Link" $ \v -> do
-    lHref <- v .: "href"
+    lHref <- v .: "href" >>= maybe (fail "invalid href URI") pure . parseURIReference . unpack
     lRel <- v .: "rel"
     lName <- v .:? "name"
     lRender <- v .:? "render"
@@ -124,7 +123,7 @@ data Item = Item
 
 instance FromJSON Item where
   parseJSON = withObject "Item" $ \v -> do
-    iHref <- v .: "href"
+    iHref <- v .: "href" >>= maybe (fail "invalid href URI") pure . parseURIReference . unpack
     iData <- v .:? "data" .!= []
     iLinks <- v .:? "links" .!= []
 
@@ -172,7 +171,7 @@ data Query = Query
 
 instance FromJSON Query where
   parseJSON = withObject "Query" $ \v -> do
-    qHref <- v .: "href"
+    qHref <- v .: "href" >>= maybe (fail "invalid href URI") pure . parseURIReference . unpack
     qRel <- v .: "rel"
     qName <- v .:? "name"
     qPrompt <- v .:? "prompt"
