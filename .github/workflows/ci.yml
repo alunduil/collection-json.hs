@@ -19,6 +19,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
 
+    # network-arbitrary is a test-only dependency whose published bounds still
+    # cap base < 4.21 (no GHC 9.12+ support). Relax its bounds until a release
+    # ships (alunduil/network-arbitrary#106). Library consumers never pull it,
+    # so the bare published bounds the sdist build enforces for the library
+    # itself are unaffected.
+    env:
+      CABAL_ALLOW_NEWER: "--allow-newer=network-arbitrary"
+
     strategy:
       fail-fast: false
       matrix:
@@ -41,8 +49,9 @@ jobs:
 
       # Everything below builds from the sdist tarball, not the working
       # tree: it exercises the bare published bounds a Hackage consumer
-      # faces (the tarball carries no cabal.project, so no allow-newer)
-      # and validates that every source and test file is packaged.
+      # faces and validates that every source and test file is packaged.
+      # The only relaxation is CABAL_ALLOW_NEWER (test-only dep, see above);
+      # the library's own bounds stay strict.
       - name: Build sdist
         run: cabal sdist all
 
@@ -55,7 +64,7 @@ jobs:
 
       - name: Generate build plan
         working-directory: sdist-build
-        run: cabal build all --enable-tests --dry-run
+        run: cabal build all --enable-tests --dry-run $CABAL_ALLOW_NEWER
 
       - name: Restore cabal store
         id: cache
@@ -69,7 +78,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: sdist-build
-        run: cabal build all --enable-tests --only-dependencies
+        run: cabal build all --enable-tests --only-dependencies $CABAL_ALLOW_NEWER
 
       - name: Save cabal store
         if: steps.cache.outputs.cache-hit != 'true'
@@ -80,11 +89,11 @@ jobs:
 
       - name: Build
         working-directory: sdist-build
-        run: cabal build all --enable-tests
+        run: cabal build all --enable-tests $CABAL_ALLOW_NEWER
 
       - name: Test
         working-directory: sdist-build
-        run: cabal test all --enable-tests --test-show-details=direct
+        run: cabal test all --enable-tests --test-show-details=direct $CABAL_ALLOW_NEWER
 
       - name: Check package metadata
         working-directory: sdist-build
@@ -92,4 +101,4 @@ jobs:
 
       - name: Haddock
         working-directory: sdist-build
-        run: cabal haddock all
+        run: cabal haddock all $CABAL_ALLOW_NEWER

@@ -84,7 +84,7 @@ test-suite collection-json-tests
     , hspec                >= 2.10 && < 2.12
     , network-arbitrary    >= 1.0  && < 1.1
     , QuickCheck           >= 2.14 && < 2.19
-    , quickcheck-instances >= 0.3  && < 0.4
+    , quickcheck-instances >= 0.3  && < 0.5
     , test-invariant       >= 0.4  && < 0.5
 
   other-extensions:
