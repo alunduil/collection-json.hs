@@ -39,10 +39,23 @@ jobs:
       - name: Update Hackage index
         run: cabal update
 
-      - name: Generate build plan
+      # Everything below builds from the sdist tarball, not the working
+      # tree: it exercises the bare published bounds a Hackage consumer
+      # faces (the tarball carries no cabal.project, so no allow-newer)
+      # and validates that every source and test file is packaged.
+      - name: Build sdist
+        run: cabal sdist all
+
+      - name: Unpack sdist
+        shell: bash
         run: |
-          cabal configure --enable-tests
-          cabal build all --enable-tests --dry-run
+          mkdir sdist-build
+          tar xf dist-newstyle/sdist/collection-json-*.tar.gz \
+            -C sdist-build --strip-components=1
+
+      - name: Generate build plan
+        working-directory: sdist-build
+        run: cabal build all --enable-tests --dry-run
 
       - name: Restore cabal store
         id: cache
@@ -51,10 +64,11 @@ jobs:
           key: ${{ runner.os }}-ghc-${{ steps.setup.outputs.ghc-version }}-cabal-${{ steps.setup.outputs.cabal-version }}
         with:
           path: ${{ steps.setup.outputs.cabal-store }}
-          key: ${{ env.key }}-plan-${{ hashFiles('dist-newstyle/cache/plan.json') }}
+          key: ${{ env.key }}-plan-${{ hashFiles('sdist-build/dist-newstyle/cache/plan.json') }}
           restore-keys: ${{ env.key }}-
 
       - name: Install dependencies
+        working-directory: sdist-build
         run: cabal build all --enable-tests --only-dependencies
 
       - name: Save cabal store
@@ -65,26 +79,17 @@ jobs:
           key: ${{ steps.cache.outputs.cache-primary-key }}
 
       - name: Build
+        working-directory: sdist-build
         run: cabal build all --enable-tests
 
       - name: Test
+        working-directory: sdist-build
         run: cabal test all --enable-tests --test-show-details=direct
 
       - name: Check package metadata
+        working-directory: sdist-build
         run: cabal check
 
       - name: Haddock
+        working-directory: sdist-build
         run: cabal haddock all
-
-      - name: Build sdist
-        run: cabal sdist all
-
-      - name: Smoke test sdist
-        shell: bash
-        run: |
-          tarball=$(ls dist-newstyle/sdist/collection-json-*.tar.gz)
-          workdir=$(mktemp -d)
-          tar xf "$tarball" -C "$workdir"
-          cd "$workdir"/collection-json-*
-          cabal build all --enable-tests
-          cabal test all --enable-tests --test-show-details=direct
