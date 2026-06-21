@@ -12,7 +12,20 @@ A collection of types and instances for @application/vnd.collection+json@.
 Full documentation for @application/vnd.collection+json@ can be found at
 <http://amundsen.com/media-types/collection/>.
 -}
-module Data.CollectionJSON where
+module Data.CollectionJSON (
+  -- * Core Data Types
+  Collection (..),
+  Link (..),
+  Item (..),
+  Query (..),
+  Template (..),
+  Error (..),
+  Datum (..),
+
+  -- * Type Conversion
+  FromCollection (..),
+  ToCollection (..),
+) where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toJSON), object, withObject, (.!=), (.:), (.:?), (.=))
 import Data.Maybe (catMaybes)
@@ -42,7 +55,7 @@ instance FromJSON Collection where
     v <- c .: "collection"
 
     cVersion <- v .:? "version" .!= "1.0"
-    cHref <- v .:? "href" .!= "" >>= maybe (fail "invalid href URI") pure . parseURIReference . unpack
+    cHref <- v .:? "href" .!= "" >>= parseHref
     cLinks <- v .:? "links" .!= []
     cItems <- v .:? "items" .!= []
     cQueries <- v .:? "queries" .!= []
@@ -91,7 +104,7 @@ data Link = Link
 
 instance FromJSON Link where
   parseJSON = withObject "Link" $ \v -> do
-    lHref <- v .: "href" >>= maybe (fail "invalid href URI") pure . parseURIReference . unpack
+    lHref <- v .: "href" >>= parseHref
     lRel <- v .: "rel"
     lName <- v .:? "name"
     lRender <- v .:? "render"
@@ -123,7 +136,7 @@ data Item = Item
 
 instance FromJSON Item where
   parseJSON = withObject "Item" $ \v -> do
-    iHref <- v .: "href" >>= maybe (fail "invalid href URI") pure . parseURIReference . unpack
+    iHref <- v .: "href" >>= parseHref
     iData <- v .:? "data" .!= []
     iLinks <- v .:? "links" .!= []
 
@@ -171,7 +184,7 @@ data Query = Query
 
 instance FromJSON Query where
   parseJSON = withObject "Query" $ \v -> do
-    qHref <- v .: "href" >>= maybe (fail "invalid href URI") pure . parseURIReference . unpack
+    qHref <- v .: "href" >>= parseHref
     qRel <- v .: "rel"
     qName <- v .:? "name"
     qPrompt <- v .:? "prompt"
@@ -278,3 +291,8 @@ class ToCollection a where
 
 instance ToCollection Collection where
   toCollection = id
+
+-- Deliberately parses a URI reference (relative and empty forms
+-- allowed), not a strict absolute URI.
+parseHref :: MonadFail m => Text -> m URI
+parseHref = maybe (fail "invalid href URI") pure . parseURIReference . unpack
