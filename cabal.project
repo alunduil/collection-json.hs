@@ -1,5 +1,1 @@
 packages: .
-
--- The dependency tree's upper bounds are stale relative to modern GHC
--- (aeson 1.x caps time<1.5, etc.). Relax broadly until republished.
-allow-newer: all
