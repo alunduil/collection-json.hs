@@ -19,9 +19,21 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - uses: haskell-actions/setup@v2
+      - name: Verify tag matches cabal version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          cabal_version="$(grep -i '^version:' collection-json.cabal | awk '{print $2}')"
+          tag_version="${TAG#v}"
+          tag_version="${tag_version%%-*}"
+          if [ "$cabal_version" != "$tag_version" ]; then
+            echo "::error::Tag $TAG resolves to version $tag_version but collection-json.cabal declares $cabal_version"
+            exit 1
+          fi
+
+      - uses: haskell-actions/setup@cd0d9bdd65b20557f41bea4dbe43d0b5fbbfe553 # v2
         with:
           ghc-version: 'latest'
           cabal-version: 'latest'
@@ -48,11 +60,23 @@ jobs:
     runs-on: ubuntu-latest
     environment: hackage
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           ref: ${{ inputs.tag }}
 
-      - uses: haskell-actions/setup@v2
+      - name: Verify tag matches cabal version
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          cabal_version="$(grep -i '^version:' collection-json.cabal | awk '{print $2}')"
+          tag_version="${TAG#v}"
+          tag_version="${tag_version%%-*}"
+          if [ "$cabal_version" != "$tag_version" ]; then
+            echo "::error::Tag $TAG resolves to version $tag_version but collection-json.cabal declares $cabal_version"
+            exit 1
+          fi
+
+      - uses: haskell-actions/setup@cd0d9bdd65b20557f41bea4dbe43d0b5fbbfe553 # v2
         with:
           ghc-version: 'latest'
           cabal-version: 'latest'
