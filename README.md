@@ -2,6 +2,7 @@
 
 [![Hackage](https://img.shields.io/hackage/v/collection-json.svg)](https://hackage.haskell.org/package/collection-json)
 [![CI](https://github.com/alunduil/collection-json.hs/actions/workflows/ci.yml/badge.svg)](https://github.com/alunduil/collection-json.hs/actions/workflows/ci.yml)
+[![Codecov](https://codecov.io/gh/alunduil/collection-json.hs/branch/main/graph/badge.svg)](https://codecov.io/gh/alunduil/collection-json.hs)
 [![License](https://img.shields.io/github/license/alunduil/collection-json.hs.svg)](LICENSE)
 [![GHC](https://img.shields.io/badge/GHC-9.10%20%7C%209.12%20%7C%209.14-blue.svg)](https://www.haskell.org/ghc/)
 
