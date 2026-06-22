@@ -3,7 +3,7 @@
 [![Hackage](https://img.shields.io/hackage/v/collection-json.svg)](https://hackage.haskell.org/package/collection-json)
 [![CI](https://github.com/alunduil/collection-json.hs/actions/workflows/ci.yml/badge.svg)](https://github.com/alunduil/collection-json.hs/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/alunduil/collection-json.hs.svg)](LICENSE)
-[![GHC](https://img.shields.io/badge/GHC-9.6%20%7C%209.8%20%7C%209.10%20%7C%209.12-blue.svg)](https://www.haskell.org/ghc/)
+[![GHC](https://img.shields.io/badge/GHC-9.10%20%7C%209.12%20%7C%209.14-blue.svg)](https://www.haskell.org/ghc/)
 
 [Collection+JSON—Hypermedia Type][Collection+JSON] tools for [Haskell].
 
