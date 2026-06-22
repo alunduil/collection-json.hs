@@ -1,11 +1,8 @@
-# Coverage is reported, not gated: status checks post the delta on PRs
-# but never fail the build. The hspec suite's job is to encode the spec,
-# not to chase a coverage number.
 coverage:
   status:
     project:
       default:
-        informational: true
+        threshold: 1%
     patch:
       default:
-        informational: true
+        threshold: 1%
