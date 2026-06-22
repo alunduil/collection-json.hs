@@ -39,6 +39,15 @@ spec =
           it "'Collection' errors on \"{}\"" $
             isNothing (decode "{}" :: Maybe Collection)
 
+        describe "required keys" $
+          context "decode fails when a spec-required key is absent" $
+            do
+              it "'Link' without \"href\"" $ isNothing (decode "{\"rel\":\"item\"}" :: Maybe Link)
+              it "'Link' without \"rel\"" $ isNothing (decode "{\"href\":\"http://example.com\"}" :: Maybe Link)
+              it "'Query' without \"href\"" $ isNothing (decode "{\"rel\":\"item\"}" :: Maybe Query)
+              it "'Query' without \"rel\"" $ isNothing (decode "{\"href\":\"http://example.com\"}" :: Maybe Query)
+              it "'Datum' without \"name\"" $ isNothing (decode "{}" :: Maybe Datum)
+
         describe "properties" $
           context "fromJust . decode . encode == id" $
             do
@@ -84,6 +93,10 @@ spec =
 
                 it "Collection" $
                   encode (Collection "1.0" eURI [] [] [] Nothing Nothing) `shouldBe` mCollection
+
+            context "decode supplies defaults for absent optional keys" $
+              it "Collection \"version\" defaults to 1.0" $
+                fmap cVersion (decode "{\"collection\":{}}" :: Maybe Collection) `shouldBe` Just "1.0"
  where
   mCollection = "{\"collection\":{\"href\":\"http://example.com\",\"version\":\"1.0\"}}" :: BL.ByteString
   mLink = "{\"href\":\"http://example.com\",\"rel\":\"item\"}" :: BL.ByteString
