@@ -99,3 +99,49 @@ jobs:
       - name: Haddock
         working-directory: sdist-build
         run: cabal haddock all --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up GHC
+        uses: haskell-actions/setup@cd0d9bdd65b20557f41bea4dbe43d0b5fbbfe553 # v2.11.0
+        with:
+          ghc-version: "9.14"
+          cabal-version: latest
+
+      - name: Update Hackage index
+        run: cabal update
+
+      # Coverage builds from the working tree, not the sdist the build
+      # job uses: the instrumented .mix/.tix paths then map straight onto
+      # the repo's src/ layout that Codecov reports against. allow-newer
+      # mirrors the build job's network-arbitrary stopgap.
+      - name: Configure with coverage
+        run: cabal configure --enable-tests --enable-coverage --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+
+      - name: Build
+        run: cabal build all
+
+      - name: Test
+        run: cabal test all --test-show-details=direct
+
+      # excludes drops the test components so the report measures the
+      # library module alone.
+      - name: Generate coverage report
+        id: report
+        uses: 8c6794b6/hpc-codecov-action@f943f40733e5390825b12d72165cad991e44340c # v4.3.0
+        with:
+          target: cabal:collection-json-tests
+          excludes: Main,Paths_collection_json,Data.CollectionJSONSpec,Data.CollectionJSON.Arbitrary
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          files: ${{ steps.report.outputs.report }}
+          fail_ci_if_error: true
