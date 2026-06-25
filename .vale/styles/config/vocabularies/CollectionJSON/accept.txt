@@ -1,0 +1,9 @@
+# Project Vale.Terms vocabulary: spellings to accept, and the canonical
+# casing Vale.Terms then enforces. One regex per line, case-sensitive
+# (prefix (?i) for case-insensitive). Keep this lean — add a term only
+# when it recurs in linted prose, not for one-off mentions.
+
+Codecov
+Fourmolu
+Hackage
+HLint

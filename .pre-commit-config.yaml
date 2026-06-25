@@ -4,6 +4,10 @@
 # Run all:    pre-commit run --all-files
 # Update:     pre-commit autoupdate
 
+# .vale/styles/ is vendored by `vale sync`; only config/ (our vocabulary)
+# is ours. Keep the vendored packages out of every hook.
+exclude: ^\.vale/styles/(?!config/)
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -17,6 +21,21 @@ repos:
         args: ["--fix=lf"]
       - id: check-yaml
         exclude: '^\.github/workflows/'
+
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.22.1
+    hooks:
+      - id: markdownlint-cli2
+
+  # Vale prose linting over Markdown, gating on errors only. Styles are
+  # vendored under .vale/styles (see the top-level exclude), so the hook
+  # needs no `vale sync` step.
+  - repo: https://github.com/errata-ai/vale
+    rev: v3.15.1
+    hooks:
+      - id: vale
+        args: [--output=line, --minAlertLevel=error]
+        types: [markdown]
 
   # fourmolu and hlint are installed in the dev environment (or in CI by the
   # Pre-commit workflow) and invoked from PATH. Renovate's pre-commit manager

@@ -9,9 +9,9 @@
 [Collection+JSON—Hypermedia Type][Collection+JSON] tools for [Haskell].
 
 `collection-json` lets you encode, decode, and manipulate
-`application/vnd.collection+json` documents.  The library exposes a single
+`application/vnd.collection+json` documents. The library exposes a single
 module, `Data.CollectionJSON`, with `aeson` `ToJSON`/`FromJSON` instances for
-each type defined by the spec — `Collection`, `Item`, `Link`, `Query`,
+each type defined by the spec—`Collection`, `Item`, `Link`, `Query`,
 `Template`, `Datum`, and `Error`.
 
 ## Install
@@ -48,26 +48,22 @@ main = do
   -- Just (Collection {cVersion = "1.0", cHref = ..., ...})
 ```
 
-Full API reference on [Hackage].  The Collection+JSON specification is at
+Full API reference on [Hackage]. The Collection+JSON specification is at
 <https://github.com/collection-json/spec>.
 
 ## Contributing
 
-Report bugs and feature requests on the [issue tracker].  See
+Report bugs and feature requests on the [issue tracker]. See
 [`CONTRIBUTING.md`](CONTRIBUTING.md) for the build, test, formatter, branch,
 and release conventions.
 
 For changes, fork the repository, branch from `main`, and open a pull request
-against `main`.  PRs are squash-merged.  If you'd like attribution, add yourself
+against `main`. PRs are squash-merged. If you'd like attribution, add yourself
 to the [`COPYRIGHT`](COPYRIGHT) file in the same PR.
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE).
-
-I am providing code in the repository to you under an open source license.
-Because this is my personal repository, the license you receive to my code is
-from me and not my employer (Facebook).
+MIT—see [`LICENSE`](LICENSE).
 
 [Collection+JSON]: https://github.com/collection-json/spec
 [Hackage]: https://hackage.haskell.org/package/collection-json
