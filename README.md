@@ -49,7 +49,7 @@ main = do
 ```
 
 Full API reference on [Hackage].  The Collection+JSON specification is at
-<http://amundsen.com/media-types/collection/>.
+<https://github.com/collection-json/spec>.
 
 ## Contributing
 
@@ -69,7 +69,7 @@ I am providing code in the repository to you under an open source license.
 Because this is my personal repository, the license you receive to my code is
 from me and not my employer (Facebook).
 
-[Collection+JSON]: http://amundsen.com/media-types/collection/
+[Collection+JSON]: https://github.com/collection-json/spec
 [Hackage]: https://hackage.haskell.org/package/collection-json
 [Haskell]: https://www.haskell.org/
 [issue tracker]: https://github.com/alunduil/collection-json.hs/issues
