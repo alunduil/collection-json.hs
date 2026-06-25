@@ -10,7 +10,7 @@ Hackage: `collection-json`.
 
 ## Source of truth for behaviour
 
-The Collection+JSON spec at <http://amundsen.com/media-types/collection/>
+The Collection+JSON spec at <https://github.com/collection-json/spec>
 is authoritative. The hspec suite is an attempt to encode that spec;
 when the two disagree, the spec wins and the tests are wrong. Don't
 shift semantics to make a test pass — re-derive from the spec, then fix
