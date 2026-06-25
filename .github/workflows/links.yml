@@ -6,9 +6,7 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    # Fridays ~18:00 Europe/London, so a report is waiting heading into the
-    # weekend. Cron is UTC-fixed and ignores DST: this fires at 18:00 local
-    # during BST and 17:00 during GMT.
+    # Fridays 17:00 UTC = ~18:00 Europe/London (17:00 in winter; cron can't track DST).
     - cron: "0 17 * * 5"
 
 permissions:
