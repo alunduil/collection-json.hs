@@ -6,8 +6,10 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    # Fridays 17:00 UTC = ~18:00 Europe/London (17:00 in winter; cron can't track DST).
-    - cron: "0 17 * * 5"
+    # Fridays 18:00 Europe/London. GitHub applies the timezone (and DST), so the
+    # report is waiting at 18:00 local year-round.
+    - cron: "0 18 * * 5"
+      timezone: "Europe/London"
 
 permissions:
   contents: read
