@@ -12,19 +12,20 @@ Prerequisites: GHC and `cabal-install`. The supported GHC range is
 declared in [`tested-with`](collection-json.cabal); CI runs the
 matrix on every PR.
 
-```
+```sh
 cabal build
 cabal test
 ```
 
 ## Formatting and linting
 
-Formatting (Fourmolu), linting (HLint), and prose linting (Vale, over
-Markdown) run through [pre-commit](https://pre-commit.com). The
-`Pre-commit` workflow runs the same hooks on every push and PR; merges
-are blocked until they pass.
+Formatting (Fourmolu), Haskell linting (HLint), Markdown linting
+(markdownlint-cli2), and prose linting (Vale) run through
+[pre-commit](https://pre-commit.com). The `Pre-commit` workflow runs
+the same hooks on every push and PR; merges are blocked until they
+pass.
 
-```
+```sh
 pre-commit install            # install the git hook (one-off)
 pre-commit run --all-files    # run all hooks against the repo
 pre-commit autoupdate         # bump third-party hook revs

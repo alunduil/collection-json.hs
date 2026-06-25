@@ -18,6 +18,11 @@ repos:
       - id: check-yaml
         exclude: '^\.github/workflows/'
 
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.22.1
+    hooks:
+      - id: markdownlint-cli2
+
   # Vale prose linting. The first hook installs the styles declared in
   # `.vale.ini`; the second lints Markdown, gating on errors only.
   - repo: https://github.com/errata-ai/vale
