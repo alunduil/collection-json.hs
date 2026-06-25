@@ -6,9 +6,10 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    # Weekly (Mondays, 06:00 UTC): catch external link rot independent of
-    # PR activity.
-    - cron: "0 6 * * 1"
+    # Fridays ~18:00 Europe/London, so a report is waiting heading into the
+    # weekend. Cron is UTC-fixed and ignores DST: this fires at 18:00 local
+    # during BST and 17:00 during GMT.
+    - cron: "0 17 * * 5"
 
 permissions:
   contents: read
@@ -42,13 +43,12 @@ jobs:
         uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411 # v2.8.0
         with:
           args: --config lychee.toml --no-progress "./**/*.md"
-          # Don't fail the step here; the steps below turn a non-zero exit
-          # into either a filed issue (scheduled) or a hard failure (PR/push).
-          fail: false
+          # Fail the job on PR and push so a dead link blocks the merge; on the
+          # scheduled run continue, so the next step can file a tracking issue.
+          fail: ${{ github.event_name != 'schedule' }}
 
-      # On the weekly run there's no PR to redden, so surface dead links as a
-      # tracking issue instead. lychee writes its Markdown report to
-      # lychee/out.md.
+      # Only reached on the scheduled run (PR/push already failed above). lychee
+      # writes its Markdown report to lychee/out.md.
       - name: File issue for broken links
         if: github.event_name == 'schedule' && steps.lychee.outputs.exit_code != 0
         uses: peter-evans/create-issue-from-file@fca9117c27cdc29c6c4db3b86c48e4115a786710 # v6.0.0
@@ -56,9 +56,3 @@ jobs:
           title: Broken links detected
           content-filepath: lychee/out.md
           labels: documentation
-
-      # On PR and push, a dead link should block the merge the way the rest of
-      # CI does.
-      - name: Fail on broken links
-        if: github.event_name != 'schedule' && steps.lychee.outputs.exit_code != 0
-        run: exit 1
