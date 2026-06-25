@@ -18,6 +18,11 @@ repos:
       - id: check-yaml
         exclude: '^\.github/workflows/'
 
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.22.1
+    hooks:
+      - id: markdownlint-cli2
+
   # fourmolu and hlint are installed in the dev environment (or in CI by the
   # Pre-commit workflow) and invoked from PATH. Renovate's pre-commit manager
   # only tracks third-party hooks with a `rev:` field, so the pinned versions
