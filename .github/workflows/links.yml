@@ -48,11 +48,22 @@ jobs:
           fail: ${{ github.event_name != 'schedule' }}
 
       # Only reached on the scheduled run (PR/push already failed above). lychee
-      # writes its Markdown report to lychee/out.md.
-      - name: File issue for broken links
+      # writes its Markdown report to lychee/out.md. Refresh the open tracking
+      # issue if one exists rather than filing a fresh duplicate each Friday;
+      # create-issue-from-file can't update, so drive gh directly.
+      - name: File or refresh broken-links issue
         if: github.event_name == 'schedule' && steps.lychee.outputs.exit_code != 0
-        uses: peter-evans/create-issue-from-file@fca9117c27cdc29c6c4db3b86c48e4115a786710 # v6.0.0
-        with:
-          title: Broken links detected
-          content-filepath: lychee/out.md
-          labels: documentation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: Broken links detected
+        run: |
+          number=$(gh issue list --state open --label documentation \
+            --json number,title \
+            --jq "map(select(.title == \"$TITLE\")) | .[0].number // empty")
+          if [ -n "$number" ]; then
+            gh issue edit "$number" --body-file lychee/out.md
+            echo "Refreshed existing issue #$number"
+          else
+            gh issue create --title "$TITLE" --label documentation \
+              --body-file lychee/out.md
+          fi
