@@ -4,6 +4,10 @@
 # Run all:    pre-commit run --all-files
 # Update:     pre-commit autoupdate
 
+# .vale/styles/ is vendored by `vale sync`; only config/ (our vocabulary)
+# is ours. Keep the vendored packages out of every hook.
+exclude: ^\.vale/styles/(?!config/)
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -23,14 +27,12 @@ repos:
     hooks:
       - id: markdownlint-cli2
 
-  # Vale prose linting. The first hook installs the styles declared in
-  # `.vale.ini`; the second lints Markdown, gating on errors only.
+  # Vale prose linting over Markdown, gating on errors only. Styles are
+  # vendored under .vale/styles (see the top-level exclude), so the hook
+  # needs no `vale sync` step.
   - repo: https://github.com/errata-ai/vale
     rev: v3.15.1
     hooks:
-      - id: vale
-        args: [sync]
-        pass_filenames: false
       - id: vale
         args: [--output=line, --minAlertLevel=error]
         types: [markdown]
