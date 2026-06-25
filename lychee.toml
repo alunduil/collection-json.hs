@@ -1,0 +1,17 @@
+# Configuration for the lychee link checker, run in CI by
+# .github/workflows/links.yml. See https://lychee.cli.rs.
+
+# Cache results between runs so unchanged links aren't re-fetched; the
+# workflow persists .lycheecache across runs.
+cache = true
+max_cache_age = "1w"
+
+# Give slow hosts (the amundsen.com spec page, shields.io badge
+# endpoints) room to answer before a link is declared dead.
+timeout = 20
+max_retries = 3
+retry_wait_time = 2
+
+# GitHub and shields.io throttle anonymous bursts with 429 — that's rate
+# limiting, not a dead link.
+accept = ["200..=299", "429"]
