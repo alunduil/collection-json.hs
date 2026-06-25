@@ -23,3 +23,8 @@ cabal.project.local
 .HTF/
 
 # End of https://www.gitignore.io/api/haskell
+
+# Vale-downloaded style packages, re-fetched by `vale sync`. The
+# project vocabulary under config/ stays tracked.
+/.vale/styles/*
+!/.vale/styles/config/

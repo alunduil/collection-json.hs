@@ -18,6 +18,18 @@ repos:
       - id: check-yaml
         exclude: '^\.github/workflows/'
 
+  # Vale prose linting. The first hook installs the styles declared in
+  # `.vale.ini`; the second lints Markdown, gating on errors only.
+  - repo: https://github.com/errata-ai/vale
+    rev: v3.15.1
+    hooks:
+      - id: vale
+        args: [sync]
+        pass_filenames: false
+      - id: vale
+        args: [--output=line, --minAlertLevel=error]
+        types: [markdown]
+
   # fourmolu and hlint are installed in the dev environment (or in CI by the
   # Pre-commit workflow) and invoked from PATH. Renovate's pre-commit manager
   # only tracks third-party hooks with a `rev:` field, so the pinned versions

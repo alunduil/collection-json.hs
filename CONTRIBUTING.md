@@ -19,10 +19,10 @@ cabal test
 
 ## Formatting and linting
 
-Formatting (Fourmolu) and linting (HLint) run through
-[pre-commit](https://pre-commit.com). The `Pre-commit` workflow runs
-the same hooks on every push and PR; merges are blocked until they
-pass.
+Formatting (Fourmolu), linting (HLint), and prose linting (Vale, over
+Markdown) run through [pre-commit](https://pre-commit.com). The
+`Pre-commit` workflow runs the same hooks on every push and PR; merges
+are blocked until they pass.
 
 ```
 pre-commit install            # install the git hook (one-off)
@@ -34,6 +34,8 @@ The Haskell hooks shell out to `fourmolu` and `hlint` from `PATH`,
 so install them locally (`cabal install fourmolu hlint`, or via
 `ghcup`). The pinned versions used by CI live at the top of
 [`.github/workflows/pre-commit.yml`](.github/workflows/pre-commit.yml).
+Vale, by contrast, is built and its styles fetched by pre-commit, so
+it needs no local install.
 
 ## Branch policy
 

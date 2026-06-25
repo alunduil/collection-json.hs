@@ -1,0 +1,41 @@
+# Project Vale.Terms vocabulary. One regex per line; case-sensitive unless
+# prefixed with (?i). Lines starting with # are comments. Entries accept the
+# spelling and enforce the casing shown — use (?i) for words that legitimately
+# appear in several cases (sentence starts, historical CHANGELOG entries).
+
+# Media type and domain
+(?i)Collection\+JSON
+(?i)hypermedia
+(?i)roundtrip
+
+# Haskell ecosystem
+Haskell
+GHC
+(?i)cabal
+(?i)Hackage
+(?i)Haddock
+aeson
+Fourmolu
+HLint
+(?i)hspec
+(?i)QuickCheck
+PVP
+pragmas
+recompiles
+
+# Tooling and CI (lowercase tokens from historical CHANGELOG entries)
+Codecov
+Renovate
+pre-commit
+(?i)travis
+cloudbuild
+sdist
+envrc
+autoload
+
+# Doc filenames referenced in prose
+(?i)README
+(?i)CHANGELOG
+(?i)CONTRIBUTING
+worktree
+repo
