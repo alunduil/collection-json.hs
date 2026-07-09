@@ -53,13 +53,11 @@ Full API reference on [Hackage]. The Collection+JSON specification is at
 
 ## Scope
 
-`collection-json` covers the wire format only: the envelope types, their
-`ToJSON`/`FromJSON` instances, and the `FromCollection`/`ToCollection`
-contract for bridging your own domain types. Concerns beyond the
-envelope—content negotiation, profile semantics, request-shape
-validation—belong in adjacent layers, not here. For `href` values,
-[`network-uri-json`] provides `Network.URI` JSON instances that compose
-with these types.
+`collection-json` stops at the wire format: it models the envelope and
+bridges your domain types through `FromCollection`/`ToCollection`, but
+leaves content negotiation, profile semantics, and request-shape
+validation to adjacent layers. For `href` values, [`network-uri-json`]
+provides `Network.URI` JSON instances that compose with these types.
 
 ## Contributing
 
