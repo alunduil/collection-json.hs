@@ -3,9 +3,8 @@ name: GHC matrix
 on:
   workflow_dispatch:
   schedule:
-    # First of the month, 18:00 Europe/London. GitHub applies the timezone
-    # (and DST). GHC majors land roughly yearly, so monthly is proportionate:
-    # it catches a new series within weeks without weekly noise.
+    # Monthly: GHC majors land roughly yearly, so a new series surfaces
+    # within weeks without weekly noise.
     - cron: "0 18 1 * *"
       timezone: "Europe/London"
 
