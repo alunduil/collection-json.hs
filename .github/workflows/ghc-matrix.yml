@@ -1,0 +1,96 @@
+name: GHC matrix
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 18 * * 5"
+      timezone: "Europe/London"
+
+permissions:
+  contents: read
+  # The drift check files a tracking issue when the matrix ages out.
+  issues: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  drift:
+    name: Check GHC matrix drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Policy (#141): test every GHC major series upstream hasn't end-of-
+      # lifed (endoflife.date `eol: false`), so the matrix spans the full
+      # still-alive range rather than a hardcoded count.
+      - name: Detect drift
+        id: check
+        run: |
+          set -euo pipefail
+
+          expected=$(curl -fsSL https://endoflife.date/api/ghc.json \
+            | jq -r 'map(select(.eol == false)) | .[].cycle' \
+            | sort -V)
+
+          # Guard against an upstream schema change or empty response: an
+          # empty set would spuriously flag every series as drift.
+          if [ -z "$expected" ]; then
+            echo "endoflife.date returned no live GHC series; aborting" >&2
+            exit 1
+          fi
+
+          matrix=$(yq '.jobs.build.strategy.matrix.ghc[]' \
+            .github/workflows/ci.yml | sort -V)
+
+          tested=$(grep -oE 'GHC == [0-9]+\.[0-9]+' collection-json.cabal \
+            | grep -oE '[0-9]+\.[0-9]+' | sort -V)
+
+          # An empty set on either side means a parse failure or a moved
+          # field; abort rather than file a spurious drift issue.
+          if [ -z "$matrix" ] || [ -z "$tested" ]; then
+            echo "could not parse the CI matrix or tested-with; aborting" >&2
+            exit 1
+          fi
+
+          drift=false
+          [ "$expected" = "$matrix" ] || drift=true
+          [ "$expected" = "$tested" ] || drift=true
+          echo "drift=$drift" >> "$GITHUB_OUTPUT"
+
+          join() { printf '%s' "$1" | paste -sd, -; }
+          # create-an-issue reads the title and labels from front matter.
+          {
+            echo "---"
+            echo "title: GHC version matrix out of date"
+            echo "labels:"
+            echo "  - infrastructure"
+            echo "---"
+            echo "The CI matrix and \`tested-with\` should track every GHC major"
+            echo "series upstream hasn't end-of-lifed (policy: #141)."
+            echo
+            echo "| Source | Series |"
+            echo "| --- | --- |"
+            echo "| Expected (endoflife.date, not end-of-life) | $(join "$expected") |"
+            echo "| CI matrix (\`.github/workflows/ci.yml\`) | $(join "$matrix") |"
+            echo "| \`tested-with\` (\`collection-json.cabal\`) | $(join "$tested") |"
+            echo
+            echo "Update the matrix and \`tested-with\`, then bump per PVP"
+            echo "(CI/packaging-only is a patch)."
+          } > ghc-drift-issue.md
+
+      # update_existing overwrites the open tracking issue with the same
+      # title rather than filing a duplicate, and files a fresh one only
+      # when none is open. Title and labels come from the front matter above.
+      - name: File or refresh drift issue
+        if: steps.check.outputs.drift == 'true'
+        uses: JasonEtco/create-an-issue@1b14a70e4d8dc185e5cc76d3bec9eab20257b2c5 # v2.9.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          filename: ghc-drift-issue.md
+          update_existing: true
