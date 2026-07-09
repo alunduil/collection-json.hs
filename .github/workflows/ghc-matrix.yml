@@ -28,22 +28,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      # Policy (#141): test the GHC major series endoflife.date marks as
-      # currently supported (`support: true`), so the matrix follows actual
-      # upstream support rather than a hardcoded count.
+      # Policy (#141): test every GHC major series upstream hasn't end-of-
+      # lifed (endoflife.date `eol: false`), so the matrix spans the full
+      # still-alive range rather than a hardcoded count.
       - name: Detect drift
         id: check
         run: |
           set -euo pipefail
 
           expected=$(curl -fsSL https://endoflife.date/api/ghc.json \
-            | jq -r 'map(select(.support == true)) | .[].cycle' \
+            | jq -r 'map(select(.eol == false)) | .[].cycle' \
             | sort -V)
 
           # Guard against an upstream schema change or empty response: an
           # empty set would spuriously flag every series as drift.
           if [ -z "$expected" ]; then
-            echo "endoflife.date returned no supported GHC series; aborting" >&2
+            echo "endoflife.date returned no live GHC series; aborting" >&2
             exit 1
           fi
 
@@ -60,12 +60,12 @@ jobs:
 
           join() { printf '%s' "$1" | paste -sd, -; }
           {
-            echo "The CI matrix and \`tested-with\` should track the GHC major"
-            echo "series endoflife.date marks as supported (policy: #141)."
+            echo "The CI matrix and \`tested-with\` should track every GHC major"
+            echo "series upstream hasn't end-of-lifed (policy: #141)."
             echo
             echo "| Source | Series |"
             echo "| --- | --- |"
-            echo "| Expected (endoflife.date, supported series) | $(join "$expected") |"
+            echo "| Expected (endoflife.date, not end-of-life) | $(join "$expected") |"
             echo "| CI matrix (\`.github/workflows/ci.yml\`) | $(join "$matrix") |"
             echo "| \`tested-with\` (\`collection-json.cabal\`) | $(join "$tested") |"
             echo

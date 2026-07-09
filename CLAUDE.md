@@ -27,7 +27,7 @@ Single-package project (`cabal.project`: `packages: .`).
   sdist; `coverage` job → Codecov, `codecov.yml`), `pre-commit.yml`,
   `links.yml` (lychee, `lychee.toml`), `ghc-matrix.yml` (monthly:
   files/refreshes a tracking issue when the matrix drifts from the GHC
-  series endoflife.date marks supported).
+  series endoflife.date still lists as not end-of-life).
 - **Publish**: `.github/workflows/release.yml` — see Release process.
 - **Deps / versioning**: `renovate.json`; Haskell PVP.
 
