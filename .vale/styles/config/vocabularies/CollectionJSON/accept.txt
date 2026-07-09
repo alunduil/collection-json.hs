@@ -7,3 +7,4 @@ Codecov
 Fourmolu
 Hackage
 HLint
+jsoncompat
