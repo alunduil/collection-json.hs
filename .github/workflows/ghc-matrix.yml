@@ -1,0 +1,92 @@
+name: GHC matrix
+
+on:
+  workflow_dispatch:
+  schedule:
+    # First of the month, 18:00 Europe/London. GitHub applies the timezone
+    # (and DST). GHC majors land roughly yearly, so monthly is proportionate:
+    # it catches a new series within weeks without weekly noise.
+    - cron: "0 18 1 * *"
+      timezone: "Europe/London"
+
+permissions:
+  contents: read
+  # The drift check files a tracking issue when the matrix ages out.
+  issues: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  drift:
+    name: Check GHC matrix drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Policy (#141): test the three most recent GHC major series. The
+      # expected set is derived from endoflife.date's release *list* — an
+      # objective record of which majors exist — not its support flag, which
+      # is a maintained classification that can lag. Applying our own "top 3"
+      # rule keeps the window self-documenting and bounded at three rows.
+      - name: Detect drift
+        id: check
+        run: |
+          set -euo pipefail
+
+          expected=$(curl -fsSL https://endoflife.date/api/ghc.json \
+            | jq -r '
+                map(select((.releaseDate + "T00:00:00Z" | fromdateiso8601) <= now))
+                | sort_by(.cycle | split(".") | map(tonumber))
+                | reverse | .[0:3] | .[].cycle' \
+            | sort -V)
+
+          matrix=$(sed -n 's/.*ghc: \[\(.*\)\].*/\1/p' .github/workflows/ci.yml \
+            | grep -oE '[0-9]+\.[0-9]+' | sort -V)
+
+          tested=$(grep -oE 'GHC == [0-9]+\.[0-9]+' collection-json.cabal \
+            | grep -oE '[0-9]+\.[0-9]+' | sort -V)
+
+          drift=false
+          [ "$expected" = "$matrix" ] || drift=true
+          [ "$expected" = "$tested" ] || drift=true
+          echo "drift=$drift" >> "$GITHUB_OUTPUT"
+
+          join() { printf '%s' "$1" | paste -sd, -; }
+          {
+            echo "The CI matrix and \`tested-with\` should track the three most"
+            echo "recent GHC major series (policy: #141)."
+            echo
+            echo "| Source | Series |"
+            echo "| --- | --- |"
+            echo "| Expected (endoflife.date, three newest majors) | $(join "$expected") |"
+            echo "| CI matrix (\`.github/workflows/ci.yml\`) | $(join "$matrix") |"
+            echo "| \`tested-with\` (\`collection-json.cabal\`) | $(join "$tested") |"
+            echo
+            echo "Update the matrix and \`tested-with\`, then bump per PVP"
+            echo "(CI/packaging-only is a patch)."
+          } > ghc-drift-report.md
+
+      # Refresh the open tracking issue if one exists rather than filing a
+      # fresh duplicate each month; gh issue create can't update, so drive
+      # gh directly. Mirrors the file-or-refresh idiom in links.yml.
+      - name: File or refresh drift issue
+        if: steps.check.outputs.drift == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: GHC version matrix out of date
+        run: |
+          number=$(gh issue list --state open --label infrastructure \
+            --json number,title \
+            --jq "map(select(.title == \"$TITLE\")) | .[0].number // empty")
+          if [ -n "$number" ]; then
+            gh issue edit "$number" --body-file ghc-drift-report.md
+            echo "Refreshed existing issue #$number"
+          else
+            gh issue create --title "$TITLE" --label infrastructure \
+              --body-file ghc-drift-report.md
+          fi
