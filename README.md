@@ -55,12 +55,11 @@ Full API reference on [Hackage]. The Collection+JSON specification is at
 
 `collection-json` covers the wire format only: the envelope types, their
 `ToJSON`/`FromJSON` instances, and the `FromCollection`/`ToCollection`
-contract for bridging your own domain types. For `href` values,
-[`network-uri-json`] supplies `Network.URI` JSON instances that compose
-with these types. Concerns beyond the envelope—content negotiation,
-profile semantics, request-shape validation—belong in adjacent layers,
-not here. See [Ecosystem and scope](docs/explanation/ecosystem.md) for
-the full map.
+contract for bridging your own domain types. Concerns beyond the
+envelope—content negotiation, profile semantics, request-shape
+validation—belong in adjacent layers, not here. For `href` values,
+[`network-uri-json`] provides `Network.URI` JSON instances that compose
+with these types.
 
 ## Contributing
 
