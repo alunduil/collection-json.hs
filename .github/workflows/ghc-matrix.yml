@@ -28,22 +28,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      # Policy (#141): test the three most recent GHC major series. The
-      # expected set is derived from endoflife.date's release *list* — an
-      # objective record of which majors exist — not its support flag, which
-      # is a maintained classification that can lag. Applying our own "top 3"
-      # rule keeps the window self-documenting and bounded at three rows.
+      # Policy (#141): test the GHC major series endoflife.date marks as
+      # currently supported (`support: true`), so the matrix follows actual
+      # upstream support rather than a hardcoded count.
       - name: Detect drift
         id: check
         run: |
           set -euo pipefail
 
           expected=$(curl -fsSL https://endoflife.date/api/ghc.json \
-            | jq -r '
-                map(select((.releaseDate + "T00:00:00Z" | fromdateiso8601) <= now))
-                | sort_by(.cycle | split(".") | map(tonumber))
-                | reverse | .[0:3] | .[].cycle' \
+            | jq -r 'map(select(.support == true)) | .[].cycle' \
             | sort -V)
+
+          # Guard against an upstream schema change or empty response: an
+          # empty set would spuriously flag every series as drift.
+          if [ -z "$expected" ]; then
+            echo "endoflife.date returned no supported GHC series; aborting" >&2
+            exit 1
+          fi
 
           matrix=$(sed -n 's/.*ghc: \[\(.*\)\].*/\1/p' .github/workflows/ci.yml \
             | grep -oE '[0-9]+\.[0-9]+' | sort -V)
@@ -58,12 +60,12 @@ jobs:
 
           join() { printf '%s' "$1" | paste -sd, -; }
           {
-            echo "The CI matrix and \`tested-with\` should track the three most"
-            echo "recent GHC major series (policy: #141)."
+            echo "The CI matrix and \`tested-with\` should track the GHC major"
+            echo "series endoflife.date marks as supported (policy: #141)."
             echo
             echo "| Source | Series |"
             echo "| --- | --- |"
-            echo "| Expected (endoflife.date, three newest majors) | $(join "$expected") |"
+            echo "| Expected (endoflife.date, supported series) | $(join "$expected") |"
             echo "| CI matrix (\`.github/workflows/ci.yml\`) | $(join "$matrix") |"
             echo "| \`tested-with\` (\`collection-json.cabal\`) | $(join "$tested") |"
             echo
