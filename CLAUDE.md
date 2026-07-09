@@ -77,6 +77,10 @@ ship; don't sit on bumps to batch them.
   (gated by the `hackage` environment). Both check the tag matches
   `version:` in the cabal file and use the `HACKAGE_TOKEN` secret. Read
   `release.yml` before touching publish.
+- Cadence: ship on every accumulated patch/minor's worth of merged
+  changes (dep bumps included), don't batch. `version:` bump + dated
+  `CHANGELOG.md` entry happen at the release cut, not in feature PRs.
+  Policy: [CONTRIBUTING.md](CONTRIBUTING.md#release-cadence).
 
 ## Don't-touch list
 

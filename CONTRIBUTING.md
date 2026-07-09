@@ -54,6 +54,15 @@ merge.
 Don't bump the `version:` field in `collection-json.cabal` in your
 PR; releases are cut by the maintainer.
 
+## Release cadence
+
+Cut a Hackage release whenever a patch or minor's worth of merged
+changes has accumulated—dependency bumps included. Don't hold
+changes back to batch them; tag and ship. Releases are
+[tag-driven](.github/workflows/release.yml), so the `version:` bump
+and the dated [`CHANGELOG.md`](CHANGELOG.md) entry belong to the
+release cut, not to feature PRs.
+
 ## Reporting bugs and proposing changes
 
 File an issue on [GitHub](https://github.com/alunduil/collection-json.hs/issues).
