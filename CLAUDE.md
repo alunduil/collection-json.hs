@@ -73,6 +73,9 @@ ship; don't sit on bumps to batch them.
 ## Release process
 
 - `main` is the integration branch and PR target.
+- Cadence: cut a release on every accumulated patch/minor of merged
+  change (dep bumps included); don't batch. Policy in CONTRIBUTING.md
+  "Release cadence".
 - Current version `1.3.1.3`; next `1.3.1.4`.
 - Tag-driven via `.github/workflows/release.yml`: a `v*` tag on `main`
   uploads a Hackage candidate; a `workflow_dispatch` run publishes
