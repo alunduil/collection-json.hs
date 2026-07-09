@@ -3,9 +3,7 @@ name: GHC matrix
 on:
   workflow_dispatch:
   schedule:
-    # Monthly: GHC majors land roughly yearly, so a new series surfaces
-    # within weeks without weekly noise.
-    - cron: "0 18 1 * *"
+    - cron: "0 18 * * 5"
       timezone: "Europe/London"
 
 permissions:
