@@ -51,6 +51,14 @@ main = do
 Full API reference on [Hackage]. The Collection+JSON specification is at
 <https://github.com/collection-json/spec>.
 
+## Scope
+
+`collection-json` stops at the wire format: it models the envelope and
+bridges your domain types through `FromCollection`/`ToCollection`, but
+leaves content negotiation, profile semantics, and request-shape
+validation to adjacent layers. For `href` values, [`network-uri-json`]
+provides `Network.URI` JSON instances that compose with these types.
+
 ## Contributing
 
 Report bugs and feature requests on the [issue tracker]. See
@@ -69,3 +77,4 @@ MIT—see [`LICENSE`](LICENSE).
 [Hackage]: https://hackage.haskell.org/package/collection-json
 [Haskell]: https://www.haskell.org/
 [issue tracker]: https://github.com/alunduil/collection-json.hs/issues
+[`network-uri-json`]: https://github.com/alunduil/network-uri-json
