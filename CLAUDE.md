@@ -8,6 +8,26 @@ Haskell library: types, `FromJSON`/`ToJSON` instances, and
 `Data.CollectionJSON`; the test tree under `test/` mirrors it. MIT.
 Hackage: `collection-json`.
 
+## Tooling inventory
+
+Reach for what's already wired before curl/manual API calls/first-
+principles scripts. Single-package project (`cabal.project`: `packages: .`).
+
+- **Build / test**: `cabal build`, `cabal test` (hspec-discover picks up
+  `*Spec.hs`). No Nix, no direnv — plain `cabal`.
+- **Lint / format**: `pre-commit` (`.pre-commit-config.yaml`) runs
+  fourmolu (`fourmolu.yaml`), hlint (`hlint.yaml`), markdownlint
+  (`.markdownlint.jsonc`), and Vale (`.vale.ini`; styles vendored under
+  `.vale/styles`, so no `vale sync` needed). fourmolu and hlint run from
+  PATH; their pinned versions live in `.github/workflows/pre-commit.yml`,
+  not the pre-commit config.
+- **CI**: `.github/workflows/ci.yml` (GHC 9.10/9.12/9.14 × ubuntu/macos,
+  builds from the sdist tarball; a `coverage` job reports to Codecov,
+  `codecov.yml`), `pre-commit.yml` (hooks), `links.yml` (lychee,
+  `lychee.toml`).
+- **Publish**: `.github/workflows/release.yml` — see Release process.
+- **Deps**: `renovate.json`. **Versioning**: Haskell PVP.
+
 ## Source of truth for behaviour
 
 The Collection+JSON spec at <https://github.com/collection-json/spec>
@@ -24,14 +44,24 @@ cabal build
 cabal test                   # hspec-discover picks up *Spec.hs
 ```
 
-`direnv allow` enters the `shell.nix` / `default.nix` Nix shell; plain
-`cabal` outside Nix works too. No known `cabal test` gotchas; if one
-turns up, file it rather than papering over it with flags.
+Supported GHC: `ci.yml` tests 9.10/9.12/9.14. The `tested-with:` field
+in `collection-json.cabal` lags (legacy, still `9.10.*`); trust the CI
+matrix and `build-depends` bounds over that field, and verify any GHC
+claim with `cabal build`, not metadata.
 
-Supported GHC: authoritative source is `tested-with:` plus
-`build-depends` bounds in `collection-json.cabal`. They currently
-disagree (legacy `tested-with` predates Renovate's bumps); #113
-reconciles them. Verify any GHC claim with `cabal build`, not metadata.
+## Scope discipline
+
+PVP-classified API surface makes out-of-scope edits expensive: an
+incidental export change forces a major bump. Keep issue work tight.
+
+- Before opening a PR, verify the diff doesn't bleed into linked or
+  sibling issues; revert incidental out-of-scope edits before review.
+- An issue blocked by unshipped prerequisites: propose deferral with a
+  `blocked-by` edge, don't write premature code.
+- File unrelated problems found mid-task as their own issues by default.
+
+(The `issue-work` skill encodes the full flow; this note is the reminder
+to apply it without invoking the skill.)
 
 ## PVP obligations
 
@@ -50,29 +80,24 @@ Hackage requires PVP-compliant version bumps. Classify every change:
 Upper bounds **are** API under PVP — widen them in a patch bump and
 ship; don't sit on bumps to batch them.
 
-## Release process (in flux)
+## Release process
 
-- `develop` is the integration branch and PR target; #82 renames to
-  `main`.
+- `main` is the integration branch and PR target.
 - Versioning: Haskell **PVP** (`A.B.C.D`). Current `1.3.1.3`; next
-  `1.3.1.4` per milestone (#84).
-- The current Cloud Build + `cabal.config.enc` + `cabal upload` flow
-  will be replaced wholesale; #115 tracks the tag-driven replacement
-  and #114 the CI migration. Don't memorise today's specifics — read
-  `cloudbuild.yaml` if you need them, and check #114/#115 before
-  touching anything publish-related.
+  `1.3.1.4` per milestone.
+- Tag-driven via `.github/workflows/release.yml`: pushing a `v*` tag on
+  `main` uploads a Hackage candidate; a `workflow_dispatch` run
+  publishes (guarded by the `hackage` environment). Both steps enforce
+  that the tag matches `version:` in `collection-json.cabal` and
+  authenticate with the `HACKAGE_TOKEN` secret. Read `release.yml`
+  before touching anything publish-related.
 
 ## Don't-touch list
 
-- `cabal.config.enc` — GCP-KMS-encrypted Hackage credentials. Never
-  decrypt locally, never commit plaintext, never regenerate without
-  rotating the KMS key.
 - `Setup.hs` — one-line `defaultMain`; cabal boilerplate.
 - `dist/`, `dist-newstyle/`, `.stack-work/`, `.cabal-sandbox/`, `*.hi`,
   `*.o` — gitignored build artefacts.
-- `nix/network-arbitrary.nix`, `nix/network-uri-json.nix` — generated
-  by `cabal2nix`; regenerate, don't hand-edit.
+- `.vale/styles/` (except `config/`) — vendored by `vale sync`; our
+  vocabulary lives in `.vale/styles/config`.
 - `~/.cabal/packages/`, `~/.cabal/store/` — Hackage index and global
   build cache outside the repo. Never `rm -rf` to "fix" a build.
-- `.travis.yml` — outdated; replacement in #114. Don't patch, don't
-  rely on.
