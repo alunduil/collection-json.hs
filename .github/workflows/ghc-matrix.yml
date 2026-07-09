@@ -47,11 +47,18 @@ jobs:
             exit 1
           fi
 
-          matrix=$(sed -n 's/.*ghc: \[\(.*\)\].*/\1/p' .github/workflows/ci.yml \
-            | grep -oE '[0-9]+\.[0-9]+' | sort -V)
+          matrix=$(yq '.jobs.build.strategy.matrix.ghc[]' \
+            .github/workflows/ci.yml | sort -V)
 
           tested=$(grep -oE 'GHC == [0-9]+\.[0-9]+' collection-json.cabal \
             | grep -oE '[0-9]+\.[0-9]+' | sort -V)
+
+          # An empty set on either side means a parse failure or a moved
+          # field; abort rather than file a spurious drift issue.
+          if [ -z "$matrix" ] || [ -z "$tested" ]; then
+            echo "could not parse the CI matrix or tested-with; aborting" >&2
+            exit 1
+          fi
 
           drift=false
           [ "$expected" = "$matrix" ] || drift=true
@@ -59,7 +66,13 @@ jobs:
           echo "drift=$drift" >> "$GITHUB_OUTPUT"
 
           join() { printf '%s' "$1" | paste -sd, -; }
+          # create-an-issue reads the title and labels from front matter.
           {
+            echo "---"
+            echo "title: GHC version matrix out of date"
+            echo "labels:"
+            echo "  - infrastructure"
+            echo "---"
             echo "The CI matrix and \`tested-with\` should track every GHC major"
             echo "series upstream hasn't end-of-lifed (policy: #141)."
             echo
@@ -71,24 +84,16 @@ jobs:
             echo
             echo "Update the matrix and \`tested-with\`, then bump per PVP"
             echo "(CI/packaging-only is a patch)."
-          } > ghc-drift-report.md
+          } > ghc-drift-issue.md
 
-      # Refresh the open tracking issue if one exists rather than filing a
-      # fresh duplicate each month; gh issue create can't update, so drive
-      # gh directly. Mirrors the file-or-refresh idiom in links.yml.
+      # update_existing overwrites the open tracking issue with the same
+      # title rather than filing a duplicate, and files a fresh one only
+      # when none is open. Title and labels come from the front matter above.
       - name: File or refresh drift issue
         if: steps.check.outputs.drift == 'true'
+        uses: JasonEtco/create-an-issue@1b14a70e4d8dc185e5cc76d3bec9eab20257b2c5 # v2.9.2
         env:
-          GH_TOKEN: ${{ github.token }}
-          TITLE: GHC version matrix out of date
-        run: |
-          number=$(gh issue list --state open --label infrastructure \
-            --json number,title \
-            --jq "map(select(.title == \"$TITLE\")) | .[0].number // empty")
-          if [ -n "$number" ]; then
-            gh issue edit "$number" --body-file ghc-drift-report.md
-            echo "Refreshed existing issue #$number"
-          else
-            gh issue create --title "$TITLE" --label infrastructure \
-              --body-file ghc-drift-report.md
-          fi
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          filename: ghc-drift-issue.md
+          update_existing: true
