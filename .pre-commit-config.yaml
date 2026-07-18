@@ -37,6 +37,12 @@ repos:
         args: [--output=line, --minAlertLevel=error]
         types: [markdown]
 
+  - repo: https://github.com/renovatebot/pre-commit-hooks
+    rev: 43.270.0
+    hooks:
+      - id: renovate-config-validator
+        args: [--strict, --no-global]
+
   # fourmolu and hlint are installed in the dev environment (or in CI by the
   # Pre-commit workflow) and invoked from PATH. Renovate's pre-commit manager
   # only tracks third-party hooks with a `rev:` field, so the pinned versions
