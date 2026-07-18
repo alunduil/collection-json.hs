@@ -5,6 +5,7 @@
 
 - group: {name: future, enabled: true}
 - group: {name: partial, enabled: true}
+- group: {name: partial-strict, enabled: true}
 
 # unsafePerformIO has no place in a pure data-modelling library.
 - functions:
