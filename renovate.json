@@ -12,6 +12,12 @@
   ],
   "minimumReleaseAge": "3 days",
   "internalChecksFilter": "strict",
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["pin", "pinDigest", "lockFileMaintenance"],
+      "minimumReleaseAge": "0 days"
+    }
+  ],
   "vulnerabilityAlerts": {
     "minimumReleaseAge": "0 days"
   },
