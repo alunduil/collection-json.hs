@@ -14,14 +14,14 @@
   "internalChecksFilter": "strict",
   "packageRules": [
     {
-      "matchUpdateTypes": ["pin", "pinDigest", "lockFileMaintenance"],
+      "matchUpdateTypes": ["pin", "pinDigest", "digest", "lockFileMaintenance"],
       "minimumReleaseAge": "0 days"
     }
   ],
   "vulnerabilityAlerts": {
     "minimumReleaseAge": "0 days"
   },
-  "osvVulnerabilityAlerts": true,
+  "osvVulnerabilityAlerts": false,
   "pre-commit": {
     "enabled": true
   },
