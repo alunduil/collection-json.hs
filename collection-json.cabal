@@ -49,7 +49,7 @@ common language
 
 common deps
   build-depends:
-      aeson       >= 2.2  && < 2.3
+      aeson >=2.2 && <2.4
     , base        >= 4.18 && < 4.23
     , network-uri >= 2.6  && < 2.7
     , text        >= 2.0  && < 2.2
