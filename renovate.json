@@ -2,39 +2,31 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:best-practices",
-    "schedule:weekly"
+    "security:openssf-scorecard",
+    "customManagers:githubActionsVersions"
   ],
-  "baseBranchPatterns": [
-    "main"
-  ],
+  "timezone": "Europe/London",
   "reviewers": [
     "alunduil"
   ],
   "minimumReleaseAge": "3 days",
-  "internalChecksFilter": "strict",
   "packageRules": [
     {
-      "matchUpdateTypes": ["pin", "pinDigest", "digest", "lockFileMaintenance"],
-      "minimumReleaseAge": "0 days"
+      "matchUpdateTypes": [
+        "pin",
+        "pinDigest",
+        "digest",
+        "lockFileMaintenance",
+        "lockfileUpdate",
+        "rollback",
+        "bump",
+        "replacement"
+      ],
+      "minimumReleaseAge": null
     }
   ],
-  "vulnerabilityAlerts": {
-    "minimumReleaseAge": "0 days"
-  },
   "osvVulnerabilityAlerts": false,
   "pre-commit": {
     "enabled": true
-  },
-  "customManagers": [
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/^\\.github/workflows/[^/]+\\.ya?ml$/"
-      ],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+\\S+_VERSION:\\s*\"(?<currentValue>[^\"]+)\""
-      ],
-      "extractVersionTemplate": "^v?(?<version>.+)$"
-    }
-  ]
+  }
 }
