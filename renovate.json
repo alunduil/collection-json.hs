@@ -10,6 +10,10 @@
     "alunduil"
   ],
   "minimumReleaseAge": "3 days",
+  // hackage reports no release timestamps, so the default
+  // timestamp-required mode holds every cabal update forever rather than
+  // for three days. Datasources that do report them keep the full bake.
+  "minimumReleaseAgeBehaviour": "timestamp-optional",
   "packageRules": [
     {
       "matchUpdateTypes": [
