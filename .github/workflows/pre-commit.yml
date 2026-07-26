@@ -18,7 +18,7 @@ env:
   # semver-coerced versioning reports as unstable — `ignoreUnstable` then hides
   # every update. `loose` compares them component-wise instead.
   # renovate: datasource=github-releases depName=fourmolu/fourmolu versioning=loose extractVersion=^v(?<version>.+)$
-  FOURMOLU_VERSION: "0.19.0.1"
+  FOURMOLU_VERSION: "0.20.0.0"
   # renovate: datasource=github-releases depName=ndmitchell/hlint versioning=loose extractVersion=^v(?<version>.+)$
   HLINT_VERSION: "3.10"
 
@@ -40,8 +40,9 @@ jobs:
       - name: Install Fourmolu
         run: |
           mkdir -p "$HOME/.local/bin"
-          curl -fsSL -o "$HOME/.local/bin/fourmolu" \
-            "https://github.com/fourmolu/fourmolu/releases/download/v${FOURMOLU_VERSION}/fourmolu-${FOURMOLU_VERSION}-linux-x86_64"
+          curl -fsSL -o /tmp/fourmolu.zip \
+            "https://github.com/fourmolu/fourmolu/releases/download/v${FOURMOLU_VERSION}/fourmolu-${FOURMOLU_VERSION}-linux-x86_64.zip"
+          unzip -j /tmp/fourmolu.zip '*/fourmolu' -d "$HOME/.local/bin"
           chmod +x "$HOME/.local/bin/fourmolu"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
