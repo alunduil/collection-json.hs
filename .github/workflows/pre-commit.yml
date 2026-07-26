@@ -18,7 +18,7 @@ env:
   # semver-coerced versioning reports as unstable — `ignoreUnstable` then hides
   # every update. `loose` compares them component-wise instead.
   # renovate: datasource=github-releases depName=fourmolu/fourmolu versioning=loose extractVersion=^v(?<version>.+)$
-  FOURMOLU_VERSION: "0.19.0.1"
+  FOURMOLU_VERSION: "0.20.0.0"
   # renovate: datasource=github-releases depName=ndmitchell/hlint versioning=loose extractVersion=^v(?<version>.+)$
   HLINT_VERSION: "3.10"
 
