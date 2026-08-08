@@ -31,7 +31,7 @@ repos:
   # vendored under .vale/styles (see the top-level exclude), so the hook
   # needs no `vale sync` step.
   - repo: https://github.com/errata-ai/vale
-    rev: v3.17.0
+    rev: v3.17.1
     hooks:
       - id: vale
         args: [--output=line, --minAlertLevel=error]
