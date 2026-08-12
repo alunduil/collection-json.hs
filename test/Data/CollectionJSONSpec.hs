@@ -10,7 +10,7 @@ Tests for "Data.CollectionJSON".
 -}
 module Data.CollectionJSONSpec (main, spec) where
 
-import Data.Aeson (decode, encode)
+import Data.Aeson (FromJSON, ToJSON, decode, encode)
 import Data.Maybe (fromJust, isJust, isNothing)
 import Network.URI (parseURIReference)
 import Test.Hspec (Spec, context, describe, hspec, it, shouldBe)
@@ -66,13 +66,16 @@ propertiesSpec =
   describe "properties" $
     context "fromJust . decode . encode == id" $
       do
-        prop "Datum" (fromJust . decode . encode <=> id :: Datum -> Bool)
-        prop "Error" (fromJust . decode . encode <=> id :: Error -> Bool)
-        prop "Template" (fromJust . decode . encode <=> id :: Template -> Bool)
-        prop "Query" (fromJust . decode . encode <=> id :: Query -> Bool)
-        prop "Item" (fromJust . decode . encode <=> id :: Item -> Bool)
-        prop "Link" (fromJust . decode . encode <=> id :: Link -> Bool)
-        prop "Collection" (fromJust . decode . encode <=> id :: Collection -> Bool)
+        prop "Datum" (roundtrips :: Datum -> Bool)
+        prop "Error" (roundtrips :: Error -> Bool)
+        prop "Template" (roundtrips :: Template -> Bool)
+        prop "Query" (roundtrips :: Query -> Bool)
+        prop "Item" (roundtrips :: Item -> Bool)
+        prop "Link" (roundtrips :: Link -> Bool)
+        prop "Collection" (roundtrips :: Collection -> Bool)
+
+roundtrips :: (Eq a, FromJSON a, ToJSON a) => a -> Bool
+roundtrips = fromJust . decode . encode <=> id
 
 missingKeysSpec :: Spec
 missingKeysSpec =
