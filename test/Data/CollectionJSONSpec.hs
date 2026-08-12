@@ -36,8 +36,9 @@ spec =
             it "'Collection' decode JSON string: \"{\"collection\":{}}\"" $ isJust (decode "{\"collection\":{}}" :: Maybe Collection)
 
         describe "common parse errors" $
-          it "'Collection' errors on \"{}\"" $
-            isNothing (decode "{}" :: Maybe Collection)
+          do
+            it "'Collection' errors on \"{}\"" $
+              isNothing (decode "{}" :: Maybe Collection)
 
         describe "required keys" $
           context "decode fails when a spec-required key is absent" $
@@ -95,8 +96,9 @@ spec =
                   encode (Collection "1.0" eURI [] [] [] Nothing Nothing) `shouldBe` mCollection
 
             context "decode supplies defaults for absent optional keys" $
-              it "Collection \"version\" defaults to 1.0" $
-                fmap cVersion (decode "{\"collection\":{}}" :: Maybe Collection) `shouldBe` Just "1.0"
+              do
+                it "Collection \"version\" defaults to 1.0" $
+                  fmap cVersion (decode "{\"collection\":{}}" :: Maybe Collection) `shouldBe` Just "1.0"
  where
   mCollection = "{\"collection\":{\"href\":\"http://example.com\",\"version\":\"1.0\"}}" :: BL.ByteString
   mLink = "{\"href\":\"http://example.com\",\"rel\":\"item\"}" :: BL.ByteString
