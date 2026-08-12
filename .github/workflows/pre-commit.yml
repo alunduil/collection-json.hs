@@ -32,11 +32,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
-        with:
-          python-version: "3.x"
-
       - name: Install Fourmolu
         run: |
           mkdir -p "$HOME/.local/bin"
@@ -51,5 +46,8 @@ jobs:
         with:
           version: ${{ env.HLINT_VERSION }}
 
+      # pre-commit/action pulls in `actions/cache@v4` by tag, which this repo's
+      # SHA-pin policy rejects for nested references. This action pins its own
+      # dependencies and provisions Python through uv.
       - name: Run pre-commit
-        uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
+        uses: tox-dev/action-pre-commit-uv@e09b8958484dfe71f4ac3bc7afb230ba506402ec # v1.0.5
