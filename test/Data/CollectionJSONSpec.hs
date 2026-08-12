@@ -10,7 +10,7 @@ Tests for "Data.CollectionJSON".
 -}
 module Data.CollectionJSONSpec (main, spec) where
 
-import Data.Aeson (decode, encode)
+import Data.Aeson (FromJSON, ToJSON, decode, encode)
 import Data.Maybe (fromJust, isJust, isNothing)
 import Network.URI (parseURIReference)
 import Test.Hspec (Spec, context, describe, hspec, it, shouldBe)
@@ -30,80 +30,104 @@ spec =
   describe "application/vnd.collection+json" $
     modifyMaxSize (const 25) $
       do
-        describe "RFC compliance (http://amundsen.com/media-types/collection/format/)" $
-          do
-            it "'Template' decode JSON string: \"{}\"" $ isJust (decode "{}" :: Maybe Template)
-            it "'Collection' decode JSON string: \"{\"collection\":{}}\"" $ isJust (decode "{\"collection\":{}}" :: Maybe Collection)
+        rfcComplianceSpec
+        commonParseErrorsSpec
+        requiredKeysSpec
+        propertiesSpec
+        missingKeysSpec
 
-        describe "common parse errors" $
-          it "'Collection' errors on \"{}\"" $
-            isNothing (decode "{}" :: Maybe Collection)
+rfcComplianceSpec :: Spec
+rfcComplianceSpec =
+  describe "RFC compliance (http://amundsen.com/media-types/collection/format/)" $
+    do
+      it "'Template' decode JSON string: \"{}\"" $ isJust (decode "{}" :: Maybe Template)
+      it "'Collection' decode JSON string: \"{\"collection\":{}}\"" $ isJust (decode "{\"collection\":{}}" :: Maybe Collection)
 
-        describe "required keys" $
-          context "decode fails when a spec-required key is absent" $
-            do
-              it "'Link' without \"href\"" $ isNothing (decode "{\"rel\":\"item\"}" :: Maybe Link)
-              it "'Link' without \"rel\"" $ isNothing (decode "{\"href\":\"http://example.com\"}" :: Maybe Link)
-              it "'Query' without \"href\"" $ isNothing (decode "{\"rel\":\"item\"}" :: Maybe Query)
-              it "'Query' without \"rel\"" $ isNothing (decode "{\"href\":\"http://example.com\"}" :: Maybe Query)
-              it "'Datum' without \"name\"" $ isNothing (decode "{}" :: Maybe Datum)
+commonParseErrorsSpec :: Spec
+commonParseErrorsSpec =
+  describe "common parse errors" $
+    do
+      it "'Collection' errors on \"{}\"" $
+        isNothing (decode "{}" :: Maybe Collection)
 
-        describe "properties" $
-          context "fromJust . decode . encode == id" $
-            do
-              prop "Datum" (fromJust . decode . encode <=> id :: Datum -> Bool)
-              prop "Error" (fromJust . decode . encode <=> id :: Error -> Bool)
-              prop "Template" (fromJust . decode . encode <=> id :: Template -> Bool)
-              prop "Query" (fromJust . decode . encode <=> id :: Query -> Bool)
-              prop "Item" (fromJust . decode . encode <=> id :: Item -> Bool)
-              prop "Link" (fromJust . decode . encode <=> id :: Link -> Bool)
-              prop "Collection" (fromJust . decode . encode <=> id :: Collection -> Bool)
-
-        describe "JSON Missing Keys" $
-          do
-            context "decode minimal JSON strings" $
-              do
-                it "Datum" $ isJust (decode mDatum :: Maybe Datum)
-                it "Error" $ isJust (decode mError :: Maybe Error)
-                it "Template" $ isJust (decode mTemplate :: Maybe Template)
-                it "Query" $ isJust (decode mQuery :: Maybe Query)
-                it "Item" $ isJust (decode mItem :: Maybe Item)
-                it "Link" $ isJust (decode mLink :: Maybe Link)
-                it "Collection" $ isJust (decode mCollection :: Maybe Collection)
-
-            context "encode minimal data to JSON" $
-              do
-                it "Datum" $
-                  encode (Datum "name" Nothing Nothing) `shouldBe` mDatum
-
-                it "Error" $
-                  encode (Error Nothing Nothing Nothing) `shouldBe` mError
-
-                it "Template" $
-                  encode (Template []) `shouldBe` mTemplate
-
-                it "Query" $
-                  encode (Query eURI "item" Nothing Nothing []) `shouldBe` mQuery
-
-                it "Item" $
-                  encode (Item eURI [] []) `shouldBe` mItem
-
-                it "Link" $
-                  encode (Link eURI "item" Nothing Nothing Nothing) `shouldBe` mLink
-
-                it "Collection" $
-                  encode (Collection "1.0" eURI [] [] [] Nothing Nothing) `shouldBe` mCollection
-
-            context "decode supplies defaults for absent optional keys" $
-              it "Collection \"version\" defaults to 1.0" $
-                fmap cVersion (decode "{\"collection\":{}}" :: Maybe Collection) `shouldBe` Just "1.0"
+requiredKeysSpec :: Spec
+requiredKeysSpec =
+  describe "required keys" $
+    context "decode fails when a spec-required key is absent" $
+      do
+        it "'Link' without \"href\"" $ isNothing (decode withoutHref :: Maybe Link)
+        it "'Link' without \"rel\"" $ isNothing (decode withoutRel :: Maybe Link)
+        it "'Query' without \"href\"" $ isNothing (decode withoutHref :: Maybe Query)
+        it "'Query' without \"rel\"" $ isNothing (decode withoutRel :: Maybe Query)
+        it "'Datum' without \"name\"" $ isNothing (decode "{}" :: Maybe Datum)
  where
-  mCollection = "{\"collection\":{\"href\":\"http://example.com\",\"version\":\"1.0\"}}" :: BL.ByteString
-  mLink = "{\"href\":\"http://example.com\",\"rel\":\"item\"}" :: BL.ByteString
-  mItem = "{\"href\":\"http://example.com\"}" :: BL.ByteString
-  mQuery = "{\"href\":\"http://example.com\",\"rel\":\"item\"}" :: BL.ByteString
-  mTemplate = "{\"data\":[]}" :: BL.ByteString
-  mError = "{}" :: BL.ByteString
+  withoutHref = "{\"rel\":\"item\"}" :: BL.ByteString
+  withoutRel = "{\"href\":\"http://example.com\"}" :: BL.ByteString
+
+propertiesSpec :: Spec
+propertiesSpec =
+  describe "properties" $
+    context "fromJust . decode . encode == id" $
+      do
+        prop "Datum" (roundtrips :: Datum -> Bool)
+        prop "Error" (roundtrips :: Error -> Bool)
+        prop "Template" (roundtrips :: Template -> Bool)
+        prop "Query" (roundtrips :: Query -> Bool)
+        prop "Item" (roundtrips :: Item -> Bool)
+        prop "Link" (roundtrips :: Link -> Bool)
+        prop "Collection" (roundtrips :: Collection -> Bool)
+
+roundtrips :: (Eq a, FromJSON a, ToJSON a) => a -> Bool
+roundtrips = fromJust . decode . encode <=> id
+
+missingKeysSpec :: Spec
+missingKeysSpec =
+  describe "JSON Missing Keys" $
+    do
+      context "decode minimal JSON strings" $
+        do
+          it "Datum" $ isJust (decode mDatum :: Maybe Datum)
+          it "Error" $ isJust (decode mError :: Maybe Error)
+          it "Template" $ isJust (decode mTemplate :: Maybe Template)
+          it "Query" $ isJust (decode mQuery :: Maybe Query)
+          it "Item" $ isJust (decode mItem :: Maybe Item)
+          it "Link" $ isJust (decode mLink :: Maybe Link)
+          it "Collection" $ isJust (decode mCollection :: Maybe Collection)
+
+      context "encode minimal data to JSON" $
+        do
+          it "Datum" $
+            encode (Datum "name" Nothing Nothing) `shouldBe` mDatum
+
+          it "Error" $
+            encode (Error Nothing Nothing Nothing) `shouldBe` mError
+
+          it "Template" $
+            encode (Template []) `shouldBe` mTemplate
+
+          it "Query" $
+            encode (Query eURI "item" Nothing Nothing []) `shouldBe` mQuery
+
+          it "Item" $
+            encode (Item eURI [] []) `shouldBe` mItem
+
+          it "Link" $
+            encode (Link eURI "item" Nothing Nothing Nothing) `shouldBe` mLink
+
+          it "Collection" $
+            encode (Collection "1.0" eURI [] [] [] Nothing Nothing) `shouldBe` mCollection
+
+      context "decode supplies defaults for absent optional keys" $
+        do
+          it "Collection \"version\" defaults to 1.0" $
+            fmap cVersion (decode "{\"collection\":{}}" :: Maybe Collection) `shouldBe` Just "1.0"
+ where
   mDatum = "{\"name\":\"name\"}" :: BL.ByteString
+  mError = "{}" :: BL.ByteString
+  mTemplate = "{\"data\":[]}" :: BL.ByteString
+  mQuery = "{\"href\":\"http://example.com\",\"rel\":\"item\"}" :: BL.ByteString
+  mItem = "{\"href\":\"http://example.com\"}" :: BL.ByteString
+  mLink = "{\"href\":\"http://example.com\",\"rel\":\"item\"}" :: BL.ByteString
+  mCollection = "{\"collection\":{\"href\":\"http://example.com\",\"version\":\"1.0\"}}" :: BL.ByteString
 
   eURI = fromJust $ parseURIReference "http://example.com"
