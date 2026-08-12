@@ -55,11 +55,14 @@ requiredKeysSpec =
   describe "required keys" $
     context "decode fails when a spec-required key is absent" $
       do
-        it "'Link' without \"href\"" $ isNothing (decode "{\"rel\":\"item\"}" :: Maybe Link)
-        it "'Link' without \"rel\"" $ isNothing (decode "{\"href\":\"http://example.com\"}" :: Maybe Link)
-        it "'Query' without \"href\"" $ isNothing (decode "{\"rel\":\"item\"}" :: Maybe Query)
-        it "'Query' without \"rel\"" $ isNothing (decode "{\"href\":\"http://example.com\"}" :: Maybe Query)
+        it "'Link' without \"href\"" $ isNothing (decode withoutHref :: Maybe Link)
+        it "'Link' without \"rel\"" $ isNothing (decode withoutRel :: Maybe Link)
+        it "'Query' without \"href\"" $ isNothing (decode withoutHref :: Maybe Query)
+        it "'Query' without \"rel\"" $ isNothing (decode withoutRel :: Maybe Query)
         it "'Datum' without \"name\"" $ isNothing (decode "{}" :: Maybe Datum)
+ where
+  withoutHref = "{\"rel\":\"item\"}" :: BL.ByteString
+  withoutRel = "{\"href\":\"http://example.com\"}" :: BL.ByteString
 
 propertiesSpec :: Spec
 propertiesSpec =
