@@ -12,7 +12,7 @@ module Data.CollectionJSONSpec (main, spec) where
 
 import Data.Aeson (FromJSON, ToJSON, decode, encode)
 import Data.Maybe (fromJust, isJust, isNothing)
-import Network.URI (parseURIReference)
+import Network.URI (nullURI, parseURIReference)
 import Test.Hspec (Spec, context, describe, hspec, it, shouldBe)
 import Test.Hspec.QuickCheck (modifyMaxSize, prop)
 import Test.Invariant ((<=>))
@@ -33,6 +33,7 @@ spec =
         rfcComplianceSpec
         commonParseErrorsSpec
         requiredKeysSpec
+        hrefSpec
         propertiesSpec
         missingKeysSpec
 
@@ -63,6 +64,29 @@ requiredKeysSpec =
  where
   withoutHref = "{\"rel\":\"item\"}" :: BL.ByteString
   withoutRel = "{\"href\":\"http://example.com\"}" :: BL.ByteString
+
+hrefSpec :: Spec
+hrefSpec =
+  describe "href" $
+    do
+      context "decode accepts a relative reference" $
+        do
+          it "'Link'" $ fmap lHref (decode relativeLink) `shouldBe` Just relativeURI
+          it "'Item'" $ fmap iHref (decode relativeItem) `shouldBe` Just relativeURI
+          it "'Query'" $ fmap qHref (decode relativeQuery) `shouldBe` Just relativeURI
+          it "'Collection'" $ fmap cHref (decode relativeCollection) `shouldBe` Just relativeURI
+
+      context "decode resolves an absent or empty 'Collection' href to the empty reference" $
+        do
+          it "absent" $ fmap cHref (decode "{\"collection\":{}}") `shouldBe` Just nullURI
+          it "empty" $ fmap cHref (decode "{\"collection\":{\"href\":\"\"}}") `shouldBe` Just nullURI
+ where
+  relativeLink = "{\"href\":\"/api/characters\",\"rel\":\"item\"}" :: BL.ByteString
+  relativeItem = "{\"href\":\"/api/characters\"}" :: BL.ByteString
+  relativeQuery = "{\"href\":\"/api/characters\",\"rel\":\"search\"}" :: BL.ByteString
+  relativeCollection = "{\"collection\":{\"href\":\"/api/characters\"}}" :: BL.ByteString
+
+  relativeURI = fromJust $ parseURIReference "/api/characters"
 
 propertiesSpec :: Spec
 propertiesSpec =
