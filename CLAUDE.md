@@ -39,6 +39,22 @@ when the two disagree, the spec wins and the tests are wrong. Don't
 shift semantics to make a test pass — re-derive from the spec, then fix
 the test.
 
+## Haddock and comments
+
+Haddock renders exported entities annotated with `-- |`, `-- ^`, or
+`{- |`; everything else is invisible.
+
+Docstrings answer "can a caller use this without reading the
+definition?" — input constraints, what a decoded value can hold,
+resolution rules.
+
+Rationale takes a plain `{- -}` on the definition it constrains: why an
+alternative was rejected, what a future change would require. See
+`parseHref`.
+
+A rule spanning several fields goes in the module header rather than
+repeated on each.
+
 ## Scope discipline
 
 PVP-classified API surface makes out-of-scope edits expensive — an

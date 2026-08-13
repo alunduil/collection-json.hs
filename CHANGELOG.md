@@ -8,6 +8,11 @@ and this project adheres to the [Haskell Package Versioning Policy
 
 ## [Unreleased]
 
+### Added
+
+- Documented `href` decoding: a relative address is valid and resolves
+  against the address the document was retrieved from.
+
 ### Changed
 
 - Compatible with `aeson` 2.2, `base` 4.22, and `network-uri-json` 0.4

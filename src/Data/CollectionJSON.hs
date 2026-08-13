@@ -11,6 +11,14 @@ A collection of types and instances for @application/vnd.collection+json@.
 
 Full documentation for @application/vnd.collection+json@ can be found at
 <http://amundsen.com/media-types/collection/>.
+
+Every @href@ ('cHref', 'lHref', 'iHref', and 'qHref') decodes as a URI
+reference, so a relative address is valid. It resolves against the
+address the document was retrieved from, as described in
+[RFC 3986 section 5.1.3](https://www.rfc-editor.org/rfc/rfc3986#section-5.1.3).
+
+A 'Collection' with no @href@ decodes to the empty reference, which
+resolves to that same retrieval address.
 -}
 module Data.CollectionJSON (
   -- * Core Data Types
@@ -292,7 +300,11 @@ class ToCollection a where
 instance ToCollection Collection where
   toCollection = id
 
--- Deliberately parses a URI reference (relative and empty forms
--- allowed), not a strict absolute URI.
+{- aeson's @FromJSON URI@ accepts absolute URIs only. Decoding through it
+would break round-tripping, because the @href@ fields hold an
+unconstrained 'URI' and @ToJSON URI@ encodes relative references.
+Enforcing absolute addresses needs a type that cannot hold a relative
+one.
+-}
 parseHref :: MonadFail m => Text -> m URI
 parseHref = maybe (fail "invalid href URI") pure . parseURIReference . unpack
