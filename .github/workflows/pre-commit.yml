@@ -46,8 +46,5 @@ jobs:
         with:
           version: ${{ env.HLINT_VERSION }}
 
-      # pre-commit/action pulls in `actions/cache@v4` by tag, which this repo's
-      # SHA-pin policy rejects for nested references. This action pins its own
-      # dependencies and provisions Python through uv.
       - name: Run pre-commit
         uses: tox-dev/action-pre-commit-uv@e09b8958484dfe71f4ac3bc7afb230ba506402ec # v1.0.5
