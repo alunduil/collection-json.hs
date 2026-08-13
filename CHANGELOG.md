@@ -10,9 +10,8 @@ and this project adheres to the [Haskell Package Versioning Policy
 
 ### Added
 
-- Documented that `href` decodes as a URI reference: relative addresses
-  are accepted and resolve against the address the document was
-  retrieved from.
+- Documented `href` decoding: a relative address is valid and resolves
+  against the address the document was retrieved from.
 
 ### Changed
 
