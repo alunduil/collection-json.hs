@@ -2,14 +2,14 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 {- |
-Module      : Data.CollectionJSONSpec
+Module      : Data.CollectionJSONTest
 Description : Tests for Data.CollectionJSON
 Copyright   : (c) Alex Brandt, 2017
 License     : MIT
 
 Tests for "Data.CollectionJSON".
 -}
-module Data.CollectionJSONSpec (tests) where
+module Data.CollectionJSONTest (tests) where
 
 import Data.Aeson (FromJSON, ToJSON, decode, eitherDecode, encode)
 import Data.Either (fromLeft)

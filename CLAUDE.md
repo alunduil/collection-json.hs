@@ -14,7 +14,7 @@ Single-package project (`cabal.project`: `packages: .`).
 
 - **Build / test**: `cabal update` (first run or after a gap), then
   `cabal build`, `cabal test` (tasty). No Nix or direnv — plain
-  `cabal`. Wire a new test module into both `test/Spec.hs` and
+  `cabal`. Wire a new test module into both `test/Main.hs` and
   `other-modules`. Supported GHC: `ci.yml`'s matrix, mirrored by the
   cabal file's `tested-with:` — update both together.
 - **Lint / format**: `pre-commit` (`.pre-commit-config.yaml`) runs
