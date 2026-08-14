@@ -4,7 +4,7 @@
 [![CI](https://github.com/alunduil/collection-json.hs/actions/workflows/ci.yml/badge.svg)](https://github.com/alunduil/collection-json.hs/actions/workflows/ci.yml)
 [![Codecov](https://codecov.io/gh/alunduil/collection-json.hs/branch/main/graph/badge.svg)](https://codecov.io/gh/alunduil/collection-json.hs)
 [![License](https://img.shields.io/github/license/alunduil/collection-json.hs.svg)](LICENSE)
-[![GHC](https://img.shields.io/badge/GHC-9.10%20%7C%209.12%20%7C%209.14-blue.svg)](https://www.haskell.org/ghc/)
+[![GHC](https://img.shields.io/badge/GHC-9.6%20%7C%209.8%20%7C%209.10%20%7C%209.12%20%7C%209.14-blue.svg)](https://www.haskell.org/ghc/)
 
 [Collection+JSON—Hypermedia Type][Collection+JSON] tools for [Haskell].
 
@@ -22,6 +22,8 @@ directly:
 ```sh
 cabal install --lib collection-json
 ```
+
+[`CHANGELOG.md`](CHANGELOG.md) records what changed in each release.
 
 ## Usage
 
@@ -63,11 +65,8 @@ provides `Network.URI` JSON instances that compose with these types.
 
 Report bugs and feature requests on the [issue tracker]. See
 [`CONTRIBUTING.md`](CONTRIBUTING.md) for the build, test, formatter, branch,
-and release conventions.
-
-For changes, fork the repository, branch from `main`, and open a pull request
-against `main`. PRs are squash-merged. If you'd like attribution, add yourself
-to the [`COPYRIGHT`](COPYRIGHT) file in the same PR.
+and release conventions. Everyone taking part follows the
+[Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## License
 
