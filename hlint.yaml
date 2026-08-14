@@ -15,4 +15,4 @@
 # mode would surface on first run, not at a customer.
 - ignore:
     name: Avoid partial function
-    within: Data.CollectionJSONSpec
+    within: Data.CollectionJSONTest
