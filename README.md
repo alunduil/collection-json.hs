@@ -18,7 +18,7 @@ each type defined by the spec—`Collection`, `Item`, `Link`, `Query`,
 
 ## Install
 
-You need GHC and `cabal-install`. The GHC badge names the tested versions.
+You need GHC and `cabal-install`.
 
 Add `collection-json` to the `build-depends` of your package, or install it
 directly:
@@ -81,8 +81,7 @@ Report bugs and feature requests on the [issue tracker]. See
 and release conventions. [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) covers
 how contributors treat each other.
 
-One maintainer answers issues as time allows. There's no paid support and no
-response-time commitment.
+Support is free and comes from one maintainer, as time allows.
 
 ## License
 
