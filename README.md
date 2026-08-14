@@ -18,7 +18,7 @@ each type defined by the spec—`Collection`, `Item`, `Link`, `Query`,
 
 ## Install
 
-You need GHC and `cabal-install`.
+You need the Glasgow Haskell Compiler (GHC) and `cabal-install`.
 
 Add `collection-json` to the `build-depends` of your package, or install it
 directly:
@@ -81,11 +81,11 @@ Report bugs and feature requests on the [issue tracker]. See
 and release conventions. [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) covers
 how contributors treat each other.
 
-Support is free and comes from one maintainer, as time allows.
+Support is free and comes from one maintainer working in spare time.
 
 ## License
 
-Use, modify, and redistribute this library freely, including inside
+Use, modify, and redistribute this library, including inside
 proprietary software, as long as you keep the copyright and permission
 notices. [`LICENSE`](LICENSE) reproduces the MIT license in full.
 
