@@ -92,3 +92,4 @@ test-suite collection-json-tests
   other-extensions:
       OverloadedStrings
     , RecordWildCards
+    , ScopedTypeVariables

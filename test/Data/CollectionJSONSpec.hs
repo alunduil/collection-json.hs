@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 {- |
 Module      : Data.CollectionJSONSpec
@@ -31,11 +32,19 @@ uri = fromJust . parseURIReference
 exampleURI :: URI
 exampleURI = uri "http://example.com"
 
+{- The field selector fixes the type decode targets, so call sites carry
+   no annotation. -}
+decodeField :: FromJSON a => (a -> b) -> BL.ByteString -> Maybe b
+decodeField field = fmap field . decode
+
 decodeFailure :: Either String a -> String
 decodeFailure = fromLeft "decode succeeded"
 
-holds :: TestName -> Bool -> TestTree
-holds name = testCase name . assertBool "expected to hold"
+decodeSucceeds :: TestName -> Maybe a -> TestTree
+decodeSucceeds name = testCase name . assertBool "decode returned Nothing" . isJust
+
+decodeFails :: TestName -> Maybe a -> TestTree
+decodeFails name = testCase name . assertBool "decode returned a value" . isNothing
 
 contains :: String -> String -> Assertion
 contains reported fragment =
@@ -67,16 +76,15 @@ rfcComplianceTests :: TestTree
 rfcComplianceTests =
   testGroup
     "RFC compliance (http://amundsen.com/media-types/collection/format/)"
-    [ holds "'Template' decode JSON string: \"{}\"" $ isJust (decode "{}" :: Maybe Template)
-    , holds "'Collection' decode JSON string: \"{\"collection\":{}}\"" $ isJust (decode "{\"collection\":{}}" :: Maybe Collection)
+    [ decodeSucceeds "'Template' decode JSON string: \"{}\"" (decode "{}" :: Maybe Template)
+    , decodeSucceeds "'Collection' decode JSON string: \"{\"collection\":{}}\"" (decode "{\"collection\":{}}" :: Maybe Collection)
     ]
 
 commonParseErrorsTests :: TestTree
 commonParseErrorsTests =
   testGroup
     "common parse errors"
-    [ holds "'Collection' errors on \"{}\"" $
-        isNothing (decode "{}" :: Maybe Collection)
+    [ decodeFails "'Collection' errors on \"{}\"" (decode "{}" :: Maybe Collection)
     ]
 
 requiredKeysTests :: TestTree
@@ -85,11 +93,11 @@ requiredKeysTests =
     "required keys"
     [ testGroup
         "decode fails when a spec-required key is absent"
-        [ holds "'Link' without \"href\"" $ isNothing (decode withoutHref :: Maybe Link)
-        , holds "'Link' without \"rel\"" $ isNothing (decode withoutRel :: Maybe Link)
-        , holds "'Query' without \"href\"" $ isNothing (decode withoutHref :: Maybe Query)
-        , holds "'Query' without \"rel\"" $ isNothing (decode withoutRel :: Maybe Query)
-        , holds "'Datum' without \"name\"" $ isNothing (decode "{}" :: Maybe Datum)
+        [ decodeFails "'Link' without \"href\"" (decode withoutHref :: Maybe Link)
+        , decodeFails "'Link' without \"rel\"" (decode withoutRel :: Maybe Link)
+        , decodeFails "'Query' without \"href\"" (decode withoutHref :: Maybe Query)
+        , decodeFails "'Query' without \"rel\"" (decode withoutRel :: Maybe Query)
+        , decodeFails "'Datum' without \"name\"" (decode "{}" :: Maybe Datum)
         ]
     ]
  where
@@ -102,20 +110,20 @@ hrefTests =
     "href"
     [ testGroup
         "decode accepts a relative reference"
-        [ testCase "'Link'" $ fmap lHref (decode relativeLink) @?= Just relativeURI
-        , testCase "'Item'" $ fmap iHref (decode relativeItem) @?= Just (Just relativeURI)
-        , testCase "'Query'" $ fmap qHref (decode relativeQuery) @?= Just relativeURI
-        , testCase "'Collection'" $ fmap cHref (decode relativeCollection) @?= Just relativeURI
+        [ testCase "'Link'" $ decodeField lHref relativeLink @?= Just relativeURI
+        , testCase "'Item'" $ decodeField iHref relativeItem @?= Just (Just relativeURI)
+        , testCase "'Query'" $ decodeField qHref relativeQuery @?= Just relativeURI
+        , testCase "'Collection'" $ decodeField cHref relativeCollection @?= Just relativeURI
         ]
     , testGroup
         "decode resolves an absent or empty 'Collection' href to the empty reference"
-        [ testCase "absent" $ fmap cHref (decode absentHref) @?= Just nullURI
-        , testCase "empty" $ fmap cHref (decode emptyHref) @?= Just nullURI
+        [ testCase "absent" $ decodeField cHref absentHref @?= Just nullURI
+        , testCase "empty" $ decodeField cHref emptyHref @?= Just nullURI
         ]
     , testGroup
         "'Item' href is optional"
         [ testCase "decode reports an absent href as absent" $
-            fmap iHref (decode itemWithoutHref) @?= Just Nothing
+            decodeField iHref itemWithoutHref @?= Just Nothing
         , testCase "encode omits an absent href" $
             encode (Item Nothing [] []) @?= itemWithoutHref
         ]
@@ -153,7 +161,7 @@ valueTests =
     ]
  where
   datum v = "{\"name\":\"n\",\"value\":" <> v <> "}" :: BL.ByteString
-  dValueOf v = fmap dValue (decode (datum v) :: Maybe Datum)
+  dValueOf v = decodeField dValue (datum v)
 
   rejects v structure = do
     let reported = decodeFailure (eitherDecode (datum v) :: Either String Datum)
@@ -174,19 +182,17 @@ renderTests =
     ]
  where
   link r = "{\"href\":\"http://example.com\",\"rel\":\"item\",\"render\":" <> r <> "}" :: BL.ByteString
-  lRenderOf r = fmap lRender (decode (link r) :: Maybe Link)
+  lRenderOf r = decodeField lRender (link r)
 
 versionTests :: TestTree
 versionTests =
   testGroup
     "'Collection' version"
     [ testCase "decode defaults an absent version to 1.0" $
-        cVersionOf "{\"collection\":{}}" @?= Just "1.0"
+        decodeField cVersion "{\"collection\":{}}" @?= Just "1.0"
     , testCase "decode passes through a version other than 1.0" $
-        cVersionOf "{\"collection\":{\"version\":\"1.1\"}}" @?= Just "1.1"
+        decodeField cVersion "{\"collection\":{\"version\":\"1.1\"}}" @?= Just "1.1"
     ]
- where
-  cVersionOf d = fmap cVersion (decode d :: Maybe Collection)
 
 propertiesTests :: TestTree
 propertiesTests =
@@ -211,39 +217,26 @@ missingKeysTests :: TestTree
 missingKeysTests =
   testGroup
     "JSON Missing Keys"
-    [ testGroup
-        "decode minimal JSON strings"
-        [ holds "Datum" $ isJust (decode mDatum :: Maybe Datum)
-        , holds "Error" $ isJust (decode mError :: Maybe Error)
-        , holds "Template" $ isJust (decode mTemplate :: Maybe Template)
-        , holds "Query" $ isJust (decode mQuery :: Maybe Query)
-        , holds "Item" $ isJust (decode mItem :: Maybe Item)
-        , holds "Link" $ isJust (decode mLink :: Maybe Link)
-        , holds "Collection" $ isJust (decode mCollection :: Maybe Collection)
-        ]
-    , testGroup
-        "encode minimal data to JSON"
-        [ testCase "Datum" $
-            encode (Datum "name" Nothing Nothing) @?= mDatum
-        , testCase "Error" $
-            encode (Error Nothing Nothing Nothing) @?= mError
-        , testCase "Template" $
-            encode (Template []) @?= mTemplate
-        , testCase "Query" $
-            encode (Query exampleURI "item" Nothing Nothing []) @?= mQuery
-        , testCase "Item" $
-            encode (Item (Just exampleURI) [] []) @?= mItem
-        , testCase "Link" $
-            encode (Link exampleURI "item" Nothing Nothing Nothing) @?= mLink
-        , testCase "Collection" $
-            encode (Collection "1.0" exampleURI [] [] [] Nothing Nothing) @?= mCollection
-        ]
+    [ testGroup "decode minimal JSON strings" decodeTests
+    , testGroup "encode minimal data to JSON" encodeTests
     ]
  where
-  mDatum = "{\"name\":\"name\"}" :: BL.ByteString
-  mError = "{}" :: BL.ByteString
-  mTemplate = "{\"data\":[]}" :: BL.ByteString
-  mQuery = "{\"href\":\"http://example.com\",\"rel\":\"item\"}" :: BL.ByteString
-  mItem = "{\"href\":\"http://example.com\"}" :: BL.ByteString
-  mLink = "{\"href\":\"http://example.com\",\"rel\":\"item\"}" :: BL.ByteString
-  mCollection = "{\"collection\":{\"href\":\"http://example.com\",\"version\":\"1.0\"}}" :: BL.ByteString
+  (decodeTests, encodeTests) =
+    unzip
+      [ minimal "Datum" (Datum "name" Nothing Nothing) "{\"name\":\"name\"}"
+      , minimal "Error" (Error Nothing Nothing Nothing) "{}"
+      , minimal "Template" (Template []) "{\"data\":[]}"
+      , minimal "Query" (Query exampleURI "item" Nothing Nothing []) "{\"href\":\"http://example.com\",\"rel\":\"item\"}"
+      , minimal "Item" (Item (Just exampleURI) [] []) "{\"href\":\"http://example.com\"}"
+      , minimal "Link" (Link exampleURI "item" Nothing Nothing Nothing) "{\"href\":\"http://example.com\",\"rel\":\"item\"}"
+      , minimal "Collection" (Collection "1.0" exampleURI [] [] [] Nothing Nothing) "{\"collection\":{\"href\":\"http://example.com\",\"version\":\"1.0\"}}"
+      ]
+
+{- A pair rather than two tables: the value and the JSON it must both
+   decode from and encode to share a type variable no heterogeneous list
+   of cases could carry. -}
+minimal :: forall a. (FromJSON a, ToJSON a) => TestName -> a -> BL.ByteString -> (TestTree, TestTree)
+minimal name value json =
+  ( decodeSucceeds name (decode json :: Maybe a)
+  , testCase name $ encode value @?= json
+  )
