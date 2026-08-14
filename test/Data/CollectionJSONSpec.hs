@@ -10,10 +10,11 @@ Tests for "Data.CollectionJSON".
 -}
 module Data.CollectionJSONSpec (main, spec) where
 
-import Data.Aeson (FromJSON, ToJSON, decode, encode)
+import Data.Aeson (FromJSON, ToJSON, decode, eitherDecode, encode)
+import Data.Either (fromLeft)
 import Data.Maybe (fromJust, isJust, isNothing)
 import Network.URI (URI, nullURI, parseURIReference)
-import Test.Hspec (Spec, context, describe, hspec, it, shouldBe)
+import Test.Hspec (Spec, context, describe, hspec, it, shouldBe, shouldContain, shouldEndWith)
 import Test.Hspec.QuickCheck (modifyMaxSize, prop)
 import Test.Invariant ((<=>))
 
@@ -30,6 +31,9 @@ uri = fromJust . parseURIReference
 
 exampleURI :: URI
 exampleURI = uri "http://example.com"
+
+decodeFailure :: Either String a -> String
+decodeFailure = fromLeft "decode succeeded"
 
 spec :: Spec
 spec =
@@ -124,11 +128,16 @@ valueSpec =
 
       context "decode rejects the structures the format excludes" $
         do
-          it "OBJECT" $ isNothing (decode (datum "{\"a\":1}") :: Maybe Datum)
-          it "ARRAY" $ isNothing (decode (datum "[1,2]") :: Maybe Datum)
+          it "OBJECT" $ rejects "{\"a\":1}" "Object"
+          it "ARRAY" $ rejects "[1,2]" "Array"
  where
   datum v = "{\"name\":\"n\",\"value\":" <> v <> "}" :: BL.ByteString
   dValueOf v = fmap dValue (decode (datum v) :: Maybe Datum)
+
+  rejects v structure = do
+    let reported = decodeFailure (eitherDecode (datum v) :: Either String Datum)
+    reported `shouldContain` "DatumValue"
+    reported `shouldEndWith` structure
 
 renderSpec :: Spec
 renderSpec =
@@ -137,8 +146,9 @@ renderSpec =
       it "decode reads \"image\"" $ lRenderOf "\"image\"" `shouldBe` Just (Just RenderImage)
       it "decode reads \"link\"" $ lRenderOf "\"link\"" `shouldBe` Just (Just RenderLink)
 
-      it "decode fails on any other value" $
-        isNothing (decode (link "\"embed\"") :: Maybe Link)
+      it "decode fails on any other value, naming it and the two allowed" $
+        decodeFailure (eitherDecode (link "\"embed\"") :: Either String Link)
+          `shouldEndWith` "render must be \"image\" or \"link\", not \"embed\""
 
       it "encode writes the format's spelling" $
         encode (Link exampleURI "item" Nothing (Just RenderImage) Nothing) `shouldBe` link "\"image\""
