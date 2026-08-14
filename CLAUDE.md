@@ -13,7 +13,9 @@ Hackage: `collection-json`.
 Single-package project (`cabal.project`: `packages: .`).
 
 - **Build / test**: `cabal update` (first run or after a gap), then
-  `cabal build`, `cabal test` (hspec-discover, `*Spec.hs`). No Nix or
+  `cabal build`, `cabal test` (tasty; `test/Spec.hs` builds the tree
+  explicitly, so a new test module needs wiring there and in
+  `other-modules`). No Nix or
   direnv — plain `cabal`. Supported GHC: `ci.yml` tests 9.10/9.12/9.14;
   `tested-with:` in the cabal file lags at `9.10.*`, so trust the CI
   matrix and `build-depends` bounds — verify with `cabal build`, not
@@ -34,7 +36,7 @@ Single-package project (`cabal.project`: `packages: .`).
 ## Source of truth for behaviour
 
 The Collection+JSON spec at <https://github.com/collection-json/spec>
-is authoritative. The hspec suite is an attempt to encode that spec;
+is authoritative. The test suite is an attempt to encode that spec;
 when the two disagree, the spec wins and the tests are wrong. Don't
 shift semantics to make a test pass — re-derive from the spec, then fix
 the test.
