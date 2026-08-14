@@ -32,8 +32,6 @@ uri = fromJust . parseURIReference
 exampleURI :: URI
 exampleURI = uri "http://example.com"
 
-{- The field selector fixes the type decode targets, so call sites carry
-   no annotation. -}
 decodeField :: FromJSON a => (a -> b) -> BL.ByteString -> Maybe b
 decodeField field = fmap field . decode
 
@@ -232,9 +230,8 @@ missingKeysTests =
       , minimal "Collection" (Collection "1.0" exampleURI [] [] [] Nothing Nothing) "{\"collection\":{\"href\":\"http://example.com\",\"version\":\"1.0\"}}"
       ]
 
-{- A pair rather than two tables: the value and the JSON it must both
-   decode from and encode to share a type variable no heterogeneous list
-   of cases could carry. -}
+{- Separate decode and encode tables would need a heterogeneous list,
+   which cannot carry the type variable a value shares with its JSON. -}
 minimal :: forall a. (FromJSON a, ToJSON a) => TestName -> a -> BL.ByteString -> (TestTree, TestTree)
 minimal name value json =
   ( decodeSucceeds name (decode json :: Maybe a)

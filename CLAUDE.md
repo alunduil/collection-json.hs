@@ -13,10 +13,9 @@ Hackage: `collection-json`.
 Single-package project (`cabal.project`: `packages: .`).
 
 - **Build / test**: `cabal update` (first run or after a gap), then
-  `cabal build`, `cabal test` (tasty; `test/Spec.hs` builds the tree
-  explicitly, so a new test module needs wiring there and in
-  `other-modules`). No Nix or
-  direnv — plain `cabal`. Supported GHC: `ci.yml` tests 9.10/9.12/9.14;
+  `cabal build`, `cabal test` (tasty). No Nix or direnv — plain
+  `cabal`. Wire a new test module into both `test/Spec.hs` and
+  `other-modules`. Supported GHC: `ci.yml` tests 9.10/9.12/9.14;
   `tested-with:` in the cabal file lags at `9.10.*`, so trust the CI
   matrix and `build-depends` bounds — verify with `cabal build`, not
   metadata.
