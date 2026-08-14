@@ -8,6 +8,8 @@
 
 [Collection+JSON—Hypermedia Type][Collection+JSON] tools for [Haskell].
 
+By Alex Brandt. Source at <https://github.com/alunduil/collection-json.hs>.
+
 `collection-json` lets you encode, decode, and manipulate
 `application/vnd.collection+json` documents. The library exposes a single
 module, `Data.CollectionJSON`, with `aeson` `ToJSON`/`FromJSON` instances for
@@ -15,6 +17,8 @@ each type defined by the spec—`Collection`, `Item`, `Link`, `Query`,
 `Template`, `Datum`, and `Error`.
 
 ## Install
+
+You need GHC and `cabal-install`. The GHC badge names the tested versions.
 
 Add `collection-json` to the `build-depends` of your package, or install it
 directly:
@@ -77,9 +81,14 @@ Report bugs and feature requests on the [issue tracker]. See
 and release conventions. [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) covers
 how contributors treat each other.
 
+One maintainer answers issues as time allows. There's no paid support and no
+response-time commitment.
+
 ## License
 
-MIT—see [`LICENSE`](LICENSE).
+Use, modify, and redistribute this library freely, including inside
+proprietary software, as long as you keep the copyright and permission
+notices. That's the MIT license—full text in [`LICENSE`](LICENSE).
 
 [Collection+JSON]: https://github.com/collection-json/spec
 [Hackage]: https://hackage.haskell.org/package/collection-json
