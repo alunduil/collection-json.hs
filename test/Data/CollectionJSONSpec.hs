@@ -10,10 +10,11 @@ Tests for "Data.CollectionJSON".
 -}
 module Data.CollectionJSONSpec (main, spec) where
 
-import Data.Aeson (FromJSON, ToJSON, decode, encode)
+import Data.Aeson (FromJSON, ToJSON, decode, eitherDecode, encode)
+import Data.Either (fromLeft)
 import Data.Maybe (fromJust, isJust, isNothing)
 import Network.URI (URI, nullURI, parseURIReference)
-import Test.Hspec (Spec, context, describe, hspec, it, shouldBe)
+import Test.Hspec (Spec, context, describe, hspec, it, shouldBe, shouldContain, shouldEndWith)
 import Test.Hspec.QuickCheck (modifyMaxSize, prop)
 import Test.Invariant ((<=>))
 
@@ -28,6 +29,12 @@ main = hspec spec
 uri :: String -> URI
 uri = fromJust . parseURIReference
 
+exampleURI :: URI
+exampleURI = uri "http://example.com"
+
+decodeFailure :: Either String a -> String
+decodeFailure = fromLeft "decode succeeded"
+
 spec :: Spec
 spec =
   describe "application/vnd.collection+json" $
@@ -37,6 +44,9 @@ spec =
         commonParseErrorsSpec
         requiredKeysSpec
         hrefSpec
+        valueSpec
+        renderSpec
+        versionSpec
         propertiesSpec
         missingKeysSpec
 
@@ -75,7 +85,7 @@ hrefSpec =
       context "decode accepts a relative reference" $
         do
           it "'Link'" $ fmap lHref (decode relativeLink) `shouldBe` Just relativeURI
-          it "'Item'" $ fmap iHref (decode relativeItem) `shouldBe` Just relativeURI
+          it "'Item'" $ fmap iHref (decode relativeItem) `shouldBe` Just (Just relativeURI)
           it "'Query'" $ fmap qHref (decode relativeQuery) `shouldBe` Just relativeURI
           it "'Collection'" $ fmap cHref (decode relativeCollection) `shouldBe` Just relativeURI
 
@@ -83,6 +93,14 @@ hrefSpec =
         do
           it "absent" $ fmap cHref (decode absentHref) `shouldBe` Just nullURI
           it "empty" $ fmap cHref (decode emptyHref) `shouldBe` Just nullURI
+
+      context "'Item' href is optional" $
+        do
+          it "decode reports an absent href as absent" $
+            fmap iHref (decode itemWithoutHref) `shouldBe` Just Nothing
+
+          it "encode omits an absent href" $
+            encode (Item Nothing [] []) `shouldBe` itemWithoutHref
  where
   relativeLink = "{\"href\":\"/api/characters\",\"rel\":\"item\"}" :: BL.ByteString
   relativeItem = "{\"href\":\"/api/characters\"}" :: BL.ByteString
@@ -92,7 +110,63 @@ hrefSpec =
   absentHref = "{\"collection\":{}}" :: BL.ByteString
   emptyHref = "{\"collection\":{\"href\":\"\"}}" :: BL.ByteString
 
+  itemWithoutHref = "{}" :: BL.ByteString
+
   relativeURI = uri "/api/characters"
+
+valueSpec :: Spec
+valueSpec =
+  describe "'Datum' value" $
+    do
+      context "decode accepts every scalar the format admits" $
+        do
+          it "STRING" $ dValueOf "\"x\"" `shouldBe` Just (Just (DatumString "x"))
+          it "NUMBER" $ dValueOf "5" `shouldBe` Just (Just (DatumNumber 5))
+          it "true" $ dValueOf "true" `shouldBe` Just (Just (DatumBool True))
+          it "false" $ dValueOf "false" `shouldBe` Just (Just (DatumBool False))
+          it "null" $ dValueOf "null" `shouldBe` Just Nothing
+
+      context "decode rejects the structures the format excludes" $
+        do
+          it "OBJECT" $ rejects "{\"a\":1}" "Object"
+          it "ARRAY" $ rejects "[1,2]" "Array"
+ where
+  datum v = "{\"name\":\"n\",\"value\":" <> v <> "}" :: BL.ByteString
+  dValueOf v = fmap dValue (decode (datum v) :: Maybe Datum)
+
+  rejects v structure = do
+    let reported = decodeFailure (eitherDecode (datum v) :: Either String Datum)
+    reported `shouldContain` "DatumValue"
+    reported `shouldEndWith` structure
+
+renderSpec :: Spec
+renderSpec =
+  describe "'Link' render" $
+    do
+      it "decode reads \"image\"" $ lRenderOf "\"image\"" `shouldBe` Just (Just RenderImage)
+      it "decode reads \"link\"" $ lRenderOf "\"link\"" `shouldBe` Just (Just RenderLink)
+
+      it "decode fails on any other value, naming it and the two allowed" $
+        decodeFailure (eitherDecode (link "\"embed\"") :: Either String Link)
+          `shouldEndWith` "render must be \"image\" or \"link\", not \"embed\""
+
+      it "encode writes the format's spelling" $
+        encode (Link exampleURI "item" Nothing (Just RenderImage) Nothing) `shouldBe` link "\"image\""
+ where
+  link r = "{\"href\":\"http://example.com\",\"rel\":\"item\",\"render\":" <> r <> "}" :: BL.ByteString
+  lRenderOf r = fmap lRender (decode (link r) :: Maybe Link)
+
+versionSpec :: Spec
+versionSpec =
+  describe "'Collection' version" $
+    do
+      it "decode defaults an absent version to 1.0" $
+        cVersionOf "{\"collection\":{}}" `shouldBe` Just "1.0"
+
+      it "decode passes through a version other than 1.0" $
+        cVersionOf "{\"collection\":{\"version\":\"1.1\"}}" `shouldBe` Just "1.1"
+ where
+  cVersionOf d = fmap cVersion (decode d :: Maybe Collection)
 
 propertiesSpec :: Spec
 propertiesSpec =
@@ -136,21 +210,16 @@ missingKeysSpec =
             encode (Template []) `shouldBe` mTemplate
 
           it "Query" $
-            encode (Query eURI "item" Nothing Nothing []) `shouldBe` mQuery
+            encode (Query exampleURI "item" Nothing Nothing []) `shouldBe` mQuery
 
           it "Item" $
-            encode (Item eURI [] []) `shouldBe` mItem
+            encode (Item (Just exampleURI) [] []) `shouldBe` mItem
 
           it "Link" $
-            encode (Link eURI "item" Nothing Nothing Nothing) `shouldBe` mLink
+            encode (Link exampleURI "item" Nothing Nothing Nothing) `shouldBe` mLink
 
           it "Collection" $
-            encode (Collection "1.0" eURI [] [] [] Nothing Nothing) `shouldBe` mCollection
-
-      context "decode supplies defaults for absent optional keys" $
-        do
-          it "Collection \"version\" defaults to 1.0" $
-            fmap cVersion (decode "{\"collection\":{}}" :: Maybe Collection) `shouldBe` Just "1.0"
+            encode (Collection "1.0" exampleURI [] [] [] Nothing Nothing) `shouldBe` mCollection
  where
   mDatum = "{\"name\":\"name\"}" :: BL.ByteString
   mError = "{}" :: BL.ByteString
@@ -159,5 +228,3 @@ missingKeysSpec =
   mItem = "{\"href\":\"http://example.com\"}" :: BL.ByteString
   mLink = "{\"href\":\"http://example.com\",\"rel\":\"item\"}" :: BL.ByteString
   mCollection = "{\"collection\":{\"href\":\"http://example.com\",\"version\":\"1.0\"}}" :: BL.ByteString
-
-  eURI = uri "http://example.com"
