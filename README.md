@@ -88,7 +88,7 @@ response-time commitment.
 
 Use, modify, and redistribute this library freely, including inside
 proprietary software, as long as you keep the copyright and permission
-notices. That's the MIT license—full text in [`LICENSE`](LICENSE).
+notices. [`LICENSE`](LICENSE) reproduces the MIT license in full.
 
 [Collection+JSON]: https://github.com/collection-json/spec
 [Hackage]: https://hackage.haskell.org/package/collection-json
