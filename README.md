@@ -74,8 +74,8 @@ provides `Network.URI` JSON instances that compose with these types.
 
 Report bugs and feature requests on the [issue tracker]. See
 [`CONTRIBUTING.md`](CONTRIBUTING.md) for the build, test, formatter, branch,
-and release conventions. Everyone taking part follows the
-[Code of Conduct](CODE_OF_CONDUCT.md).
+and release conventions. [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) covers
+how contributors treat each other.
 
 ## License
 
