@@ -19,24 +19,33 @@ address the document was retrieved from, as described in
 
 A 'Collection' with no @href@ decodes to the empty reference, which
 resolves to that same retrieval address.
+
+Decoding accepts every document the format permits and rejects only
+what it forbids. So 'dValue' holds any of the format's scalar types,
+'iHref' may be absent, and 'cVersion' is whatever the document said;
+an unrecognised 'lRender' fails the parse.
 -}
 module Data.CollectionJSON (
   -- * Core Data Types
   Collection (..),
   Link (..),
+  Render (..),
   Item (..),
   Query (..),
   Template (..),
   Error (..),
   Datum (..),
+  DatumValue (..),
 
   -- * Type Conversion
   FromCollection (..),
   ToCollection (..),
 ) where
 
-import Data.Aeson (FromJSON (parseJSON), ToJSON (toJSON), object, withObject, (.!=), (.:), (.:?), (.=))
+import Data.Aeson (FromJSON (parseJSON), ToJSON (toJSON), Value (Bool, Number, String), object, withObject, withText, (.!=), (.:), (.:?), (.=))
+import Data.Aeson.Types (typeMismatch)
 import Data.Maybe (catMaybes)
+import Data.Scientific (Scientific)
 import Data.Text (Text, unpack)
 import Network.URI (URI, parseURIReference)
 
@@ -45,7 +54,9 @@ import Network.URI (URI, parseURIReference)
 -- | The top-level object for an @application/vnd.collection+json@ resource.
 data Collection = Collection
   { cVersion :: Text
-  -- ^ Currently, always "1.0".
+  {- ^ Version the document declares, or "1.0" when it declares none.
+  A caller that cares about the version has to check it.
+  -}
   , cHref :: URI
   {- ^ Address used to retrieve the 'Collection'
   and to add new elements.
@@ -62,6 +73,10 @@ instance FromJSON Collection where
   parseJSON = withObject "Collection" $ \c -> do
     v <- c .: "collection"
 
+    {- Rejecting a version other than "1.0" would put every other field
+    out of reach the day a later version ships, so the declared version
+    is passed through for the caller to judge.
+    -}
     cVersion <- v .:? "version" .!= "1.0"
     cHref <- v .:? "href" .!= "" >>= parseHref
     cLinks <- v .:? "links" .!= []
@@ -105,7 +120,8 @@ data Link = Link
   * [RFC5988](http://tools.ietf.org/html/rfc5988)
   -}
   , lName :: Maybe Text
-  , lRender :: Maybe Text
+  , lRender :: Maybe Render
+  -- ^ How to present the resource; 'RenderLink' when absent.
   , lPrompt :: Maybe Text
   }
   deriving (Eq, Show)
@@ -131,11 +147,30 @@ instance ToJSON Link where
         , (.=) "prompt" <$> lPrompt
         ]
 
+-- | How a user agent should present the resource a 'Link' addresses.
+data Render
+  = -- | Embed the resource in the display.
+    RenderImage
+  | -- | Offer the resource as a navigable address.
+    RenderLink
+  deriving (Eq, Show)
+
+instance FromJSON Render where
+  parseJSON = withText "Render" $ \t -> case t of
+    "image" -> pure RenderImage
+    "link" -> pure RenderLink
+    _ -> fail $ "render must be \"image\" or \"link\", not " <> show t
+
+instance ToJSON Render where
+  toJSON RenderImage = String "image"
+  toJSON RenderLink = String "link"
+
 -- | An element in the 'Collection'
 data Item = Item
-  { iHref :: URI
+  { iHref :: Maybe URI
   {- ^ Address of the resource used to retrieve, modify, or
-  delete the element.
+  delete the element. An 'Item' that omits it can only be read
+  through its enclosing 'Collection'.
   -}
   , iData :: [Datum]
   , iLinks :: [Link]
@@ -144,7 +179,11 @@ data Item = Item
 
 instance FromJSON Item where
   parseJSON = withObject "Item" $ \v -> do
-    iHref <- v .: "href" >>= parseHref
+    {- Resolving an absent item href to the empty reference, as
+    'Collection' does, would hand back the collection's own address
+    dressed as the item's. Absence stays visible instead.
+    -}
+    iHref <- v .:? "href" >>= traverse parseHref
     iData <- v .:? "data" .!= []
     iLinks <- v .:? "links" .!= []
 
@@ -154,7 +193,7 @@ instance ToJSON Item where
   toJSON Item{..} =
     object $
       catMaybes
-        [ Just $ "href" .= iHref
+        [ (.=) "href" <$> iHref
         , if null iData then Nothing else Just $ "data" .= iData
         , if null iLinks then Nothing else Just $ "links" .= iLinks
         ]
@@ -165,7 +204,7 @@ A template for possible queries related to this 'Collection'.
 A query should correspond to an associated HTTP GET request.
 
 The Query:
-> Query "http://example.com/search" "search" Nothing (Just "Search:") [Datum "search" "" Nothing]
+> Query "http://example.com/search" "search" Nothing (Just "Search:") [Datum "search" (Just (DatumString "")) Nothing]
 
 Corresponds with the following URI for an HTTP GET:
 > http://example.com/search?search={search_terms}
@@ -261,7 +300,10 @@ instance ToJSON Error where
 data Datum = Datum
   { dName :: Text
   -- ^ Identifier for this 'Datum'.
-  , dValue :: Maybe Text
+  , dValue :: Maybe DatumValue
+  {- ^ 'Nothing' for both an absent @value@ and an explicit @null@;
+  the format draws no distinction between them.
+  -}
   , dPrompt :: Maybe Text
   -- ^ Suggested user prompt.
   }
@@ -283,6 +325,29 @@ instance ToJSON Datum where
         , (.=) "value" <$> dValue
         , (.=) "prompt" <$> dPrompt
         ]
+
+{- |
+A scalar carried by a 'Datum'.
+
+@application/vnd.collection+json@ admits no nested structure here, so
+an object or an array in a @value@ fails to decode.
+-}
+data DatumValue
+  = DatumString Text
+  | DatumNumber Scientific
+  | DatumBool Bool
+  deriving (Eq, Show)
+
+instance FromJSON DatumValue where
+  parseJSON (String t) = pure $ DatumString t
+  parseJSON (Number n) = pure $ DatumNumber n
+  parseJSON (Bool b) = pure $ DatumBool b
+  parseJSON v = typeMismatch "DatumValue" v
+
+instance ToJSON DatumValue where
+  toJSON (DatumString t) = toJSON t
+  toJSON (DatumNumber n) = toJSON n
+  toJSON (DatumBool b) = toJSON b
 
 -- * Type Conversion
 
