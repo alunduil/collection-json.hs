@@ -21,9 +21,7 @@ A 'Collection' with no @href@ decodes to the empty reference, which
 resolves to that same retrieval address.
 
 Decoding accepts every document the format permits and rejects only
-what it forbids. So 'dValue' holds any of the format's scalar types,
-'iHref' may be absent, and 'cVersion' is whatever the document said;
-an unrecognised 'lRender' fails the parse.
+what it forbids.
 -}
 module Data.CollectionJSON (
   -- * Core Data Types
@@ -56,7 +54,7 @@ import Network.URI (URI, parseURIReference)
 data Collection = Collection
   { cVersion :: Text
   {- ^ Version the document declares, or "1.0" when it declares none.
-  A caller that cares about the version has to check it.
+  Checking it is the caller's job.
   -}
   , cHref :: URI
   {- ^ Address used to retrieve the 'Collection'
@@ -75,8 +73,7 @@ instance FromJSON Collection where
     v <- c .: "collection"
 
     {- Rejecting a version other than "1.0" would put every other field
-    out of reach the day a later version ships, so the declared version
-    is passed through for the caller to judge.
+    out of reach the day a later version ships.
     -}
     cVersion <- v .:? "version" .!= "1.0"
     cHref <- v .:? "href" .!= "" >>= parseHref
@@ -122,7 +119,7 @@ data Link = Link
   -}
   , lName :: Maybe Text
   , lRender :: Maybe Render
-  -- ^ How to present the resource; 'RenderLink' when absent.
+  -- ^ Absent means 'RenderLink'.
   , lPrompt :: Maybe Text
   }
   deriving (Eq, Show)
@@ -152,7 +149,7 @@ instance ToJSON Link where
 data Render
   = -- | Embed the resource in the display.
     RenderImage
-  | -- | Offer the resource as a navigable address.
+  | -- | Offer the resource as a link to follow.
     RenderLink
   deriving (Eq, Show)
 
@@ -181,8 +178,8 @@ data Item = Item
 instance FromJSON Item where
   parseJSON = withObject "Item" $ \v -> do
     {- Resolving an absent item href to the empty reference, as
-    'Collection' does, would hand back the collection's own address
-    dressed as the item's. Absence stays visible instead.
+    'Collection' does, would hand back the collection's own address as
+    though it were the item's.
     -}
     iHref <- v .:? "href" >>= traverse parseHref
     iData <- v .:? "data" .!= []
@@ -302,8 +299,8 @@ data Datum = Datum
   { dName :: Text
   -- ^ Identifier for this 'Datum'.
   , dValue :: Maybe DatumValue
-  {- ^ 'Nothing' for both an absent @value@ and an explicit @null@;
-  the format draws no distinction between them.
+  {- ^ 'Nothing' for both an absent @value@ and an explicit @null@,
+  which the format treats alike.
   -}
   , dPrompt :: Maybe Text
   -- ^ Suggested user prompt.
@@ -328,10 +325,8 @@ instance ToJSON Datum where
         ]
 
 {- |
-A scalar carried by a 'Datum'.
-
-@application/vnd.collection+json@ admits no nested structure here, so
-an object or an array in a @value@ fails to decode.
+A scalar carried by a 'Datum'. The format admits no nested structure
+here, so an object or an array in a @value@ fails to decode.
 -}
 data DatumValue
   = DatumString Text
@@ -366,8 +361,8 @@ class ToCollection a where
 instance ToCollection Collection where
   toCollection = id
 
-{- Every array in the format is optional, and an empty one says nothing a
-missing one doesn't, so encoding leaves it out.
+{- Every array in the format is optional, and an empty one says nothing
+a missing one doesn't.
 -}
 omitEmpty :: ToJSON a => Key -> [a] -> Maybe Pair
 omitEmpty k xs = if null xs then Nothing else Just (k .= xs)
