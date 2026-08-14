@@ -40,13 +40,22 @@ import Network.URI (parseURI)
 
 main :: IO ()
 main = do
-  let href = fromJust (parseURI "http://example.com/friends/")
-      c    = Collection "1.0" href [] [] [] Nothing Nothing
+  let c =
+        Collection
+          { cVersion = "1.0"
+          , cHref = fromJust (parseURI "http://example.com/friends/")
+          , cLinks = []
+          , cItems = []
+          , cQueries = []
+          , cTemplate = Nothing
+          , cError = Nothing
+          }
+      json = encode c
 
-  BL.putStrLn (encode c)
+  BL.putStrLn json
   -- {"collection":{"href":"http://example.com/friends/","version":"1.0"}}
 
-  print (decode (encode c) :: Maybe Collection)
+  print (decode json :: Maybe Collection)
   -- Just (Collection {cVersion = "1.0", cHref = ..., ...})
 ```
 
