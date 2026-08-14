@@ -15,10 +15,8 @@ Single-package project (`cabal.project`: `packages: .`).
 - **Build / test**: `cabal update` (first run or after a gap), then
   `cabal build`, `cabal test` (tasty). No Nix or direnv — plain
   `cabal`. Wire a new test module into both `test/Spec.hs` and
-  `other-modules`. Supported GHC: `ci.yml` tests 9.10/9.12/9.14;
-  `tested-with:` in the cabal file lags at `9.10.*`, so trust the CI
-  matrix and `build-depends` bounds — verify with `cabal build`, not
-  metadata.
+  `other-modules`. Supported GHC: `ci.yml`'s matrix, mirrored by the
+  cabal file's `tested-with:` — update both together.
 - **Lint / format**: `pre-commit` (`.pre-commit-config.yaml`) runs
   fourmolu (`fourmolu.yaml`), hlint (`hlint.yaml`), markdownlint
   (`.markdownlint.jsonc`), Vale (`.vale.ini`; styles vendored under
