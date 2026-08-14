@@ -28,6 +28,9 @@ main = hspec spec
 uri :: String -> URI
 uri = fromJust . parseURIReference
 
+exampleURI :: URI
+exampleURI = uri "http://example.com"
+
 spec :: Spec
 spec =
   describe "application/vnd.collection+json" $
@@ -138,19 +141,22 @@ renderSpec =
         isNothing (decode (link "\"embed\"") :: Maybe Link)
 
       it "encode writes the format's spelling" $
-        encode (Link eURI "item" Nothing (Just RenderImage) Nothing) `shouldBe` link "\"image\""
+        encode (Link exampleURI "item" Nothing (Just RenderImage) Nothing) `shouldBe` link "\"image\""
  where
   link r = "{\"href\":\"http://example.com\",\"rel\":\"item\",\"render\":" <> r <> "}" :: BL.ByteString
   lRenderOf r = fmap lRender (decode (link r) :: Maybe Link)
 
-  eURI = uri "http://example.com"
-
 versionSpec :: Spec
 versionSpec =
   describe "'Collection' version" $
-    it "decode passes through a version other than 1.0" $
-      fmap cVersion (decode "{\"collection\":{\"version\":\"1.1\"}}" :: Maybe Collection)
-        `shouldBe` Just "1.1"
+    do
+      it "decode defaults an absent version to 1.0" $
+        cVersionOf "{\"collection\":{}}" `shouldBe` Just "1.0"
+
+      it "decode passes through a version other than 1.0" $
+        cVersionOf "{\"collection\":{\"version\":\"1.1\"}}" `shouldBe` Just "1.1"
+ where
+  cVersionOf d = fmap cVersion (decode d :: Maybe Collection)
 
 propertiesSpec :: Spec
 propertiesSpec =
@@ -194,21 +200,16 @@ missingKeysSpec =
             encode (Template []) `shouldBe` mTemplate
 
           it "Query" $
-            encode (Query eURI "item" Nothing Nothing []) `shouldBe` mQuery
+            encode (Query exampleURI "item" Nothing Nothing []) `shouldBe` mQuery
 
           it "Item" $
-            encode (Item (Just eURI) [] []) `shouldBe` mItem
+            encode (Item (Just exampleURI) [] []) `shouldBe` mItem
 
           it "Link" $
-            encode (Link eURI "item" Nothing Nothing Nothing) `shouldBe` mLink
+            encode (Link exampleURI "item" Nothing Nothing Nothing) `shouldBe` mLink
 
           it "Collection" $
-            encode (Collection "1.0" eURI [] [] [] Nothing Nothing) `shouldBe` mCollection
-
-      context "decode supplies defaults for absent optional keys" $
-        do
-          it "Collection \"version\" defaults to 1.0" $
-            fmap cVersion (decode "{\"collection\":{}}" :: Maybe Collection) `shouldBe` Just "1.0"
+            encode (Collection "1.0" exampleURI [] [] [] Nothing Nothing) `shouldBe` mCollection
  where
   mDatum = "{\"name\":\"name\"}" :: BL.ByteString
   mError = "{}" :: BL.ByteString
@@ -217,5 +218,3 @@ missingKeysSpec =
   mItem = "{\"href\":\"http://example.com\"}" :: BL.ByteString
   mLink = "{\"href\":\"http://example.com\",\"rel\":\"item\"}" :: BL.ByteString
   mCollection = "{\"collection\":{\"href\":\"http://example.com\",\"version\":\"1.0\"}}" :: BL.ByteString
-
-  eURI = uri "http://example.com"

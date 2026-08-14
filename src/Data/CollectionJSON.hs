@@ -43,7 +43,8 @@ module Data.CollectionJSON (
 ) where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toJSON), Value (Bool, Number, String), object, withObject, withText, (.!=), (.:), (.:?), (.=))
-import Data.Aeson.Types (typeMismatch)
+import Data.Aeson.Key (Key)
+import Data.Aeson.Types (Pair, typeMismatch)
 import Data.Maybe (catMaybes)
 import Data.Scientific (Scientific)
 import Data.Text (Text, unpack)
@@ -95,9 +96,9 @@ instance ToJSON Collection where
             ( catMaybes
                 [ Just $ "version" .= cVersion
                 , Just $ "href" .= cHref
-                , if null cLinks then Nothing else Just $ "links" .= cLinks
-                , if null cItems then Nothing else Just $ "items" .= cItems
-                , if null cQueries then Nothing else Just $ "queries" .= cQueries
+                , omitEmpty "links" cLinks
+                , omitEmpty "items" cItems
+                , omitEmpty "queries" cQueries
                 , (.=) "template" <$> cTemplate
                 , (.=) "error" <$> cError
                 ]
@@ -194,8 +195,8 @@ instance ToJSON Item where
     object $
       catMaybes
         [ (.=) "href" <$> iHref
-        , if null iData then Nothing else Just $ "data" .= iData
-        , if null iLinks then Nothing else Just $ "links" .= iLinks
+        , omitEmpty "data" iData
+        , omitEmpty "links" iLinks
         ]
 
 {- |
@@ -247,7 +248,7 @@ instance ToJSON Query where
         , Just $ "rel" .= qRel
         , (.=) "name" <$> qName
         , (.=) "prompt" <$> qPrompt
-        , if null qData then Nothing else Just $ "data" .= qData
+        , omitEmpty "data" qData
         ]
 
 -- | A fillable template for creation of a new object in the 'Collection'.
@@ -364,6 +365,12 @@ class ToCollection a where
 
 instance ToCollection Collection where
   toCollection = id
+
+{- Every array in the format is optional, and an empty one says nothing a
+missing one doesn't, so encoding leaves it out.
+-}
+omitEmpty :: ToJSON a => Key -> [a] -> Maybe Pair
+omitEmpty k xs = if null xs then Nothing else Just (k .= xs)
 
 {- aeson's @FromJSON URI@ accepts absolute URIs only. Decoding through it
 would break round-tripping, because the @href@ fields hold an
