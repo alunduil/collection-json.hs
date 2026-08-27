@@ -1,8 +1,7 @@
 root = true
 
-# The whitespace and line-ending settings pair with the pre-commit hooks
-# that enforce them after the fact (mixed-line-ending, trailing-whitespace,
-# end-of-file-fixer); changing one side means changing the other.
+# The pre-commit hooks enforce these same rules on commit. Change both
+# sides together, or the hooks overwrite what the editor produced.
 [*]
 charset = utf-8
 end_of_line = lf
