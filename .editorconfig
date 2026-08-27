@@ -1,0 +1,28 @@
+root = true
+
+# The whitespace settings below duplicate what the pre-commit hooks
+# (trailing-whitespace, end-of-file-fixer, mixed-line-ending) enforce;
+# changing one means changing the other. Indentation is scoped per file
+# type rather than set on [*] so the vendored .vale/styles/ tree keeps
+# whatever its upstream uses.
+[*]
+charset = utf-8
+end_of_line = lf
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.hs]
+indent_style = space
+indent_size = 2
+
+[*.cabal]
+indent_style = space
+indent_size = 2
+
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+[*.md]
+indent_style = space
+indent_size = 2
