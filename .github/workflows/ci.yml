@@ -146,3 +146,18 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ${{ steps.report.outputs.report }}
           fail_ci_if_error: true
+
+  # The one check name the default-branch ruleset requires. The matrix leg
+  # names carry their GHC version, so they change as versions age out and a
+  # ruleset pinning them would gate merges on checks that no longer run.
+  results:
+    name: Check CI results
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [build, coverage]
+    if: always()
+
+    steps:
+      - name: Fail when any job did not succeed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
+        run: exit 1
