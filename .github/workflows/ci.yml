@@ -147,9 +147,9 @@ jobs:
           files: ${{ steps.report.outputs.report }}
           fail_ci_if_error: true
 
-  # The one check name the default-branch ruleset requires. The matrix leg
-  # names carry their GHC version, so they change as versions age out and a
-  # ruleset pinning them would gate merges on checks that no longer run.
+  # The stable check name the default-branch ruleset pins: renaming this job
+  # breaks the merge gate. Requiring the matrix legs directly would block
+  # merges once a GHC version ages out and its check stops reporting.
   results:
     name: Check CI results
     runs-on: ubuntu-latest
