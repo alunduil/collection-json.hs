@@ -11,9 +11,18 @@
 # An incidental export forces a major PVP bump.
 - warn: {name: Use explicit module export list}
 
-# unsafePerformIO has no place in a pure data-modelling library.
+# The partial groups already flag head and fromJust; these are the
+# names they miss.
 - functions:
-    - {name: unsafePerformIO, within: []}
+    - name: unsafePerformIO
+      within: []
+      message: A pure data-modelling library has no IO to escape from.
+    - name: [error, undefined]
+      within: []
+      message: Report failure through the aeson parser.
+    - name: read
+      within: []
+      message: Use readMaybe.
 
 # Hard-coded literal URIs in tests are safe to fromJust; the failure
 # mode would surface on first run, not at a customer.
