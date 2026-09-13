@@ -6,6 +6,7 @@
 - group: {name: future, enabled: true}
 - group: {name: partial, enabled: true}
 - group: {name: partial-strict, enabled: true}
+- group: {name: generalise, enabled: true}
 
 # An incidental export forces a major PVP bump.
 - warn: {name: Use explicit module export list}

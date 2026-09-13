@@ -91,13 +91,13 @@ instance ToJSON Collection where
       [ "collection"
           .= object
             ( catMaybes
-                [ Just $ "version" .= cVersion
-                , Just $ "href" .= cHref
+                [ always "version" cVersion
+                , always "href" cHref
                 , omitEmpty "links" cLinks
                 , omitEmpty "items" cItems
                 , omitEmpty "queries" cQueries
-                , (.=) "template" <$> cTemplate
-                , (.=) "error" <$> cError
+                , omitAbsent "template" cTemplate
+                , omitAbsent "error" cError
                 ]
             )
       ]
@@ -138,11 +138,11 @@ instance ToJSON Link where
   toJSON Link{..} =
     object $
       catMaybes
-        [ Just $ "href" .= lHref
-        , Just $ "rel" .= lRel
-        , (.=) "name" <$> lName
-        , (.=) "render" <$> lRender
-        , (.=) "prompt" <$> lPrompt
+        [ always "href" lHref
+        , always "rel" lRel
+        , omitAbsent "name" lName
+        , omitAbsent "render" lRender
+        , omitAbsent "prompt" lPrompt
         ]
 
 -- | How a user agent should present the resource a 'Link' addresses.
@@ -191,7 +191,7 @@ instance ToJSON Item where
   toJSON Item{..} =
     object $
       catMaybes
-        [ (.=) "href" <$> iHref
+        [ omitAbsent "href" iHref
         , omitEmpty "data" iData
         , omitEmpty "links" iLinks
         ]
@@ -241,10 +241,10 @@ instance ToJSON Query where
   toJSON Query{..} =
     object $
       catMaybes
-        [ Just $ "href" .= qHref
-        , Just $ "rel" .= qRel
-        , (.=) "name" <$> qName
-        , (.=) "prompt" <$> qPrompt
+        [ always "href" qHref
+        , always "rel" qRel
+        , omitAbsent "name" qName
+        , omitAbsent "prompt" qPrompt
         , omitEmpty "data" qData
         ]
 
@@ -289,9 +289,9 @@ instance ToJSON Error where
   toJSON Error{..} =
     object $
       catMaybes
-        [ (.=) "title" <$> eTitle
-        , (.=) "code" <$> eCode
-        , (.=) "message" <$> eMessage
+        [ omitAbsent "title" eTitle
+        , omitAbsent "code" eCode
+        , omitAbsent "message" eMessage
         ]
 
 -- | Contents of a 'Collection' 'Item'.
@@ -319,9 +319,9 @@ instance ToJSON Datum where
   toJSON Datum{..} =
     object $
       catMaybes
-        [ Just $ "name" .= dName
-        , (.=) "value" <$> dValue
-        , (.=) "prompt" <$> dPrompt
+        [ always "name" dName
+        , omitAbsent "value" dValue
+        , omitAbsent "prompt" dPrompt
         ]
 
 {- |
@@ -361,11 +361,17 @@ class ToCollection a where
 instance ToCollection Collection where
   toCollection = id
 
+always :: ToJSON a => Key -> a -> Maybe Pair
+always k = Just . (k .=)
+
 {- Every array in the format is optional, and an empty one says nothing
 a missing one doesn't.
 -}
 omitEmpty :: ToJSON a => Key -> [a] -> Maybe Pair
 omitEmpty k xs = if null xs then Nothing else Just (k .= xs)
+
+omitAbsent :: ToJSON a => Key -> Maybe a -> Maybe Pair
+omitAbsent k = fmap (k .=)
 
 {- aeson's @FromJSON URI@ accepts absolute URIs only. Decoding through it
 would break round-tripping, because the @href@ fields hold an
