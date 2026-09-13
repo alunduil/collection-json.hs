@@ -11,8 +11,16 @@
 - warn: {name: Use explicit module export list}
 
 # unsafePerformIO has no place in a pure data-modelling library.
+#
+# The partial groups above reach the list and Maybe eliminators but not
+# the three below, which are what remains for putting a bottom in a
+# total API. A decoder that cannot make sense of its input says so
+# through the aeson parser's failure channel; readMaybe covers the rest.
 - functions:
     - {name: unsafePerformIO, within: []}
+    - {name: error, within: []}
+    - {name: undefined, within: []}
+    - {name: read, within: []}
 
 # Hard-coded literal URIs in tests are safe to fromJust; the failure
 # mode would surface on first run, not at a customer.
