@@ -10,18 +10,18 @@
 # An incidental export forces a major PVP bump.
 - warn: {name: Use explicit module export list}
 
-# The partial groups above cover the list and Maybe eliminators, so
-# head and fromJust need nothing here. These are what those groups
-# leave reachable.
+# The partial groups already flag head and fromJust; these are the
+# names they miss.
 - functions:
     - name: unsafePerformIO
       within: []
       message: A pure data-modelling library has no IO to escape from.
-    - name: [error, undefined, read]
+    - name: [error, undefined]
       within: []
-      message: >-
-        Decoders report failure through the aeson parser; readMaybe
-        covers read.
+      message: Report failure through the aeson parser.
+    - name: read
+      within: []
+      message: Use readMaybe.
 
 # Hard-coded literal URIs in tests are safe to fromJust; the failure
 # mode would surface on first run, not at a customer.
