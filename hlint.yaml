@@ -6,10 +6,6 @@
 - group: {name: future, enabled: true}
 - group: {name: partial, enabled: true}
 - group: {name: partial-strict, enabled: true}
-
-# The exposed records hold list fields. Writing them through Functor and
-# Semigroup rather than list-specific operators keeps call sites intact if a
-# field's container ever changes.
 - group: {name: generalise, enabled: true}
 
 # unsafePerformIO has no place in a pure data-modelling library.
