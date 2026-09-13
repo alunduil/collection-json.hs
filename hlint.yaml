@@ -7,8 +7,7 @@
 - group: {name: partial, enabled: true}
 - group: {name: partial-strict, enabled: true}
 
-# An incidental export forces a major PVP bump, so every module states its
-# export list rather than leaking whatever it happens to define.
+# An incidental export forces a major PVP bump.
 - warn: {name: Use explicit module export list}
 
 # unsafePerformIO has no place in a pure data-modelling library.
