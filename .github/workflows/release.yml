@@ -34,7 +34,7 @@ jobs:
             exit 1
           fi
 
-      - uses: haskell-actions/setup@6037f33647c3f17758a2356c80fc4a53d7e0685d # v2
+      - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
         with:
           ghc-version: 'latest'
           cabal-version: 'latest'
@@ -77,7 +77,7 @@ jobs:
             exit 1
           fi
 
-      - uses: haskell-actions/setup@6037f33647c3f17758a2356c80fc4a53d7e0685d # v2
+      - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
         with:
           ghc-version: 'latest'
           cabal-version: 'latest'
