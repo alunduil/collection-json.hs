@@ -29,7 +29,7 @@
       "minimumReleaseAge": null
     }
   ],
-  "osvVulnerabilityAlerts": false,
+  "osvVulnerabilityAlerts": true,
   "pre-commit": {
     "enabled": true
   }
