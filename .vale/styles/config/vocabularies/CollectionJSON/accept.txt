@@ -3,6 +3,7 @@
 # (prefix (?i) for case-insensitive). Keep this lean — add a term only
 # when it recurs in linted prose, not for one-off mentions.
 
+actionlint
 Codecov
 Fourmolu
 Hackage

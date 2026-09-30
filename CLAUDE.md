@@ -20,8 +20,9 @@ Single-package project (`cabal.project`: `packages: .`).
 - **Lint / format**: `pre-commit` (`.pre-commit-config.yaml`) runs
   fourmolu (`fourmolu.yaml`), hlint (`hlint.yaml`), markdownlint
   (`.markdownlint.jsonc`), Vale (`.vale.ini`; styles vendored under
-  `.vale/styles`, no `vale sync`). fourmolu/hlint run from PATH, pinned
-  in `.github/workflows/pre-commit.yml` (not the pre-commit config).
+  `.vale/styles`, no `vale sync`), actionlint. fourmolu/hlint run from
+  PATH, pinned in `.github/workflows/pre-commit.yml` (not the
+  pre-commit config).
 - **CI**: `ci.yml` (GHC matrix above × ubuntu/macos, builds from the
   sdist; `coverage` job → Codecov, `codecov.yml`), `pre-commit.yml`,
   `links.yml` (lychee, `lychee.toml`), `ghc-matrix.yml` (weekly:
