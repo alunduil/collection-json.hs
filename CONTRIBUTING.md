@@ -33,8 +33,7 @@ resolution failure that reads like a broken build.
 ## Formatting and linting
 
 Formatting (Fourmolu), Haskell linting (HLint), Markdown linting
-(markdownlint-cli2), prose linting (Vale), and workflow linting
-(actionlint) run through
+(markdownlint-cli2), and prose linting (Vale) run through
 [pre-commit](https://pre-commit.com). The `Pre-commit` workflow runs
 the same hooks on every push and PR; merges are blocked until they
 pass.
@@ -49,7 +48,8 @@ The Haskell hooks shell out to `fourmolu` and `hlint` from `PATH`,
 so install them locally (`cabal install fourmolu hlint`, or via
 `ghcup`). The pinned versions used by CI live at the top of
 [`.github/workflows/pre-commit.yml`](.github/workflows/pre-commit.yml).
-Vale and actionlint need no local install; pre-commit builds both.
+Vale, by contrast, is built and its styles fetched by pre-commit, so
+it needs no local install.
 
 ## Branch policy
 
