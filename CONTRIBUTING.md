@@ -105,5 +105,3 @@ the same PR as your first contribution if you want attribution.
 [gfi]: https://github.com/alunduil/collection-json.hs/labels/good%20first%20issue
 [hw]: https://github.com/alunduil/collection-json.hs/labels/help%20wanted
 [question]: https://github.com/alunduil/collection-json.hs/labels/question
-
-This failure was written by the gate test.
