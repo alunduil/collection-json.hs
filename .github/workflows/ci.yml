@@ -147,12 +147,9 @@ jobs:
           files: ${{ steps.report.outputs.report }}
           fail_ci_if_error: true
 
-  # vale's exit code ignores non-error severities, so reviewdog supplies the
-  # gate: warnings on the lines a PR adds fail, suggestions only annotate.
-  # Error severity stays covered tree-wide by the pre-commit hook. The gate
-  # step needs PR context (filter-mode=added, github-pr-check), so only it is
-  # guarded; on push the job just installs its tools and succeeds, letting
-  # `results` require it.
+  # vale exits zero on warnings, so reviewdog gates them; the pre-commit hook
+  # gates errors tree-wide. reviewdog needs a PR diff, so only its step is
+  # guarded: on push the job succeeds empty and `results` can still require it.
   prose:
     name: Check prose
     runs-on: ubuntu-latest
@@ -162,7 +159,7 @@ jobs:
       checks: write
 
     env:
-      # Keep in step with the vale hook's rev in .pre-commit-config.yaml.
+      # Match the vale hook's rev in .pre-commit-config.yaml.
       # renovate: datasource=github-releases depName=errata-ai/vale extractVersion=^v(?<version>.+)$
       VALE_VERSION: "3.21.0"
       # renovate: datasource=github-releases depName=reviewdog/reviewdog
@@ -189,7 +186,7 @@ jobs:
         if: github.event_name == 'pull_request'
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # An explicit bash shell adds pipefail, so a vale crash fails the step.
+        # Explicit bash enables pipefail; without it a vale crash passes.
         shell: bash
         run: |
           vale --no-exit --output=JSON . \
