@@ -158,7 +158,7 @@ jobs:
   # guarded: on push the job succeeds empty and `results` can still require it.
   prose:
     name: Check prose
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read
