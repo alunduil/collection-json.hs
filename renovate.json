@@ -31,9 +31,8 @@
   ],
   "customManagers": [
     {
-      // The github-actions manager reads runner labels only from a literal
-      // `runs-on:`, so labels reached through
-      // `runs-on: ${{ matrix.runner }}` need their own manager.
+      // The github-actions manager skips `runs-on:` expressions, so runner
+      // labels in a job matrix need their own manager.
       "customType": "regex",
       "managerFilePatterns": ["/^\\.github/workflows/[^/]+\\.ya?ml$/"],
       "matchStringsStrategy": "recursive",
