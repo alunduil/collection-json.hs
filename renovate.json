@@ -29,22 +29,6 @@
       "minimumReleaseAge": null
     }
   ],
-  "customManagers": [
-    {
-      // The github-actions manager skips `runs-on:` expressions, so runner
-      // labels in a job matrix need their own manager.
-      "customType": "regex",
-      "managerFilePatterns": ["/^\\.github/workflows/[^/]+\\.ya?ml$/"],
-      "matchStringsStrategy": "recursive",
-      "matchStrings": [
-        "\\brunner:\\s*\\[[^\\]]*\\]",
-        "(?<depName>[a-zA-Z]+)-(?<currentValue>[\\w.-]+)"
-      ],
-      "datasourceTemplate": "github-runners",
-      "versioningTemplate": "docker",
-      "depTypeTemplate": "github-runner"
-    }
-  ],
   "osvVulnerabilityAlerts": true,
   "pre-commit": {
     "enabled": true

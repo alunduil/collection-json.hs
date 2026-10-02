@@ -15,15 +15,22 @@ concurrency:
 
 jobs:
   build:
-    name: GHC ${{ matrix.ghc }} / ${{ matrix.runner }}
-    runs-on: ${{ matrix.runner }}
+    name: GHC ${{ matrix.ghc }} / ${{ matrix.os }}-${{ matrix.OS_VERSION }}
+    runs-on: ${{ matrix.os }}-${{ matrix.OS_VERSION }}
     timeout-minutes: 30
 
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-24.04, macos-26]
+        os: [ubuntu, macos]
         ghc: ["9.6", "9.8", "9.10", "9.12", "9.14"]
+        include:
+          - os: ubuntu
+            # renovate: datasource=github-runners depName=ubuntu
+            OS_VERSION: "24.04"
+          - os: macos
+            # renovate: datasource=github-runners depName=macos
+            OS_VERSION: "26"
 
     steps:
       - name: Checkout
