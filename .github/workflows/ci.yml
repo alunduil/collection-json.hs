@@ -15,14 +15,14 @@ concurrency:
 
 jobs:
   build:
-    name: GHC ${{ matrix.ghc }} / ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: GHC ${{ matrix.ghc }} / ${{ matrix.runner }}
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-26]
+        runner: [ubuntu-24.04, macos-26]
         ghc: ["9.6", "9.8", "9.10", "9.12", "9.14"]
 
     steps:
