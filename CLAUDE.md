@@ -24,7 +24,8 @@ Single-package project (`cabal.project`: `packages: .`).
   PATH, pinned in `.github/workflows/pre-commit.yml` (not the
   pre-commit config).
 - **CI**: `ci.yml` (GHC matrix above × ubuntu/macos, builds from the
-  sdist; `coverage` job → Codecov, `codecov.yml`), `pre-commit.yml`,
+  sdist; `coverage` job → Codecov, `codecov.yml`; `prose` job → Vale
+  warnings on PR-added lines via reviewdog), `pre-commit.yml`,
   `links.yml` (lychee, `lychee.toml`), `ghc-matrix.yml` (weekly:
   files/refreshes a tracking issue when the matrix drifts from the GHC
   series endoflife.date still lists as not end-of-life).

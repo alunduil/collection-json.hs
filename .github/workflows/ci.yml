@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
 
 permissions:
   contents: read
@@ -154,6 +153,65 @@ jobs:
           files: ${{ steps.report.outputs.report }}
           fail_ci_if_error: true
 
+  # vale exits zero on warnings, so reviewdog gates them; the pre-commit hook
+  # gates errors tree-wide. reviewdog needs a PR diff, so only its step is
+  # guarded: on push the job succeeds empty and `results` can still require it.
+  prose:
+    name: Check prose
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      checks: write
+
+    env:
+      # Match the vale hook's rev in .pre-commit-config.yaml.
+      # renovate: datasource=github-releases depName=errata-ai/vale extractVersion=^v(?<version>.+)$
+      VALE_VERSION: "3.21.0"
+      # renovate: datasource=github-releases depName=reviewdog/reviewdog
+      REVIEWDOG_VERSION: "v0.21.2"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Vale
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL \
+            "https://github.com/errata-ai/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz" \
+            | tar xz -C "$HOME/.local/bin" vale
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Set up reviewdog
+        uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
+        with:
+          reviewdog_version: ${{ env.REVIEWDOG_VERSION }}
+
+      - name: Check prose on changed lines
+        if: github.event_name == 'pull_request'
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Explicit bash enables pipefail; without it a vale crash passes.
+        shell: bash
+        run: |
+          vale --no-exit --output=JSON . \
+            | jq -c '
+              to_entries[] | .key as $p | .value[] | {
+                message: .Message,
+                location: {
+                  path: $p,
+                  range: {
+                    start: {line: .Line, column: .Span[0]},
+                    end: {line: .Line, column: (.Span[1] + 1)},
+                  },
+                },
+                severity: ({error: "ERROR", warning: "WARNING", suggestion: "INFO"}[.Severity]),
+                code: {value: .Check},
+              }' \
+            | reviewdog -f=rdjsonl -name=vale \
+                -reporter=github-pr-check -filter-mode=added -fail-level=warning
+
   # The stable check name the default-branch ruleset pins: renaming this job
   # breaks the merge gate. Requiring the matrix legs directly would block
   # merges once a GHC version ages out and its check stops reporting.
@@ -161,7 +219,7 @@ jobs:
     name: Check CI results
     runs-on: ubuntu-24.04
     timeout-minutes: 5
-    needs: [build, coverage]
+    needs: [build, coverage, prose]
     if: always()
 
     steps:
