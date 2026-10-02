@@ -29,6 +29,23 @@
       "minimumReleaseAge": null
     }
   ],
+  "customManagers": [
+    {
+      // The github-actions manager reads runner labels only from a literal
+      // `runs-on:`, so labels reached through `runs-on: ${{ matrix.os }}`
+      // need their own manager.
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/workflows/[^/]+\\.ya?ml$/"],
+      "matchStringsStrategy": "recursive",
+      "matchStrings": [
+        "\\bos:\\s*\\[[^\\]]*\\]",
+        "(?<depName>ubuntu|macos|windows)-(?<currentValue>[\\w.-]+)"
+      ],
+      "datasourceTemplate": "github-runners",
+      "versioningTemplate": "docker",
+      "depTypeTemplate": "github-runner"
+    }
+  ],
   "osvVulnerabilityAlerts": true,
   "pre-commit": {
     "enabled": true
