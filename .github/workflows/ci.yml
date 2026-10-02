@@ -161,7 +161,7 @@ jobs:
     env:
       # Match the vale hook's rev in .pre-commit-config.yaml.
       # renovate: datasource=github-releases depName=errata-ai/vale extractVersion=^v(?<version>.+)$
-      VALE_VERSION: "3.21.0"
+      VALE_VERSION: "3.23.0"
       # renovate: datasource=github-releases depName=reviewdog/reviewdog
       REVIEWDOG_VERSION: "v0.21.2"
 
