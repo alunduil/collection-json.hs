@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   build:
-    name: GHC ${{ matrix.ghc }} / ${{ matrix.os }}-${{ matrix.OS_VERSION }}
+    name: GHC ${{ matrix.ghc }} / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}-${{ matrix.OS_VERSION }}
     timeout-minutes: 30
 
