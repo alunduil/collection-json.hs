@@ -51,11 +51,6 @@ so install them locally (`cabal install fourmolu hlint`, or via
 Vale, by contrast, is built and its styles fetched by pre-commit, so
 it needs no local install.
 
-Pre-commit fails only on Vale errors. On pull requests, the
-`Check prose` job also fails on Vale warnings in lines the PR adds.
-To see those warnings before pushing, install Vale and run
-`vale <file>`.
-
 ## Branch policy
 
 Trunk-based. `main` is the only long-lived branch and the merge
