@@ -14,17 +14,20 @@ permissions:
   contents: read
 
 jobs:
-  candidate:
-    name: Upload Hackage candidate
-    if: github.event_name == 'push'
+  version:
+    name: Resolve release version
     runs-on: ubuntu-24.04
-    environment: hackage
+    outputs:
+      version: ${{ steps.verify.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.tag }}
 
       - name: Verify tag matches cabal version
+        id: verify
         env:
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           cabal_version="$(grep -i '^version:' collection-json.cabal | awk '{print $2}')"
           tag_version="${TAG#v}"
@@ -33,6 +36,16 @@ jobs:
             echo "::error::Tag $TAG resolves to version $tag_version but collection-json.cabal declares $cabal_version"
             exit 1
           fi
+          echo "version=$cabal_version" >> "$GITHUB_OUTPUT"
+
+  candidate:
+    name: Upload Hackage candidate
+    needs: version
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    environment: hackage
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
         with:
@@ -61,35 +74,32 @@ jobs:
   # would propagate that skip down the chain.
   candidate-ghc:
     name: Read candidate GHC range
-    needs: candidate
-    if: ${{ !cancelled() && (needs.candidate.result == 'success' || github.event_name == 'workflow_dispatch') }}
+    needs: [version, candidate]
+    if: ${{ !cancelled() && needs.version.result == 'success' && (needs.candidate.result == 'success' || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-24.04
     outputs:
       tarball: ${{ steps.range.outputs.tarball }}
-      ghc: ${{ steps.range.outputs.ghc }}
+      ghc-versions: ${{ steps.range.outputs.ghc-versions }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.tag }}
+
       # The ends of tested-with catch both lower- and upper-bound solve
       # failures without paying for the full CI matrix on every release.
       - name: Read tested-with ends from the candidate
         id: range
         env:
-          TAG: ${{ inputs.tag || github.ref_name }}
+          VERSION: ${{ needs.version.outputs.version }}
         run: |
           set -euo pipefail
-          version="${TAG#v}"
-          version="${version%%-*}"
-          base="https://hackage.haskell.org/package/collection-json-$version/candidate"
-          ghc=$(curl -fsSL "$base/collection-json.cabal" \
-            | grep -oE 'GHC == [0-9]+\.[0-9]+' \
-            | grep -oE '[0-9]+\.[0-9]+' \
-            | sort -V | sed -n '1p;$p' | uniq \
+          base="https://hackage.haskell.org/package/collection-json-$VERSION/candidate"
+          ghc_versions=$(curl -fsSL "$base/collection-json.cabal" \
+            | .github/scripts/tested-with-ghc.sh \
+            | sed -n '1p;$p' | uniq \
             | jq -Rnc '[inputs]')
-          if [ "$ghc" = "[]" ]; then
-            echo "::error::No tested-with GHC versions in the $TAG candidate"
-            exit 1
-          fi
-          echo "tarball=$base/collection-json-$version.tar.gz" >> "$GITHUB_OUTPUT"
-          echo "ghc=$ghc" >> "$GITHUB_OUTPUT"
+          echo "tarball=$base/collection-json-$VERSION.tar.gz" >> "$GITHUB_OUTPUT"
+          echo "ghc-versions=$ghc_versions" >> "$GITHUB_OUTPUT"
 
   # Builds from the uploaded candidate in a workspace with no checkout, so
   # its published bounds solve against the current index exactly as a
@@ -102,7 +112,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ghc: ${{ fromJSON(needs.candidate-ghc.outputs.ghc) }}
+        ghc: ${{ fromJSON(needs.candidate-ghc.outputs.ghc-versions) }}
     steps:
       - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
         with:
@@ -135,18 +145,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ inputs.tag }}
-
-      - name: Verify tag matches cabal version
-        env:
-          TAG: ${{ inputs.tag }}
-        run: |
-          cabal_version="$(grep -i '^version:' collection-json.cabal | awk '{print $2}')"
-          tag_version="${TAG#v}"
-          tag_version="${tag_version%%-*}"
-          if [ "$cabal_version" != "$tag_version" ]; then
-            echo "::error::Tag $TAG resolves to version $tag_version but collection-json.cabal declares $cabal_version"
-            exit 1
-          fi
 
       - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
         with:

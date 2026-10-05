@@ -47,8 +47,7 @@ jobs:
           matrix=$(yq '.jobs.build.strategy.matrix.ghc[]' \
             .github/workflows/ci.yml | sort -V)
 
-          tested=$(grep -oE 'GHC == [0-9]+\.[0-9]+' collection-json.cabal \
-            | grep -oE '[0-9]+\.[0-9]+' | sort -V)
+          tested=$(.github/scripts/tested-with-ghc.sh < collection-json.cabal)
 
           # An empty set on either side means a parse failure or a moved
           # field; abort rather than file a spurious drift issue.
