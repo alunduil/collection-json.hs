@@ -29,7 +29,7 @@ Single-package project (`cabal.project`: `packages: .`).
   `links.yml` (lychee, `lychee.toml`), `ghc-matrix.yml` (weekly:
   files/refreshes a tracking issue when the matrix drifts from the GHC
   series endoflife.date still lists as not end-of-life), `daily.yml`
-  (closes pull requests after 44 quiet days; Renovate's `dependencies`
+  (closes quiet pull requests; Renovate's `dependencies`
   label exempts its pull requests).
 - **Publish**: `.github/workflows/release.yml` — see Release process.
 - **Deps / versioning**: `renovate.json`; Haskell PVP.
