@@ -3,8 +3,8 @@ name: Release
 on:
   push:
     tags: ['v*']
-  # Dispatched on the release tag's ref (--ref v<version>) so the hackage
-  # environment can be scoped to v* tags.
+  # Environment deployment rules match the run's ref, so publish reads its
+  # tag from the dispatch ref rather than an input.
   workflow_dispatch:
 
 permissions:
