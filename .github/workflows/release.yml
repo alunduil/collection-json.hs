@@ -127,3 +127,36 @@ jobs:
         env:
           HACKAGE_KEY: ${{ secrets.HACKAGE_TOKEN }}
         run: cabal upload --publish --documentation dist-newstyle/*-docs.tar.gz
+
+  github-release:
+    name: Create GitHub Release
+    needs: publish
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: Extract changelog entry
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          version="${TAG#v}"
+          version="${version%%-*}"
+          awk -v heading="## [$version]" '
+            index($0, heading) == 1 { found = 1; next }
+            found && (/^## / || /^\[[^]]+\]: /) { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            echo "::error::CHANGELOG.md has no entry for $version"
+            exit 1
+          fi
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: gh release create "$TAG" --verify-tag --title "$TAG" --notes-file release-notes.md
