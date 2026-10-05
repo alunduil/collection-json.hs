@@ -49,10 +49,10 @@ jobs:
 
           tested=$(.github/scripts/tested-with-ghc.sh < collection-json.cabal)
 
-          # An empty set on either side means a parse failure or a moved
-          # field; abort rather than file a spurious drift issue.
-          if [ -z "$matrix" ] || [ -z "$tested" ]; then
-            echo "could not parse the CI matrix or tested-with; aborting" >&2
+          # An empty matrix means a parse failure or a moved field; abort
+          # rather than file a spurious drift issue.
+          if [ -z "$matrix" ]; then
+            echo "could not parse the CI matrix; aborting" >&2
             exit 1
           fi
 

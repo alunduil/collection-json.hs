@@ -14,11 +14,12 @@ permissions:
   contents: read
 
 jobs:
-  version:
-    name: Resolve release version
+  metadata:
+    name: Read release metadata
     runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.verify.outputs.version }}
+      ghc-versions: ${{ steps.range.outputs.ghc-versions }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -38,9 +39,20 @@ jobs:
           fi
           echo "version=$cabal_version" >> "$GITHUB_OUTPUT"
 
+      # The ends of tested-with catch both lower- and upper-bound solve
+      # failures without paying for the full CI matrix on every release.
+      - name: Read tested-with ends
+        id: range
+        run: |
+          set -euo pipefail
+          ghc_versions=$(.github/scripts/tested-with-ghc.sh < collection-json.cabal \
+            | sed -n '1p;$p' | uniq \
+            | jq -Rnc '[inputs]')
+          echo "ghc-versions=$ghc_versions" >> "$GITHUB_OUTPUT"
+
   candidate:
     name: Upload Hackage candidate
-    needs: version
+    needs: metadata
     if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     environment: hackage
@@ -71,47 +83,19 @@ jobs:
   # The smoke test runs after the upload for early feedback and before
   # publish, which runs as a separate dispatch. Dispatch skips candidate,
   # and the implicit success() skips every job downstream of a skip, so
-  # these jobs check needs results explicitly.
-  candidate-ghc:
-    name: Read candidate GHC range
-    needs: [version, candidate]
-    if: ${{ !cancelled() && needs.version.result == 'success' && (needs.candidate.result == 'success' || github.event_name == 'workflow_dispatch') }}
-    runs-on: ubuntu-24.04
-    outputs:
-      tarball: ${{ steps.range.outputs.tarball }}
-      ghc-versions: ${{ steps.range.outputs.ghc-versions }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          ref: ${{ inputs.tag }}
-
-      # The ends of tested-with catch both lower- and upper-bound solve
-      # failures without paying for the full CI matrix on every release.
-      - name: Read tested-with ends from the candidate
-        id: range
-        env:
-          VERSION: ${{ needs.version.outputs.version }}
-        run: |
-          set -euo pipefail
-          base="https://hackage.haskell.org/package/collection-json-$VERSION/candidate"
-          ghc_versions=$(curl -fsSL "$base/collection-json.cabal" \
-            | .github/scripts/tested-with-ghc.sh \
-            | sed -n '1p;$p' | uniq \
-            | jq -Rnc '[inputs]')
-          echo "tarball=$base/collection-json-$VERSION.tar.gz" >> "$GITHUB_OUTPUT"
-          echo "ghc-versions=$ghc_versions" >> "$GITHUB_OUTPUT"
-
+  # this job and publish check needs results explicitly.
+  #
   # No checkout, so nothing from the repo influences resolution: the
   # candidate's published bounds solve as a downstream consumer's would.
   smoke-test:
     name: Smoke-test candidate on GHC ${{ matrix.ghc }}
-    needs: candidate-ghc
-    if: ${{ !cancelled() && needs.candidate-ghc.result == 'success' }}
+    needs: [metadata, candidate]
+    if: ${{ !cancelled() && needs.metadata.result == 'success' && (needs.candidate.result == 'success' || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        ghc: ${{ fromJSON(needs.candidate-ghc.outputs.ghc-versions) }}
+        ghc: ${{ fromJSON(needs.metadata.outputs.ghc-versions) }}
     steps:
       - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
         with:
@@ -124,10 +108,11 @@ jobs:
       # non-local, and cabal won't build non-local test suites.
       - name: Download candidate
         env:
-          TARBALL: ${{ needs.candidate-ghc.outputs.tarball }}
+          VERSION: ${{ needs.metadata.outputs.version }}
         run: |
           mkdir candidate
-          curl -fsSL "$TARBALL" | tar xz -C candidate --strip-components=1
+          curl -fsSL "https://hackage.haskell.org/package/collection-json-$VERSION/candidate/collection-json-$VERSION.tar.gz" \
+            | tar xz -C candidate --strip-components=1
 
       # allow-newer mirrors ci.yml's network-arbitrary stopgap.
       - name: Build and test
