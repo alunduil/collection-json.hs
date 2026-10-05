@@ -9,6 +9,9 @@
   "reviewers": [
     "alunduil"
   ],
+  "labels": [
+    "dependencies"
+  ],
   "minimumReleaseAge": "3 days",
   // hackage reports no release timestamps, so the default
   // timestamp-required mode holds every cabal update forever rather than
