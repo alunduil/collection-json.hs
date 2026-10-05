@@ -39,7 +39,7 @@ jobs:
           fi
           echo "version=$cabal_version" >> "$GITHUB_OUTPUT"
 
-      # The ends of tested-with catch both lower- and upper-bound solve
+      # The ends of tested-with catch lower- and upper-bound solve
       # failures without paying for the full CI matrix on every release.
       - name: Read tested-with ends
         id: range
@@ -81,9 +81,9 @@ jobs:
         run: cabal upload --documentation dist-newstyle/*-docs.tar.gz
 
   # The smoke test runs after the upload for early feedback and before
-  # publish, which runs as a separate dispatch. Dispatch skips candidate,
-  # and the implicit success() skips every job downstream of a skip, so
-  # this job and publish check needs results explicitly.
+  # publish, which runs as a separate dispatch. Dispatch skips candidate.
+  # The implicit success() would then skip this job and publish, so both
+  # check needs results explicitly.
   #
   # No checkout, so nothing from the repo influences resolution: the
   # candidate's published bounds solve as a downstream consumer's would.
