@@ -25,17 +25,16 @@ jobs:
       STALE_DAYS: 30
       CLOSE_DAYS: 14
     steps:
-      # Both issue legs are disabled, not just marking: an issue already
-      # carrying the label would otherwise stay eligible for closing.
       - uses: actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93 # v11
         with:
+          # With only staling disabled, issues already carrying the stale
+          # label would still close.
           days-before-issue-stale: -1
           days-before-issue-close: -1
           days-before-pr-stale: ${{ env.STALE_DAYS }}
           days-before-pr-close: ${{ env.CLOSE_DAYS }}
-          # Closing a Renovate pull request tells Renovate the version is
-          # unwanted and it will not re-offer it. Renovate labels nothing by
-          # default, so this depends on renovate.json applying the label.
+          # Renovate never re-offers a version whose pull request was closed.
+          # renovate.json applies this label.
           exempt-pr-labels: dependencies
           stale-pr-message: >-
             This has been quiet for ${{ env.STALE_DAYS }} days, so it's picked
@@ -44,6 +43,5 @@ jobs:
             days.
           close-pr-message: >-
             Closing this after another ${{ env.CLOSE_DAYS }} quiet days. That
-            isn't a call on the change itself, and nothing is lost: the branch
-            stays where it is, so comment here if you want to pick it back up
-            and I'll reopen it.
+            isn't a call on the change itself. The branch stays where it is, so
+            comment here if you want to pick it back up and I'll reopen it.

@@ -9,6 +9,7 @@
   "reviewers": [
     "alunduil"
   ],
+  // The Daily workflow exempts this label from stale closing.
   "labels": [
     "dependencies"
   ],
