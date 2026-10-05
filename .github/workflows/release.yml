@@ -13,6 +13,9 @@ on:
 permissions:
   contents: read
 
+env:
+  CANDIDATE_ARTIFACT: hackage-candidate
+
 jobs:
   metadata:
     name: Read release metadata
@@ -70,6 +73,14 @@ jobs:
 
       - run: cabal haddock --haddock-for-hackage
 
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ env.CANDIDATE_ARTIFACT }}
+          path: |
+            dist-newstyle/sdist/*.tar.gz
+            dist-newstyle/*-docs.tar.gz
+          if-no-files-found: error
+
       - name: Upload sdist as candidate
         env:
           HACKAGE_KEY: ${{ secrets.HACKAGE_TOKEN }}
@@ -125,21 +136,36 @@ jobs:
     if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && needs.smoke-test.result == 'success' }}
     runs-on: ubuntu-24.04
     environment: hackage
+    permissions:
+      contents: read
+      actions: read
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      # Hackage publishes are irreversible, so ship the exact bytes reviewed
+      # as the candidate.
+      - name: Find candidate run
+        id: candidate-run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          run_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release.yml/runs?event=push&branch=$TAG&status=success" --jq '.workflow_runs[0].id // empty')"
+          if [ -z "$run_id" ]; then
+            echo "::error::No successful candidate run found for $TAG"
+            exit 1
+          fi
+          echo "run-id=$run_id" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          ref: ${{ inputs.tag }}
+          name: ${{ env.CANDIDATE_ARTIFACT }}
+          path: dist-newstyle
+          run-id: ${{ steps.candidate-run.outputs.run-id }}
+          github-token: ${{ github.token }}
 
       - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
         with:
           ghc-version: 'latest'
           cabal-version: 'latest'
-
-      - run: cabal update
-
-      - run: cabal sdist
-
-      - run: cabal haddock --haddock-for-hackage
 
       - name: Publish sdist
         env:
