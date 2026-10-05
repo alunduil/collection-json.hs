@@ -66,6 +66,37 @@ jobs:
           HACKAGE_KEY: ${{ secrets.HACKAGE_TOKEN }}
         run: cabal upload --documentation dist-newstyle/*-docs.tar.gz
 
+  draft-release:
+    name: Draft GitHub Release
+    needs: candidate
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Extract changelog entry
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="${TAG#v}"
+          version="${version%%-*}"
+          awk -v heading="## [$version]" '
+            index($0, heading) == 1 { found = 1; next }
+            found && (/^## / || /^\[[^]]+\]: /) { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            echo "::error::CHANGELOG.md has no entry for $version"
+            exit 1
+          fi
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release create "$TAG" --draft --verify-tag --title "$TAG" --notes-file release-notes.md
+
   publish:
     name: Publish to Hackage
     if: github.event_name == 'workflow_dispatch'
@@ -129,34 +160,14 @@ jobs:
         run: cabal upload --publish --documentation dist-newstyle/*-docs.tar.gz
 
   github-release:
-    name: Create GitHub Release
+    name: Publish GitHub Release
     needs: publish
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          ref: ${{ inputs.tag }}
-
-      - name: Extract changelog entry
-        env:
-          TAG: ${{ inputs.tag }}
-        run: |
-          version="${TAG#v}"
-          version="${version%%-*}"
-          awk -v heading="## [$version]" '
-            index($0, heading) == 1 { found = 1; next }
-            found && (/^## / || /^\[[^]]+\]: /) { exit }
-            found { print }
-          ' CHANGELOG.md > release-notes.md
-          if ! grep -q '[^[:space:]]' release-notes.md; then
-            echo "::error::CHANGELOG.md has no entry for $version"
-            exit 1
-          fi
-
-      - name: Create release
+      - name: Publish draft release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.tag }}
-        run: gh release create "$TAG" --verify-tag --title "$TAG" --notes-file release-notes.md
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
