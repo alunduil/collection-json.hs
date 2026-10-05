@@ -14,25 +14,36 @@ env:
   CANDIDATE_ARTIFACT: hackage-candidate
 
 jobs:
+  release-tag:
+    name: Check release tag
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require a tag ref
+        if: github.ref_type != 'tag'
+        run: |
+          echo "::error::Dispatch on the release tag (--ref v<version>), not ${GITHUB_REF}"
+          exit 1
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Verify tag matches cabal version
+        run: |
+          cabal_version="$(grep -i '^version:' collection-json.cabal | awk '{print $2}')"
+          tag_version="${GITHUB_REF_NAME#v}"
+          tag_version="${tag_version%%-*}"
+          if [ "$cabal_version" != "$tag_version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME resolves to version $tag_version but collection-json.cabal declares $cabal_version"
+            exit 1
+          fi
+
   candidate:
     name: Upload Hackage candidate
+    needs: release-tag
     if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     environment: hackage
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Verify tag matches cabal version
-        env:
-          TAG: ${{ github.ref_name }}
-        run: |
-          cabal_version="$(grep -i '^version:' collection-json.cabal | awk '{print $2}')"
-          tag_version="${TAG#v}"
-          tag_version="${tag_version%%-*}"
-          if [ "$cabal_version" != "$tag_version" ]; then
-            echo "::error::Tag $TAG resolves to version $tag_version but collection-json.cabal declares $cabal_version"
-            exit 1
-          fi
 
       - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
         with:
@@ -65,6 +76,7 @@ jobs:
 
   publish:
     name: Publish to Hackage
+    needs: release-tag
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     environment: hackage
@@ -72,37 +84,16 @@ jobs:
       contents: read
       actions: read
     steps:
-      - name: Require a tag ref
-        if: github.ref_type != 'tag'
-        run: |
-          echo "::error::Dispatch on the release tag (--ref v<version>), not ${GITHUB_REF}"
-          exit 1
-
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Verify tag matches cabal version
-        env:
-          TAG: ${{ github.ref_name }}
-        run: |
-          cabal_version="$(grep -i '^version:' collection-json.cabal | awk '{print $2}')"
-          tag_version="${TAG#v}"
-          tag_version="${tag_version%%-*}"
-          if [ "$cabal_version" != "$tag_version" ]; then
-            echo "::error::Tag $TAG resolves to version $tag_version but collection-json.cabal declares $cabal_version"
-            exit 1
-          fi
-
       # Hackage publishes are irreversible, so ship the exact bytes reviewed
       # as the candidate.
       - name: Find candidate run
         id: candidate-run
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
         run: |
-          run_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release.yml/runs?event=push&branch=$TAG&status=success" --jq '.workflow_runs[0].id // empty')"
+          run_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release.yml/runs?event=push&branch=$GITHUB_REF_NAME&status=success" --jq '.workflow_runs[0].id // empty')"
           if [ -z "$run_id" ]; then
-            echo "::error::No successful candidate run found for $TAG"
+            echo "::error::No successful candidate run found for $GITHUB_REF_NAME"
             exit 1
           fi
           echo "run-id=$run_id" >> "$GITHUB_OUTPUT"
