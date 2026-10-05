@@ -55,9 +55,80 @@ jobs:
           HACKAGE_KEY: ${{ secrets.HACKAGE_TOKEN }}
         run: cabal upload --documentation dist-newstyle/*-docs.tar.gz
 
+  # The smoke test runs after the upload for early feedback and again
+  # before publish, which runs as a separate dispatch where candidate is
+  # skipped. Explicit result checks replace the implicit success(), which
+  # would propagate that skip down the chain.
+  candidate-ghc:
+    name: Read candidate GHC range
+    needs: candidate
+    if: ${{ !cancelled() && (needs.candidate.result == 'success' || github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-24.04
+    outputs:
+      tarball: ${{ steps.range.outputs.tarball }}
+      ghc: ${{ steps.range.outputs.ghc }}
+    steps:
+      # The ends of tested-with catch both lower- and upper-bound solve
+      # failures without paying for the full CI matrix on every release.
+      - name: Read tested-with ends from the candidate
+        id: range
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          version="${version%%-*}"
+          base="https://hackage.haskell.org/package/collection-json-$version/candidate"
+          ghc=$(curl -fsSL "$base/collection-json.cabal" \
+            | grep -oE 'GHC == [0-9]+\.[0-9]+' \
+            | grep -oE '[0-9]+\.[0-9]+' \
+            | sort -V | sed -n '1p;$p' | uniq \
+            | jq -Rnc '[inputs]')
+          if [ "$ghc" = "[]" ]; then
+            echo "::error::No tested-with GHC versions in the $TAG candidate"
+            exit 1
+          fi
+          echo "tarball=$base/collection-json-$version.tar.gz" >> "$GITHUB_OUTPUT"
+          echo "ghc=$ghc" >> "$GITHUB_OUTPUT"
+
+  # Builds from the uploaded candidate in a workspace with no checkout, so
+  # its published bounds solve against the current index exactly as a
+  # downstream consumer's would.
+  smoke-test:
+    name: Smoke-test candidate on GHC ${{ matrix.ghc }}
+    needs: candidate-ghc
+    if: ${{ !cancelled() && needs.candidate-ghc.result == 'success' }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        ghc: ${{ fromJSON(needs.candidate-ghc.outputs.ghc) }}
+    steps:
+      - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
+        with:
+          ghc-version: ${{ matrix.ghc }}
+          cabal-version: 'latest'
+
+      - run: cabal update
+
+      # cabal won't build test suites of a package listed as a remote
+      # tarball in cabal.project, so unpack it and build it as local.
+      - name: Download candidate
+        env:
+          TARBALL: ${{ needs.candidate-ghc.outputs.tarball }}
+        run: |
+          mkdir candidate
+          curl -fsSL "$TARBALL" | tar xz -C candidate --strip-components=1
+
+      # allow-newer mirrors ci.yml's network-arbitrary stopgap.
+      - name: Build and test
+        working-directory: candidate
+        run: cabal test --enable-tests --test-show-details=direct --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+
   publish:
     name: Publish to Hackage
-    if: github.event_name == 'workflow_dispatch'
+    needs: smoke-test
+    if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && needs.smoke-test.result == 'success' }}
     runs-on: ubuntu-24.04
     environment: hackage
     steps:
