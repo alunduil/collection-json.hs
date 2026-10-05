@@ -98,6 +98,10 @@ ship; don't sit on bumps to batch them.
   (gated by the `hackage` environment). Both check the tag matches
   `version:` in the cabal file and use the `HACKAGE_TOKEN` secret. Read
   `release.yml` before touching publish.
+- The tagged commit's `CHANGELOG.md` needs a `## [<version>]` section:
+  the candidate run drafts a GitHub Release from it, and publish makes
+  that Release public. Without the section the candidate run fails and
+  publish refuses the tag.
 
 ## Don't-touch list
 
