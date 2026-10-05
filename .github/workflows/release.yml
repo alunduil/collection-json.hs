@@ -91,8 +91,8 @@ jobs:
             exit 1
           fi
 
-      # Publishing the candidate's own tarballs, rather than rebuilding, keeps
-      # the irreversible Hackage upload byte-identical to what was reviewed.
+      # Hackage publishes are irreversible, so ship the exact bytes reviewed
+      # as the candidate.
       - name: Find candidate run
         id: candidate-run
         env:
