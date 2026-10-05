@@ -96,8 +96,10 @@ ship; don't sit on bumps to batch them.
 - Tag-driven via `.github/workflows/release.yml`: a `v*` tag on `main`
   uploads a Hackage candidate; a `workflow_dispatch` run publishes
   (gated by the `hackage` environment). Both check the tag matches
-  `version:` in the cabal file and use the `HACKAGE_TOKEN` secret. Read
-  `release.yml` before touching publish.
+  `version:` in the cabal file, smoke-test the candidate as downloaded
+  from Hackage, and use the `HACKAGE_TOKEN` secret. Publish runs only
+  when the smoke test passes. Read `release.yml` before touching
+  publish.
 
 ## Don't-touch list
 

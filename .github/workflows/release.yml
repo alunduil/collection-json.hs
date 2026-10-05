@@ -68,10 +68,10 @@ jobs:
           HACKAGE_KEY: ${{ secrets.HACKAGE_TOKEN }}
         run: cabal upload --documentation dist-newstyle/*-docs.tar.gz
 
-  # The smoke test runs after the upload for early feedback and again
-  # before publish, which runs as a separate dispatch where candidate is
-  # skipped. Explicit result checks replace the implicit success(), which
-  # would propagate that skip down the chain.
+  # The smoke test runs after the upload for early feedback and before
+  # publish, which runs as a separate dispatch. Dispatch skips candidate,
+  # and the implicit success() skips every job downstream of a skip, so
+  # these jobs check needs results explicitly.
   candidate-ghc:
     name: Read candidate GHC range
     needs: [version, candidate]
@@ -101,9 +101,8 @@ jobs:
           echo "tarball=$base/collection-json-$VERSION.tar.gz" >> "$GITHUB_OUTPUT"
           echo "ghc-versions=$ghc_versions" >> "$GITHUB_OUTPUT"
 
-  # Builds from the uploaded candidate in a workspace with no checkout, so
-  # its published bounds solve against the current index exactly as a
-  # downstream consumer's would.
+  # No checkout, so nothing from the repo influences resolution: the
+  # candidate's published bounds solve as a downstream consumer's would.
   smoke-test:
     name: Smoke-test candidate on GHC ${{ matrix.ghc }}
     needs: candidate-ghc
@@ -121,8 +120,8 @@ jobs:
 
       - run: cabal update
 
-      # cabal won't build test suites of a package listed as a remote
-      # tarball in cabal.project, so unpack it and build it as local.
+      # Listing the tarball URL in cabal.project makes the package
+      # non-local, and cabal won't build non-local test suites.
       - name: Download candidate
         env:
           TARBALL: ${{ needs.candidate-ghc.outputs.tarball }}
