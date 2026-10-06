@@ -25,8 +25,7 @@ and this project adheres to the [Haskell Package Versioning Policy
 
 ### Fixed
 
-- `cabal get -s` clones the `main` branch instead of failing on the
-  removed `develop` branch.
+- `cabal get -s` clones the source repository.
 
 ## [1.3.1.3] - 2019-02-21
 
