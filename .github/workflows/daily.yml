@@ -1,0 +1,47 @@
+name: Daily
+
+# Offset from the hour: on-the-hour schedules queue behind platform peak load.
+on:
+  schedule:
+    - cron: "47 6 * * *"
+      timezone: "Europe/London"
+  workflow_dispatch:
+
+jobs:
+  stale-pull-requests:
+    name: Prune stale pull requests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      # `actions: write` is omitted: it covers only the resume cache, so a
+      # truncated run warns and restarts rather than failing.
+      issues: write
+      pull-requests: write
+    concurrency:
+      # No cancel-in-progress: a truncated sweep loses the operations-per-run
+      # resume cache and restarts from the first pull request.
+      group: ${{ github.workflow }}-stale-pull-requests
+    env:
+      STALE_DAYS: 30
+      CLOSE_DAYS: 14
+    steps:
+      - uses: actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93 # v11
+        with:
+          # With only staling disabled, issues already carrying the stale
+          # label would still close.
+          days-before-issue-stale: -1
+          days-before-issue-close: -1
+          days-before-pr-stale: ${{ env.STALE_DAYS }}
+          days-before-pr-close: ${{ env.CLOSE_DAYS }}
+          # Renovate never re-offers a version whose pull request was closed.
+          # renovate.json applies this label.
+          exempt-pr-labels: dependencies
+          stale-pr-message: >-
+            This has been quiet for ${{ env.STALE_DAYS }} days, so it's picked
+            up a stale label. A comment or a push clears the label and restarts
+            the clock. Otherwise this closes in another ${{ env.CLOSE_DAYS }}
+            days.
+          close-pr-message: >-
+            Closing this after another ${{ env.CLOSE_DAYS }} quiet days. That
+            isn't a call on the change itself. The branch stays where it is, so
+            comment here if you want to pick it back up and I'll reopen it.

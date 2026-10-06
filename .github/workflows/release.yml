@@ -3,38 +3,65 @@ name: Release
 on:
   push:
     tags: ['v*']
+  # Environment deployment rules match the run's ref, so publish reads its
+  # tag from the dispatch ref rather than an input.
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag to publish (e.g. v1.3.1.4) — must already exist as a Hackage candidate'
-        required: true
-        type: string
 
 permissions:
   contents: read
 
+env:
+  CANDIDATE_ARTIFACT: hackage-candidate
+
 jobs:
+  metadata:
+    name: Read release metadata
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.verify.outputs.version }}
+      ghc-versions: ${{ steps.range.outputs.ghc-versions }}
+    steps:
+      - name: Require a tag ref
+        if: github.ref_type != 'tag'
+        run: |
+          echo "::error::Dispatch on the release tag (--ref v<version>), not ${GITHUB_REF}"
+          exit 1
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Verify tag matches cabal version
+        id: verify
+        run: |
+          cabal_version="$(grep -i '^version:' collection-json.cabal | awk '{print $2}')"
+          tag_version="${GITHUB_REF_NAME#v}"
+          tag_version="${tag_version%%-*}"
+          if [ "$cabal_version" != "$tag_version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME resolves to version $tag_version but collection-json.cabal declares $cabal_version"
+            exit 1
+          fi
+          echo "version=$cabal_version" >> "$GITHUB_OUTPUT"
+
+      # The ends of tested-with catch lower- and upper-bound solve
+      # failures without paying for the full CI matrix on every release.
+      - name: Read tested-with ends
+        id: range
+        run: |
+          set -euo pipefail
+          ghc_versions=$(.github/scripts/tested-with-ghc.sh < collection-json.cabal \
+            | sed -n '1p;$p' | uniq \
+            | jq -Rnc '[inputs]')
+          echo "ghc-versions=$ghc_versions" >> "$GITHUB_OUTPUT"
+
   candidate:
     name: Upload Hackage candidate
+    needs: metadata
     if: github.event_name == 'push'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: hackage
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Verify tag matches cabal version
-        env:
-          TAG: ${{ github.ref_name }}
-        run: |
-          cabal_version="$(grep -i '^version:' collection-json.cabal | awk '{print $2}')"
-          tag_version="${TAG#v}"
-          tag_version="${tag_version%%-*}"
-          if [ "$cabal_version" != "$tag_version" ]; then
-            echo "::error::Tag $TAG resolves to version $tag_version but collection-json.cabal declares $cabal_version"
-            exit 1
-          fi
-
-      - uses: haskell-actions/setup@6037f33647c3f17758a2356c80fc4a53d7e0685d # v2
+      - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
         with:
           ghc-version: 'latest'
           cabal-version: 'latest'
@@ -44,6 +71,14 @@ jobs:
       - run: cabal sdist
 
       - run: cabal haddock --haddock-for-hackage
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ${{ env.CANDIDATE_ARTIFACT }}
+          path: |
+            dist-newstyle/sdist/*.tar.gz
+            dist-newstyle/*-docs.tar.gz
+          if-no-files-found: error
 
       - name: Upload sdist as candidate
         env:
@@ -55,38 +90,110 @@ jobs:
           HACKAGE_KEY: ${{ secrets.HACKAGE_TOKEN }}
         run: cabal upload --documentation dist-newstyle/*-docs.tar.gz
 
-  publish:
-    name: Publish to Hackage
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    environment: hackage
+  draft-release:
+    name: Draft GitHub Release
+    needs: [metadata, candidate]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          ref: ${{ inputs.tag }}
 
-      - name: Verify tag matches cabal version
+      # The oldest entry ends at the link reference definitions.
+      - name: Extract changelog entry
         env:
-          TAG: ${{ inputs.tag }}
+          VERSION: ${{ needs.metadata.outputs.version }}
         run: |
-          cabal_version="$(grep -i '^version:' collection-json.cabal | awk '{print $2}')"
-          tag_version="${TAG#v}"
-          tag_version="${tag_version%%-*}"
-          if [ "$cabal_version" != "$tag_version" ]; then
-            echo "::error::Tag $TAG resolves to version $tag_version but collection-json.cabal declares $cabal_version"
+          awk -v heading="## [$VERSION]" '
+            index($0, heading) == 1 { found = 1; next }
+            found && (/^## / || /^\[[^]]+\]: /) { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            echo "::error::CHANGELOG.md has no entry for $VERSION"
             exit 1
           fi
 
-      - uses: haskell-actions/setup@6037f33647c3f17758a2356c80fc4a53d7e0685d # v2
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release create "$TAG" --draft --verify-tag --title "$TAG" --notes-file release-notes.md
+
+  # The smoke test runs after the upload for early feedback and before
+  # publish, which runs as a separate dispatch. Dispatch skips candidate.
+  # The implicit success() would then skip this job and publish, so both
+  # check needs results explicitly.
+  #
+  # No checkout, so nothing from the repo influences resolution: the
+  # candidate's published bounds solve as a downstream consumer's would.
+  smoke-test:
+    name: Smoke-test candidate on GHC ${{ matrix.ghc }}
+    needs: [metadata, candidate]
+    if: ${{ !cancelled() && needs.metadata.result == 'success' && (needs.candidate.result == 'success' || github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        ghc: ${{ fromJSON(needs.metadata.outputs.ghc-versions) }}
+    steps:
+      - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
         with:
-          ghc-version: 'latest'
+          ghc-version: ${{ matrix.ghc }}
           cabal-version: 'latest'
 
       - run: cabal update
 
-      - run: cabal sdist
+      # Listing the tarball URL in cabal.project makes the package
+      # non-local, and cabal won't build non-local test suites.
+      - name: Download candidate
+        env:
+          VERSION: ${{ needs.metadata.outputs.version }}
+        run: |
+          mkdir candidate
+          curl -fsSL "https://hackage.haskell.org/package/collection-json-$VERSION/candidate/collection-json-$VERSION.tar.gz" \
+            | tar xz -C candidate --strip-components=1
 
-      - run: cabal haddock --haddock-for-hackage
+      # allow-newer mirrors ci.yml's network-arbitrary stopgap.
+      - name: Build and test
+        working-directory: candidate
+        run: cabal test --enable-tests --test-show-details=direct --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+
+  publish:
+    name: Publish to Hackage
+    needs: smoke-test
+    if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && needs.smoke-test.result == 'success' }}
+    runs-on: ubuntu-24.04
+    environment: hackage
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      # Hackage publishes are irreversible, so ship the exact bytes reviewed
+      # as the candidate.
+      - name: Find candidate run
+        id: candidate-run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release.yml/runs?event=push&branch=$GITHUB_REF_NAME&status=success" --jq '.workflow_runs[0].id // empty')"
+          if [ -z "$run_id" ]; then
+            echo "::error::No successful candidate run found for $GITHUB_REF_NAME"
+            exit 1
+          fi
+          echo "run-id=$run_id" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: ${{ env.CANDIDATE_ARTIFACT }}
+          path: dist-newstyle
+          run-id: ${{ steps.candidate-run.outputs.run-id }}
+          github-token: ${{ github.token }}
+
+      - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
+        with:
+          ghc-version: 'latest'
+          cabal-version: 'latest'
 
       - name: Publish sdist
         env:
@@ -97,3 +204,16 @@ jobs:
         env:
           HACKAGE_KEY: ${{ secrets.HACKAGE_TOKEN }}
         run: cabal upload --publish --documentation dist-newstyle/*-docs.tar.gz
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: publish
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Publish draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false

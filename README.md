@@ -4,9 +4,11 @@
 [![CI](https://github.com/alunduil/collection-json.hs/actions/workflows/ci.yml/badge.svg)](https://github.com/alunduil/collection-json.hs/actions/workflows/ci.yml)
 [![Codecov](https://codecov.io/gh/alunduil/collection-json.hs/branch/main/graph/badge.svg)](https://codecov.io/gh/alunduil/collection-json.hs)
 [![License](https://img.shields.io/github/license/alunduil/collection-json.hs.svg)](LICENSE)
-[![GHC](https://img.shields.io/badge/GHC-9.10%20%7C%209.12%20%7C%209.14-blue.svg)](https://www.haskell.org/ghc/)
+[![GHC](https://img.shields.io/badge/GHC-9.6%20%7C%209.8%20%7C%209.10%20%7C%209.12%20%7C%209.14-blue.svg)](https://www.haskell.org/ghc/)
 
 [Collection+JSON—Hypermedia Type][Collection+JSON] tools for [Haskell].
+
+By Alex Brandt. Source at <https://github.com/alunduil/collection-json.hs>.
 
 `collection-json` lets you encode, decode, and manipulate
 `application/vnd.collection+json` documents. The library exposes a single
@@ -16,12 +18,16 @@ each type defined by the spec—`Collection`, `Item`, `Link`, `Query`,
 
 ## Install
 
+You need the Glasgow Haskell Compiler (GHC) and `cabal-install`.
+
 Add `collection-json` to the `build-depends` of your package, or install it
 directly:
 
 ```sh
 cabal install --lib collection-json
 ```
+
+[`CHANGELOG.md`](CHANGELOG.md) records what changed in each release.
 
 ## Usage
 
@@ -38,13 +44,22 @@ import Network.URI (parseURI)
 
 main :: IO ()
 main = do
-  let href = fromJust (parseURI "http://example.com/friends/")
-      c    = Collection "1.0" href [] [] [] Nothing Nothing
+  let c =
+        Collection
+          { cVersion = "1.0"
+          , cHref = fromJust (parseURI "http://example.com/friends/")
+          , cLinks = []
+          , cItems = []
+          , cQueries = []
+          , cTemplate = Nothing
+          , cError = Nothing
+          }
+      json = encode c
 
-  BL.putStrLn (encode c)
+  BL.putStrLn json
   -- {"collection":{"href":"http://example.com/friends/","version":"1.0"}}
 
-  print (decode (encode c) :: Maybe Collection)
+  print (decode json :: Maybe Collection)
   -- Just (Collection {cVersion = "1.0", cHref = ..., ...})
 ```
 
@@ -63,15 +78,16 @@ provides `Network.URI` JSON instances that compose with these types.
 
 Report bugs and feature requests on the [issue tracker]. See
 [`CONTRIBUTING.md`](CONTRIBUTING.md) for the build, test, formatter, branch,
-and release conventions.
+and release conventions. [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) covers
+how contributors treat each other.
 
-For changes, fork the repository, branch from `main`, and open a pull request
-against `main`. PRs are squash-merged. If you'd like attribution, add yourself
-to the [`COPYRIGHT`](COPYRIGHT) file in the same PR.
+Support is free and comes from one maintainer working in spare time.
 
 ## License
 
-MIT—see [`LICENSE`](LICENSE).
+Use, modify, and redistribute this library, including inside
+proprietary software, as long as you keep the copyright and permission
+notices. [`LICENSE`](LICENSE) reproduces the MIT license in full.
 
 [Collection+JSON]: https://github.com/collection-json/spec
 [Hackage]: https://hackage.haskell.org/package/collection-json

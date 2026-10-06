@@ -13,7 +13,7 @@ module Data.CollectionJSON.Arbitrary where
 
 import Data.Text (pack)
 import Network.URI.Arbitrary ()
-import Test.QuickCheck (Arbitrary (arbitrary, shrink))
+import Test.QuickCheck (Arbitrary (arbitrary, shrink), elements, oneof)
 import Test.QuickCheck.Instances ()
 
 import Data.CollectionJSON
@@ -40,6 +40,9 @@ instance Arbitrary Link where
       <*> arbitrary
 
   shrink Link{..} = [Link lHref' lRel' lName' lRender' lPrompt' | (lHref', lRel', lName', lRender', lPrompt') <- shrink (lHref, lRel, lName, lRender, lPrompt)]
+
+instance Arbitrary Render where
+  arbitrary = elements [RenderImage, RenderLink]
 
 instance Arbitrary Item where
   arbitrary =
@@ -83,3 +86,15 @@ instance Arbitrary Datum where
       <*> arbitrary
 
   shrink Datum{..} = [Datum dName' dValue' dPrompt' | (dName', dValue', dPrompt') <- shrink (dName, dValue, dPrompt)]
+
+instance Arbitrary DatumValue where
+  arbitrary =
+    oneof
+      [ DatumString <$> arbitrary
+      , DatumNumber <$> arbitrary
+      , DatumBool <$> arbitrary
+      ]
+
+  shrink (DatumString t) = DatumString <$> shrink t
+  shrink (DatumNumber n) = DatumNumber <$> shrink n
+  shrink (DatumBool b) = DatumBool <$> shrink b

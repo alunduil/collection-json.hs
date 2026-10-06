@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
   schedule:
     # Fridays 18:00 Europe/London. GitHub applies the timezone (and DST), so the
     # report is waiting at 18:00 local year-round.
@@ -24,7 +23,7 @@ concurrency:
 jobs:
   lychee:
     name: Check links
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
 
     steps:

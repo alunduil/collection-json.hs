@@ -20,10 +20,20 @@ repos:
       - id: mixed-line-ending
         args: ["--fix=lf"]
       - id: check-yaml
-        exclude: '^\.github/workflows/'
+
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+
+  # actionlint covers inline run: blocks; this covers standalone scripts.
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+      - id: shellcheck
 
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.23.2
+    rev: v0.23.3
     hooks:
       - id: markdownlint-cli2
 
@@ -31,14 +41,14 @@ repos:
   # vendored under .vale/styles (see the top-level exclude), so the hook
   # needs no `vale sync` step.
   - repo: https://github.com/errata-ai/vale
-    rev: v3.17.1
+    rev: v3.21.0
     hooks:
       - id: vale
         args: [--output=line, --minAlertLevel=error]
         types: [markdown]
 
   - repo: https://github.com/renovatebot/pre-commit-hooks
-    rev: 44.22.0
+    rev: 44.79.6
     hooks:
       - id: renovate-config-validator
         args: [--strict, --no-global]

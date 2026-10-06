@@ -9,6 +9,10 @@
   "reviewers": [
     "alunduil"
   ],
+  // The Daily workflow exempts this label from stale closing.
+  "labels": [
+    "dependencies"
+  ],
   "minimumReleaseAge": "3 days",
   // hackage reports no release timestamps, so the default
   // timestamp-required mode holds every cabal update forever rather than
@@ -29,7 +33,7 @@
       "minimumReleaseAge": null
     }
   ],
-  "osvVulnerabilityAlerts": false,
+  "osvVulnerabilityAlerts": true,
   "pre-commit": {
     "enabled": true
   }

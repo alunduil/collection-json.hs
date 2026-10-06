@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
 
 permissions:
   contents: read
@@ -16,14 +15,26 @@ concurrency:
 jobs:
   build:
     name: GHC ${{ matrix.ghc }} / ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-${{ matrix.OS_VERSION }}
     timeout-minutes: 30
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu, macos]
         ghc: ["9.6", "9.8", "9.10", "9.12", "9.14"]
+        include:
+          - os: ubuntu
+            # renovate: datasource=github-runners depName=ubuntu
+            OS_VERSION: "24.04"
+          - os: macos
+            # renovate: datasource=github-runners depName=macos
+            OS_VERSION: "26"
+          # Metadata and docs don't vary by GHC or OS, and haddock is slow:
+          # it rebuilds every dependency with documentation.
+          - os: ubuntu
+            ghc: "9.14"
+            package-checks: true
 
     steps:
       - name: Checkout
@@ -31,7 +42,7 @@ jobs:
 
       - name: Set up GHC ${{ matrix.ghc }}
         id: setup
-        uses: haskell-actions/setup@6037f33647c3f17758a2356c80fc4a53d7e0685d # v2.12.0
+        uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2.12.1
         with:
           ghc-version: ${{ matrix.ghc }}
           cabal-version: latest
@@ -42,26 +53,32 @@ jobs:
       # Everything below builds from the sdist tarball, not the working
       # tree: it exercises the bare published bounds a Hackage consumer
       # faces and validates that every source and test file is packaged.
-      #
-      # The lone exception: the test-only network-arbitrary still caps
-      # base < 4.21 (no GHC 9.12+) and lags QuickCheck, so its bounds on
-      # those two are relaxed via allow-newer below, pending a release
-      # (alunduil/network-arbitrary#106). Scoped to that one package, so
-      # the library's own published bounds stay strictly enforced; grep
-      # allow-newer to remove the stopgap once the release ships.
       - name: Build sdist
         run: cabal sdist all
 
+      # The tarball has no cabal.project; without one, cabal finds the
+      # repo's and builds the working tree.
+      #
+      # allow-newer is the one exception to the published bounds: the
+      # test-only network-arbitrary caps base < 4.21 (no GHC 9.12+) and
+      # lags QuickCheck until alunduil/network-arbitrary#106 ships.
+      # Scoping it to that package keeps the library's own bounds
+      # enforced. Grep allow-newer to remove every copy once it ships.
       - name: Unpack sdist
         shell: bash
         run: |
           mkdir sdist-build
           tar xf dist-newstyle/sdist/collection-json-*.tar.gz \
             -C sdist-build --strip-components=1
+          cat > sdist-build/cabal.project <<'EOF'
+          packages: .
+          tests: True
+          allow-newer: network-arbitrary:base, network-arbitrary:QuickCheck
+          EOF
 
       - name: Generate build plan
         working-directory: sdist-build
-        run: cabal build all --enable-tests --dry-run --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+        run: cabal build all --dry-run
 
       - name: Restore cabal store
         id: cache
@@ -75,7 +92,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: sdist-build
-        run: cabal build all --enable-tests --only-dependencies --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+        run: cabal build all --only-dependencies
 
       - name: Save cabal store
         if: steps.cache.outputs.cache-hit != 'true'
@@ -86,23 +103,25 @@ jobs:
 
       - name: Build
         working-directory: sdist-build
-        run: cabal build all --enable-tests --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+        run: cabal build all
 
       - name: Test
         working-directory: sdist-build
-        run: cabal test all --enable-tests --test-show-details=direct --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+        run: cabal test all --test-show-details=direct
 
       - name: Check package metadata
+        if: matrix.package-checks
         working-directory: sdist-build
         run: cabal check
 
       - name: Haddock
+        if: matrix.package-checks
         working-directory: sdist-build
-        run: cabal haddock all --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+        run: cabal haddock all
 
   coverage:
     name: Coverage
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
 
     steps:
@@ -110,7 +129,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up GHC
-        uses: haskell-actions/setup@6037f33647c3f17758a2356c80fc4a53d7e0685d # v2.12.0
+        id: setup
+        uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2.12.1
         with:
           ghc-version: "9.14"
           cabal-version: latest
@@ -125,6 +145,29 @@ jobs:
       - name: Configure with coverage
         run: cabal configure --enable-tests --enable-coverage --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
 
+      - name: Generate build plan
+        run: cabal build all --dry-run
+
+      - name: Restore cabal store
+        id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        env:
+          key: ${{ runner.os }}-ghc-${{ steps.setup.outputs.ghc-version }}-cabal-${{ steps.setup.outputs.cabal-version }}
+        with:
+          path: ${{ steps.setup.outputs.cabal-store }}
+          key: ${{ env.key }}-plan-${{ hashFiles('dist-newstyle/cache/plan.json') }}
+          restore-keys: ${{ env.key }}-
+
+      - name: Install dependencies
+        run: cabal build all --only-dependencies
+
+      - name: Save cabal store
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.setup.outputs.cabal-store }}
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+
       - name: Build
         run: cabal build all
 
@@ -138,11 +181,85 @@ jobs:
         uses: 8c6794b6/hpc-codecov-action@f943f40733e5390825b12d72165cad991e44340c # v4.3.0
         with:
           target: cabal:collection-json-tests
-          excludes: Main,Paths_collection_json,Data.CollectionJSONSpec,Data.CollectionJSON.Arbitrary
+          excludes: Main,Paths_collection_json,Data.CollectionJSONTest,Data.CollectionJSON.Arbitrary
 
       - name: Upload to Codecov
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ${{ steps.report.outputs.report }}
           fail_ci_if_error: true
+
+  # vale exits zero on warnings, so reviewdog gates them; the pre-commit hook
+  # gates errors tree-wide. reviewdog needs a PR diff, so only its step is
+  # guarded: on push the job succeeds empty and `results` can still require it.
+  prose:
+    name: Check prose
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      checks: write
+
+    env:
+      # Match the vale hook's rev in .pre-commit-config.yaml.
+      # renovate: datasource=github-releases depName=errata-ai/vale extractVersion=^v(?<version>.+)$
+      VALE_VERSION: "3.21.0"
+      # renovate: datasource=github-releases depName=reviewdog/reviewdog
+      REVIEWDOG_VERSION: "v0.21.2"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Vale
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL \
+            "https://github.com/errata-ai/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz" \
+            | tar xz -C "$HOME/.local/bin" vale
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Set up reviewdog
+        uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
+        with:
+          reviewdog_version: ${{ env.REVIEWDOG_VERSION }}
+
+      - name: Check prose on changed lines
+        if: github.event_name == 'pull_request'
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Explicit bash enables pipefail; without it a vale crash passes.
+        shell: bash
+        run: |
+          vale --no-exit --output=JSON . \
+            | jq -c '
+              to_entries[] | .key as $p | .value[] | {
+                message: .Message,
+                location: {
+                  path: $p,
+                  range: {
+                    start: {line: .Line, column: .Span[0]},
+                    end: {line: .Line, column: (.Span[1] + 1)},
+                  },
+                },
+                severity: ({error: "ERROR", warning: "WARNING", suggestion: "INFO"}[.Severity]),
+                code: {value: .Check},
+              }' \
+            | reviewdog -f=rdjsonl -name=vale \
+                -reporter=github-pr-check -filter-mode=added -fail-level=warning
+
+  # The stable check name the default-branch ruleset pins: renaming this job
+  # breaks the merge gate. Requiring the matrix legs directly would block
+  # merges once a GHC version ages out and its check stops reporting.
+  results:
+    name: Check CI results
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    needs: [build, coverage, prose]
+    if: always()
+
+    steps:
+      - name: Fail when any job did not succeed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
+        run: exit 1
