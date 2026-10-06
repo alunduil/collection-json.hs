@@ -3,12 +3,9 @@ name: Release
 on:
   push:
     tags: ['v*']
+  # Environment deployment rules match the run's ref, so publish reads its
+  # tag from the dispatch ref rather than an input.
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag to publish (e.g. v1.3.1.4) — must already exist as a Hackage candidate'
-        required: true
-        type: string
 
 permissions:
   contents: read
@@ -24,20 +21,22 @@ jobs:
       version: ${{ steps.verify.outputs.version }}
       ghc-versions: ${{ steps.range.outputs.ghc-versions }}
     steps:
+      - name: Require a tag ref
+        if: github.ref_type != 'tag'
+        run: |
+          echo "::error::Dispatch on the release tag (--ref v<version>), not ${GITHUB_REF}"
+          exit 1
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          ref: ${{ inputs.tag }}
 
       - name: Verify tag matches cabal version
         id: verify
-        env:
-          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           cabal_version="$(grep -i '^version:' collection-json.cabal | awk '{print $2}')"
-          tag_version="${TAG#v}"
+          tag_version="${GITHUB_REF_NAME#v}"
           tag_version="${tag_version%%-*}"
           if [ "$cabal_version" != "$tag_version" ]; then
-            echo "::error::Tag $TAG resolves to version $tag_version but collection-json.cabal declares $cabal_version"
+            echo "::error::Tag $GITHUB_REF_NAME resolves to version $tag_version but collection-json.cabal declares $cabal_version"
             exit 1
           fi
           echo "version=$cabal_version" >> "$GITHUB_OUTPUT"
@@ -176,11 +175,10 @@ jobs:
         id: candidate-run
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.tag }}
         run: |
-          run_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release.yml/runs?event=push&branch=$TAG&status=success" --jq '.workflow_runs[0].id // empty')"
+          run_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release.yml/runs?event=push&branch=$GITHUB_REF_NAME&status=success" --jq '.workflow_runs[0].id // empty')"
           if [ -z "$run_id" ]; then
-            echo "::error::No successful candidate run found for $TAG"
+            echo "::error::No successful candidate run found for $GITHUB_REF_NAME"
             exit 1
           fi
           echo "run-id=$run_id" >> "$GITHUB_OUTPUT"
@@ -217,5 +215,5 @@ jobs:
       - name: Publish draft release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.tag }}
+          TAG: ${{ github.ref_name }}
         run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false

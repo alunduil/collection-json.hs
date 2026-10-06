@@ -93,13 +93,14 @@ ship; don't sit on bumps to batch them.
 
 - `main` is the integration branch and PR target.
 - Current version `1.3.1.3`; next `1.3.1.4`.
-- Tag-driven via `.github/workflows/release.yml`: a `v*` tag on `main`
-  uploads a Hackage candidate; a `workflow_dispatch` run publishes
-  (gated by the `hackage` environment). Both check the tag matches
-  `version:` in the cabal file, smoke-test the candidate as downloaded
-  from Hackage, and use the `HACKAGE_TOKEN` secret. Publish runs only
-  when the smoke test passes. Read `release.yml` before touching
-  publish.
+- Tag-driven via `.github/workflows/release.yml`; read it before
+  touching publish:
+  1. A `v*` tag on `main` uploads a Hackage candidate.
+  2. `gh workflow run release.yml --ref v<version>` publishes it.
+- The tag must match `version:` in the cabal file. Both steps
+  smoke-test the candidate as downloaded from Hackage, and publish runs
+  only when it passes. Both deploy through the `hackage` environment
+  and its `HACKAGE_TOKEN` secret.
 - The tagged commit's `CHANGELOG.md` needs a `## [<version>]` section:
   the candidate run drafts a GitHub Release from it, and publish makes
   that Release public. Without the section the candidate run fails and
