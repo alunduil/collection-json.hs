@@ -101,11 +101,15 @@ jobs:
         working-directory: sdist-build
         run: cabal test all --enable-tests --test-show-details=direct --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
 
+      # Metadata and docs don't vary by GHC or OS, and haddock rebuilds
+      # every dependency with documentation, so run both on one leg.
       - name: Check package metadata
+        if: matrix.os == 'ubuntu' && matrix.ghc == '9.14'
         working-directory: sdist-build
         run: cabal check
 
       - name: Haddock
+        if: matrix.os == 'ubuntu' && matrix.ghc == '9.14'
         working-directory: sdist-build
         run: cabal haddock all --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
 
