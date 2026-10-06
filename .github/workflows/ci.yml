@@ -30,6 +30,11 @@ jobs:
           - os: macos
             # renovate: datasource=github-runners depName=macos
             OS_VERSION: "26"
+          # Metadata and docs don't vary by GHC or OS, and haddock is slow:
+          # it rebuilds every dependency with documentation.
+          - os: ubuntu
+            ghc: "9.14"
+            package-checks: true
 
     steps:
       - name: Checkout
@@ -48,26 +53,32 @@ jobs:
       # Everything below builds from the sdist tarball, not the working
       # tree: it exercises the bare published bounds a Hackage consumer
       # faces and validates that every source and test file is packaged.
-      #
-      # The lone exception: the test-only network-arbitrary still caps
-      # base < 4.21 (no GHC 9.12+) and lags QuickCheck, so its bounds on
-      # those two are relaxed via allow-newer below, pending a release
-      # (alunduil/network-arbitrary#106). Scoped to that one package, so
-      # the library's own published bounds stay strictly enforced; grep
-      # allow-newer to remove the stopgap once the release ships.
       - name: Build sdist
         run: cabal sdist all
 
+      # The tarball has no cabal.project; without one, cabal finds the
+      # repo's and builds the working tree.
+      #
+      # allow-newer is the one exception to the published bounds: the
+      # test-only network-arbitrary caps base < 4.21 (no GHC 9.12+) and
+      # lags QuickCheck until alunduil/network-arbitrary#106 ships.
+      # Scoping it to that package keeps the library's own bounds
+      # enforced. Grep allow-newer to remove every copy once it ships.
       - name: Unpack sdist
         shell: bash
         run: |
           mkdir sdist-build
           tar xf dist-newstyle/sdist/collection-json-*.tar.gz \
             -C sdist-build --strip-components=1
+          cat > sdist-build/cabal.project <<'EOF'
+          packages: .
+          tests: True
+          allow-newer: network-arbitrary:base, network-arbitrary:QuickCheck
+          EOF
 
       - name: Generate build plan
         working-directory: sdist-build
-        run: cabal build all --enable-tests --dry-run --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+        run: cabal build all --dry-run
 
       - name: Restore cabal store
         id: cache
@@ -81,7 +92,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: sdist-build
-        run: cabal build all --enable-tests --only-dependencies --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+        run: cabal build all --only-dependencies
 
       - name: Save cabal store
         if: steps.cache.outputs.cache-hit != 'true'
@@ -92,19 +103,21 @@ jobs:
 
       - name: Build
         working-directory: sdist-build
-        run: cabal build all --enable-tests --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+        run: cabal build all
 
       - name: Test
         working-directory: sdist-build
-        run: cabal test all --enable-tests --test-show-details=direct --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+        run: cabal test all --test-show-details=direct
 
       - name: Check package metadata
+        if: matrix.package-checks
         working-directory: sdist-build
         run: cabal check
 
       - name: Haddock
+        if: matrix.package-checks
         working-directory: sdist-build
-        run: cabal haddock all --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+        run: cabal haddock all
 
   coverage:
     name: Coverage
@@ -116,6 +129,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up GHC
+        id: setup
         uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2.12.1
         with:
           ghc-version: "9.14"
@@ -130,6 +144,29 @@ jobs:
       # mirrors the build job's network-arbitrary stopgap.
       - name: Configure with coverage
         run: cabal configure --enable-tests --enable-coverage --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+
+      - name: Generate build plan
+        run: cabal build all --dry-run
+
+      - name: Restore cabal store
+        id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        env:
+          key: ${{ runner.os }}-ghc-${{ steps.setup.outputs.ghc-version }}-cabal-${{ steps.setup.outputs.cabal-version }}
+        with:
+          path: ${{ steps.setup.outputs.cabal-store }}
+          key: ${{ env.key }}-plan-${{ hashFiles('dist-newstyle/cache/plan.json') }}
+          restore-keys: ${{ env.key }}-
+
+      - name: Install dependencies
+        run: cabal build all --only-dependencies
+
+      - name: Save cabal store
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.setup.outputs.cabal-store }}
+          key: ${{ steps.cache.outputs.cache-primary-key }}
 
       - name: Build
         run: cabal build all
