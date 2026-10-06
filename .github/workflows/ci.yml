@@ -30,8 +30,8 @@ jobs:
           - os: macos
             # renovate: datasource=github-runners depName=macos
             OS_VERSION: "26"
-          # Metadata and docs don't vary by GHC or OS, and haddock rebuilds
-          # every dependency with documentation, so check them on one leg.
+          # Metadata and docs don't vary by GHC or OS, and haddock is slow:
+          # it rebuilds every dependency with documentation.
           - os: ubuntu
             ghc: "9.14"
             package-checks: true
@@ -56,15 +56,14 @@ jobs:
       - name: Build sdist
         run: cabal sdist all
 
-      # The tarball carries no cabal.project, so without one here cabal
-      # walks up to the repo's and builds the working tree instead.
+      # The tarball has no cabal.project; without one, cabal finds the
+      # repo's and builds the working tree.
       #
-      # allow-newer is the lone exception to the published bounds: the
-      # test-only network-arbitrary still caps base < 4.21 (no GHC 9.12+)
-      # and lags QuickCheck, pending a release
-      # (alunduil/network-arbitrary#106). Scoped to that one package, so
-      # the library's own bounds stay strictly enforced; grep allow-newer
-      # to remove the stopgap once the release ships.
+      # allow-newer is the one exception to the published bounds: the
+      # test-only network-arbitrary caps base < 4.21 (no GHC 9.12+) and
+      # lags QuickCheck until alunduil/network-arbitrary#106 ships.
+      # Scoping it to that package keeps the library's own bounds
+      # enforced. Grep allow-newer to remove every copy once it ships.
       - name: Unpack sdist
         shell: bash
         run: |
