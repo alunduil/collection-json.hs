@@ -30,6 +30,11 @@ jobs:
           - os: macos
             # renovate: datasource=github-runners depName=macos
             OS_VERSION: "26"
+          # Metadata and docs don't vary by GHC or OS, and haddock rebuilds
+          # every dependency with documentation, so check them on one leg.
+          - os: ubuntu
+            ghc: "9.14"
+            package-checks: true
 
     steps:
       - name: Checkout
@@ -48,29 +53,33 @@ jobs:
       # Everything below builds from the sdist tarball, not the working
       # tree: it exercises the bare published bounds a Hackage consumer
       # faces and validates that every source and test file is packaged.
-      #
-      # The lone exception: the test-only network-arbitrary still caps
-      # base < 4.21 (no GHC 9.12+) and lags QuickCheck, so its bounds on
-      # those two are relaxed via allow-newer below, pending a release
-      # (alunduil/network-arbitrary#106). Scoped to that one package, so
-      # the library's own published bounds stay strictly enforced; grep
-      # allow-newer to remove the stopgap once the release ships.
       - name: Build sdist
         run: cabal sdist all
 
       # The tarball carries no cabal.project, so without one here cabal
       # walks up to the repo's and builds the working tree instead.
+      #
+      # allow-newer is the lone exception to the published bounds: the
+      # test-only network-arbitrary still caps base < 4.21 (no GHC 9.12+)
+      # and lags QuickCheck, pending a release
+      # (alunduil/network-arbitrary#106). Scoped to that one package, so
+      # the library's own bounds stay strictly enforced; grep allow-newer
+      # to remove the stopgap once the release ships.
       - name: Unpack sdist
         shell: bash
         run: |
           mkdir sdist-build
           tar xf dist-newstyle/sdist/collection-json-*.tar.gz \
             -C sdist-build --strip-components=1
-          echo 'packages: .' > sdist-build/cabal.project
+          cat > sdist-build/cabal.project <<'EOF'
+          packages: .
+          tests: True
+          allow-newer: network-arbitrary:base, network-arbitrary:QuickCheck
+          EOF
 
       - name: Generate build plan
         working-directory: sdist-build
-        run: cabal build all --enable-tests --dry-run --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+        run: cabal build all --dry-run
 
       - name: Restore cabal store
         id: cache
@@ -84,7 +93,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: sdist-build
-        run: cabal build all --enable-tests --only-dependencies --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+        run: cabal build all --only-dependencies
 
       - name: Save cabal store
         if: steps.cache.outputs.cache-hit != 'true'
@@ -95,23 +104,21 @@ jobs:
 
       - name: Build
         working-directory: sdist-build
-        run: cabal build all --enable-tests --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+        run: cabal build all
 
       - name: Test
         working-directory: sdist-build
-        run: cabal test all --enable-tests --test-show-details=direct --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+        run: cabal test all --test-show-details=direct
 
-      # Metadata and docs don't vary by GHC or OS, and haddock rebuilds
-      # every dependency with documentation, so run both on one leg.
       - name: Check package metadata
-        if: matrix.os == 'ubuntu' && matrix.ghc == '9.14'
+        if: matrix.package-checks
         working-directory: sdist-build
         run: cabal check
 
       - name: Haddock
-        if: matrix.os == 'ubuntu' && matrix.ghc == '9.14'
+        if: matrix.package-checks
         working-directory: sdist-build
-        run: cabal haddock all --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+        run: cabal haddock all
 
   coverage:
     name: Coverage
