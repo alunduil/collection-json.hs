@@ -20,7 +20,7 @@ Single-package project (`cabal.project`: `packages: .`).
 - **Lint / format**: `pre-commit` (`.pre-commit-config.yaml`) runs
   fourmolu (`fourmolu.yaml`), hlint (`hlint.yaml`), markdownlint
   (`.markdownlint.jsonc`), Vale (`.vale.ini`; styles vendored under
-  `.vale/styles`, no `vale sync`), actionlint. fourmolu/hlint run from
+  `.vale/styles`, no `vale sync`), actionlint, shellcheck. fourmolu/hlint run from
   PATH, pinned in `.github/workflows/pre-commit.yml` (not the
   pre-commit config).
 - **CI**: `ci.yml` (GHC matrix above × ubuntu/macos, builds from the
@@ -97,8 +97,10 @@ ship; don't sit on bumps to batch them.
   touching publish:
   1. A `v*` tag on `main` uploads a Hackage candidate.
   2. `gh workflow run release.yml --ref v<version>` publishes it.
-- The tag must match `version:` in the cabal file. Both steps deploy
-  through the `hackage` environment and its `HACKAGE_TOKEN` secret.
+- The tag must match `version:` in the cabal file. Both steps
+  smoke-test the candidate as downloaded from Hackage, and publish runs
+  only when it passes. Both deploy through the `hackage` environment
+  and its `HACKAGE_TOKEN` secret.
 
 ## Don't-touch list
 

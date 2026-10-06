@@ -14,9 +14,12 @@ env:
   CANDIDATE_ARTIFACT: hackage-candidate
 
 jobs:
-  release-tag:
-    name: Check release tag
+  metadata:
+    name: Read release metadata
     runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.verify.outputs.version }}
+      ghc-versions: ${{ steps.range.outputs.ghc-versions }}
     steps:
       - name: Require a tag ref
         if: github.ref_type != 'tag'
@@ -27,6 +30,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Verify tag matches cabal version
+        id: verify
         run: |
           cabal_version="$(grep -i '^version:' collection-json.cabal | awk '{print $2}')"
           tag_version="${GITHUB_REF_NAME#v}"
@@ -35,10 +39,22 @@ jobs:
             echo "::error::Tag $GITHUB_REF_NAME resolves to version $tag_version but collection-json.cabal declares $cabal_version"
             exit 1
           fi
+          echo "version=$cabal_version" >> "$GITHUB_OUTPUT"
+
+      # The ends of tested-with catch lower- and upper-bound solve
+      # failures without paying for the full CI matrix on every release.
+      - name: Read tested-with ends
+        id: range
+        run: |
+          set -euo pipefail
+          ghc_versions=$(.github/scripts/tested-with-ghc.sh < collection-json.cabal \
+            | sed -n '1p;$p' | uniq \
+            | jq -Rnc '[inputs]')
+          echo "ghc-versions=$ghc_versions" >> "$GITHUB_OUTPUT"
 
   candidate:
     name: Upload Hackage candidate
-    needs: release-tag
+    needs: metadata
     if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     environment: hackage
@@ -74,10 +90,49 @@ jobs:
           HACKAGE_KEY: ${{ secrets.HACKAGE_TOKEN }}
         run: cabal upload --documentation dist-newstyle/*-docs.tar.gz
 
+  # The smoke test runs after the upload for early feedback and before
+  # publish, which runs as a separate dispatch. Dispatch skips candidate.
+  # The implicit success() would then skip this job and publish, so both
+  # check needs results explicitly.
+  #
+  # No checkout, so nothing from the repo influences resolution: the
+  # candidate's published bounds solve as a downstream consumer's would.
+  smoke-test:
+    name: Smoke-test candidate on GHC ${{ matrix.ghc }}
+    needs: [metadata, candidate]
+    if: ${{ !cancelled() && needs.metadata.result == 'success' && (needs.candidate.result == 'success' || github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        ghc: ${{ fromJSON(needs.metadata.outputs.ghc-versions) }}
+    steps:
+      - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
+        with:
+          ghc-version: ${{ matrix.ghc }}
+          cabal-version: 'latest'
+
+      - run: cabal update
+
+      # Listing the tarball URL in cabal.project makes the package
+      # non-local, and cabal won't build non-local test suites.
+      - name: Download candidate
+        env:
+          VERSION: ${{ needs.metadata.outputs.version }}
+        run: |
+          mkdir candidate
+          curl -fsSL "https://hackage.haskell.org/package/collection-json-$VERSION/candidate/collection-json-$VERSION.tar.gz" \
+            | tar xz -C candidate --strip-components=1
+
+      # allow-newer mirrors ci.yml's network-arbitrary stopgap.
+      - name: Build and test
+        working-directory: candidate
+        run: cabal test --enable-tests --test-show-details=direct --allow-newer=network-arbitrary:base,network-arbitrary:QuickCheck
+
   publish:
     name: Publish to Hackage
-    needs: release-tag
-    if: github.event_name == 'workflow_dispatch'
+    needs: smoke-test
+    if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && needs.smoke-test.result == 'success' }}
     runs-on: ubuntu-24.04
     environment: hackage
     permissions:
