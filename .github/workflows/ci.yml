@@ -58,12 +58,15 @@ jobs:
       - name: Build sdist
         run: cabal sdist all
 
+      # The tarball carries no cabal.project, so without one here cabal
+      # walks up to the repo's and builds the working tree instead.
       - name: Unpack sdist
         shell: bash
         run: |
           mkdir sdist-build
           tar xf dist-newstyle/sdist/collection-json-*.tar.gz \
             -C sdist-build --strip-components=1
+          echo 'packages: .' > sdist-build/cabal.project
 
       - name: Generate build plan
         working-directory: sdist-build
