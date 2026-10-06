@@ -23,6 +23,11 @@ and this project adheres to the [Haskell Package Versioning Policy
   for that matrix. Test-suite no longer recompiles `src/`; depends on
   the `collection-json` library directly.
 
+### Fixed
+
+- `cabal get -s` clones the `main` branch instead of failing on the
+  removed `develop` branch.
+
 ## [1.3.1.3] - 2019-02-21
 
 ### Changed
