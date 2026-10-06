@@ -100,6 +100,10 @@ ship; don't sit on bumps to batch them.
   from Hackage, and use the `HACKAGE_TOKEN` secret. Publish runs only
   when the smoke test passes. Read `release.yml` before touching
   publish.
+- The tagged commit's `CHANGELOG.md` needs a `## [<version>]` section:
+  the candidate run drafts a GitHub Release from it, and publish makes
+  that Release public. Without the section the candidate run fails and
+  publish refuses the tag.
 
 ## Don't-touch list
 
