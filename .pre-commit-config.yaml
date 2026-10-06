@@ -26,6 +26,12 @@ repos:
     hooks:
       - id: actionlint
 
+  # actionlint covers inline run: blocks; this covers standalone scripts.
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+      - id: shellcheck
+
   - repo: https://github.com/DavidAnson/markdownlint-cli2
     rev: v0.23.3
     hooks:

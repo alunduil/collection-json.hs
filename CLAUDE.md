@@ -20,7 +20,7 @@ Single-package project (`cabal.project`: `packages: .`).
 - **Lint / format**: `pre-commit` (`.pre-commit-config.yaml`) runs
   fourmolu (`fourmolu.yaml`), hlint (`hlint.yaml`), markdownlint
   (`.markdownlint.jsonc`), Vale (`.vale.ini`; styles vendored under
-  `.vale/styles`, no `vale sync`), actionlint. fourmolu/hlint run from
+  `.vale/styles`, no `vale sync`), actionlint, shellcheck. fourmolu/hlint run from
   PATH, pinned in `.github/workflows/pre-commit.yml` (not the
   pre-commit config).
 - **CI**: `ci.yml` (GHC matrix above × ubuntu/macos, builds from the
@@ -96,8 +96,10 @@ ship; don't sit on bumps to batch them.
 - Tag-driven via `.github/workflows/release.yml`: a `v*` tag on `main`
   uploads a Hackage candidate; a `workflow_dispatch` run publishes
   (gated by the `hackage` environment). Both check the tag matches
-  `version:` in the cabal file and use the `HACKAGE_TOKEN` secret. Read
-  `release.yml` before touching publish.
+  `version:` in the cabal file, smoke-test the candidate as downloaded
+  from Hackage, and use the `HACKAGE_TOKEN` secret. Publish runs only
+  when the smoke test passes. Read `release.yml` before touching
+  publish.
 - The tagged commit's `CHANGELOG.md` needs a `## [<version>]` section:
   the candidate run drafts a GitHub Release from it, and publish makes
   that Release public. Without the section the candidate run fails and
