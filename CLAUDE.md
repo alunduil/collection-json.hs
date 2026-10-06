@@ -101,6 +101,10 @@ ship; don't sit on bumps to batch them.
   smoke-test the candidate as downloaded from Hackage, and publish runs
   only when it passes. Both deploy through the `hackage` environment
   and its `HACKAGE_TOKEN` secret.
+- The tagged commit's `CHANGELOG.md` needs a `## [<version>]` section:
+  the candidate run drafts a GitHub Release from it, and publish makes
+  that Release public. Without the section the candidate run fails and
+  publish refuses the tag.
 
 ## Don't-touch list
 
