@@ -1,5 +1,7 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 
 {- |
 Module      : Data.CollectionJSONTest
@@ -15,9 +17,10 @@ import Data.Aeson (FromJSON, ToJSON, decode, eitherDecode, encode)
 import Data.Either (fromLeft)
 import Data.List (isInfixOf, isSuffixOf)
 import Data.Maybe (fromJust, isJust, isNothing)
+import Data.Typeable (Proxy (Proxy), TypeRep, Typeable, typeOf, typeRep)
 import Network.URI (URI, nullURI, parseURIReference)
 import Test.Invariant ((<=>))
-import Test.Tasty (TestName, TestTree, localOption, testGroup)
+import Test.Tasty (TestTree, localOption, testGroup)
 import Test.Tasty.HUnit (Assertion, assertBool, testCase, (@?=))
 import Test.Tasty.QuickCheck (QuickCheckMaxSize (QuickCheckMaxSize), testProperty)
 
@@ -39,11 +42,20 @@ decodeField field = fmap field . decode
 decodeFailure :: Either String a -> String
 decodeFailure = fromLeft "decode succeeded"
 
-decodeSucceeds :: TestName -> Maybe a -> TestTree
-decodeSucceeds name = testCase name . assertBool "decode returned Nothing" . isJust
+quotedType :: TypeRep -> String
+quotedType t = "'" <> show t <> "'"
 
-decodeFails :: TestName -> Maybe a -> TestTree
-decodeFails name = testCase name . assertBool "decode returned a value" . isNothing
+decodeSucceeds :: forall a. (FromJSON a, Typeable a) => BL.ByteString -> TestTree
+decodeSucceeds json =
+  testCase (quotedType (typeRep (Proxy :: Proxy a)) <> " " <> BLC.unpack json) $
+    assertBool "decode returned Nothing" $
+      isJust (decode json :: Maybe a)
+
+decodeFails :: forall a. (FromJSON a, Typeable a) => String -> BL.ByteString -> TestTree
+decodeFails key json =
+  testCase (quotedType (typeRep (Proxy :: Proxy a)) <> " without " <> show key) $
+    assertBool "decode returned a value" $
+      isNothing (decode json :: Maybe a)
 
 contains :: String -> String -> Assertion
 contains reported fragment =
@@ -74,8 +86,8 @@ optionalKeysTests =
   testGroup
     "absent optional keys"
     [ testGroup "decode succeeds" $
-        [ decodeSucceeds "'Template' {}" (decode "{}" :: Maybe Template)
-        , decodeSucceeds "'Collection' {\"collection\":{}}" (decode "{\"collection\":{}}" :: Maybe Collection)
+        [ decodeSucceeds @Template "{}"
+        , decodeSucceeds @Collection "{\"collection\":{}}"
         ]
           <> decodeTests
     , testGroup "encode omits them" encodeTests
@@ -83,24 +95,22 @@ optionalKeysTests =
  where
   (decodeTests, encodeTests) =
     unzip
-      [ minimal "Datum" (Datum "name" Nothing Nothing) "{\"name\":\"name\"}"
-      , minimal "Error" (Error Nothing Nothing Nothing) "{}"
-      , minimal "Template" (Template []) "{\"data\":[]}"
-      , minimal "Query" (Query exampleURI "item" Nothing Nothing []) "{\"href\":\"http://example.com\",\"rel\":\"item\"}"
-      , minimal "Item" (Item (Just exampleURI) [] []) "{\"href\":\"http://example.com\"}"
-      , minimal "Link" (Link exampleURI "item" Nothing Nothing Nothing) "{\"href\":\"http://example.com\",\"rel\":\"item\"}"
-      , minimal "Collection" (Collection "1.0" exampleURI [] [] [] Nothing Nothing) "{\"collection\":{\"href\":\"http://example.com\",\"version\":\"1.0\"}}"
+      [ minimal (Datum "name" Nothing Nothing) "{\"name\":\"name\"}"
+      , minimal (Error Nothing Nothing Nothing) "{}"
+      , minimal (Template []) "{\"data\":[]}"
+      , minimal (Query exampleURI "item" Nothing Nothing []) "{\"href\":\"http://example.com\",\"rel\":\"item\"}"
+      , minimal (Item (Just exampleURI) [] []) "{\"href\":\"http://example.com\"}"
+      , minimal (Link exampleURI "item" Nothing Nothing Nothing) "{\"href\":\"http://example.com\",\"rel\":\"item\"}"
+      , minimal (Collection "1.0" exampleURI [] [] [] Nothing Nothing) "{\"collection\":{\"href\":\"http://example.com\",\"version\":\"1.0\"}}"
       ]
 
 {- Separate decode and encode tables would need a heterogeneous list,
    which cannot carry the type variable a value shares with its JSON. -}
-minimal :: forall a. (FromJSON a, ToJSON a) => String -> a -> BL.ByteString -> (TestTree, TestTree)
-minimal name value json =
-  ( decodeSucceeds (typeName <> " " <> BLC.unpack json) (decode json :: Maybe a)
-  , testCase typeName $ encode value @?= json
+minimal :: forall a. (FromJSON a, ToJSON a, Typeable a) => a -> BL.ByteString -> (TestTree, TestTree)
+minimal value json =
+  ( decodeSucceeds @a json
+  , testCase (quotedType (typeOf value)) $ encode value @?= json
   )
- where
-  typeName = "'" <> name <> "'"
 
 requiredKeysTests :: TestTree
 requiredKeysTests =
@@ -108,12 +118,12 @@ requiredKeysTests =
     "absent required keys"
     [ testGroup
         "decode fails"
-        [ decodeFails "'Collection' without \"collection\"" (decode "{}" :: Maybe Collection)
-        , decodeFails "'Link' without \"href\"" (decode withoutHref :: Maybe Link)
-        , decodeFails "'Link' without \"rel\"" (decode withoutRel :: Maybe Link)
-        , decodeFails "'Query' without \"href\"" (decode withoutHref :: Maybe Query)
-        , decodeFails "'Query' without \"rel\"" (decode withoutRel :: Maybe Query)
-        , decodeFails "'Datum' without \"name\"" (decode "{}" :: Maybe Datum)
+        [ decodeFails @Collection "collection" "{}"
+        , decodeFails @Link "href" withoutHref
+        , decodeFails @Link "rel" withoutRel
+        , decodeFails @Query "href" withoutHref
+        , decodeFails @Query "rel" withoutRel
+        , decodeFails @Datum "name" "{}"
         ]
     ]
  where
