@@ -22,6 +22,7 @@ import Test.Tasty.HUnit (Assertion, assertBool, testCase, (@?=))
 import Test.Tasty.QuickCheck (QuickCheckMaxSize (QuickCheckMaxSize), testProperty)
 
 import qualified Data.ByteString.Lazy as BL (ByteString)
+import qualified Data.ByteString.Lazy.Char8 as BLC (unpack)
 
 import Data.CollectionJSON
 import Data.CollectionJSON.Arbitrary ()
@@ -59,39 +60,56 @@ tests =
   localOption (QuickCheckMaxSize 25) $
     testGroup
       "application/vnd.collection+json"
-      [ rfcComplianceTests
-      , commonParseErrorsTests
+      [ optionalKeysTests
       , requiredKeysTests
       , hrefTests
       , valueTests
       , renderTests
       , versionTests
-      , propertiesTests
-      , missingKeysTests
+      , roundTripTests
       ]
 
-rfcComplianceTests :: TestTree
-rfcComplianceTests =
+optionalKeysTests :: TestTree
+optionalKeysTests =
   testGroup
-    "RFC compliance (http://amundsen.com/media-types/collection/format/)"
-    [ decodeSucceeds "'Template' decode JSON string: \"{}\"" (decode "{}" :: Maybe Template)
-    , decodeSucceeds "'Collection' decode JSON string: \"{\"collection\":{}}\"" (decode "{\"collection\":{}}" :: Maybe Collection)
+    "absent optional keys"
+    [ testGroup "decode succeeds" $
+        [ decodeSucceeds "'Template' {}" (decode "{}" :: Maybe Template)
+        , decodeSucceeds "'Collection' {\"collection\":{}}" (decode "{\"collection\":{}}" :: Maybe Collection)
+        ]
+          <> decodeTests
+    , testGroup "encode omits them" encodeTests
     ]
+ where
+  (decodeTests, encodeTests) =
+    unzip
+      [ minimal "Datum" (Datum "name" Nothing Nothing) "{\"name\":\"name\"}"
+      , minimal "Error" (Error Nothing Nothing Nothing) "{}"
+      , minimal "Template" (Template []) "{\"data\":[]}"
+      , minimal "Query" (Query exampleURI "item" Nothing Nothing []) "{\"href\":\"http://example.com\",\"rel\":\"item\"}"
+      , minimal "Item" (Item (Just exampleURI) [] []) "{\"href\":\"http://example.com\"}"
+      , minimal "Link" (Link exampleURI "item" Nothing Nothing Nothing) "{\"href\":\"http://example.com\",\"rel\":\"item\"}"
+      , minimal "Collection" (Collection "1.0" exampleURI [] [] [] Nothing Nothing) "{\"collection\":{\"href\":\"http://example.com\",\"version\":\"1.0\"}}"
+      ]
 
-commonParseErrorsTests :: TestTree
-commonParseErrorsTests =
-  testGroup
-    "common parse errors"
-    [ decodeFails "'Collection' errors on \"{}\"" (decode "{}" :: Maybe Collection)
-    ]
+{- Separate decode and encode tables would need a heterogeneous list,
+   which cannot carry the type variable a value shares with its JSON. -}
+minimal :: forall a. (FromJSON a, ToJSON a) => String -> a -> BL.ByteString -> (TestTree, TestTree)
+minimal name value json =
+  ( decodeSucceeds (typeName <> " " <> BLC.unpack json) (decode json :: Maybe a)
+  , testCase typeName $ encode value @?= json
+  )
+ where
+  typeName = "'" <> name <> "'"
 
 requiredKeysTests :: TestTree
 requiredKeysTests =
   testGroup
-    "required keys"
+    "absent required keys"
     [ testGroup
-        "decode fails when a spec-required key is absent"
-        [ decodeFails "'Link' without \"href\"" (decode withoutHref :: Maybe Link)
+        "decode fails"
+        [ decodeFails "'Collection' without \"collection\"" (decode "{}" :: Maybe Collection)
+        , decodeFails "'Link' without \"href\"" (decode withoutHref :: Maybe Link)
         , decodeFails "'Link' without \"rel\"" (decode withoutRel :: Maybe Link)
         , decodeFails "'Query' without \"href\"" (decode withoutHref :: Maybe Query)
         , decodeFails "'Query' without \"rel\"" (decode withoutRel :: Maybe Query)
@@ -192,10 +210,10 @@ versionTests =
         decodeField cVersion "{\"collection\":{\"version\":\"1.1\"}}" @?= Just "1.1"
     ]
 
-propertiesTests :: TestTree
-propertiesTests =
+roundTripTests :: TestTree
+roundTripTests =
   testGroup
-    "properties"
+    "round trip"
     [ testGroup
         "fromJust . decode . encode == id"
         [ testProperty "Datum" (roundtrips :: Datum -> Bool)
@@ -210,30 +228,3 @@ propertiesTests =
 
 roundtrips :: (Eq a, FromJSON a, ToJSON a) => a -> Bool
 roundtrips = fromJust . decode . encode <=> id
-
-missingKeysTests :: TestTree
-missingKeysTests =
-  testGroup
-    "JSON Missing Keys"
-    [ testGroup "decode minimal JSON strings" decodeTests
-    , testGroup "encode minimal data to JSON" encodeTests
-    ]
- where
-  (decodeTests, encodeTests) =
-    unzip
-      [ minimal "Datum" (Datum "name" Nothing Nothing) "{\"name\":\"name\"}"
-      , minimal "Error" (Error Nothing Nothing Nothing) "{}"
-      , minimal "Template" (Template []) "{\"data\":[]}"
-      , minimal "Query" (Query exampleURI "item" Nothing Nothing []) "{\"href\":\"http://example.com\",\"rel\":\"item\"}"
-      , minimal "Item" (Item (Just exampleURI) [] []) "{\"href\":\"http://example.com\"}"
-      , minimal "Link" (Link exampleURI "item" Nothing Nothing Nothing) "{\"href\":\"http://example.com\",\"rel\":\"item\"}"
-      , minimal "Collection" (Collection "1.0" exampleURI [] [] [] Nothing Nothing) "{\"collection\":{\"href\":\"http://example.com\",\"version\":\"1.0\"}}"
-      ]
-
-{- Separate decode and encode tables would need a heterogeneous list,
-   which cannot carry the type variable a value shares with its JSON. -}
-minimal :: forall a. (FromJSON a, ToJSON a) => TestName -> a -> BL.ByteString -> (TestTree, TestTree)
-minimal name value json =
-  ( decodeSucceeds name (decode json :: Maybe a)
-  , testCase name $ encode value @?= json
-  )
