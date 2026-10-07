@@ -9,8 +9,8 @@ License     : MIT
 
 A collection of types and instances for @application/vnd.collection+json@.
 
-Full documentation for @application/vnd.collection+json@ can be found at
-<https://github.com/collection-json/spec>.
+The [Collection+JSON specification](https://github.com/collection-json/spec)
+defines the format.
 
 Every @href@ ('cHref', 'lHref', 'iHref', and 'qHref') decodes as a URI
 reference, so a relative address is valid. It resolves against the
