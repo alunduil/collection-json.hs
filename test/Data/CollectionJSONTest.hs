@@ -46,16 +46,14 @@ quotedType :: TypeRep -> String
 quotedType t = "'" <> show t <> "'"
 
 decodeSucceeds :: forall a. (FromJSON a, Typeable a) => BL.ByteString -> TestTree
-decodeSucceeds json =
-  testCase (quotedType (typeRep (Proxy :: Proxy a)) <> " " <> BLC.unpack json) $
-    assertBool "decode returned Nothing" $
-      isJust (decode json :: Maybe a)
+decodeSucceeds json = testCase name . assertBool "decode returned Nothing" . isJust $ (decode json :: Maybe a)
+ where
+  name = quotedType (typeRep (Proxy :: Proxy a)) <> " " <> BLC.unpack json
 
 decodeFails :: forall a. (FromJSON a, Typeable a) => String -> BL.ByteString -> TestTree
-decodeFails key json =
-  testCase (quotedType (typeRep (Proxy :: Proxy a)) <> " without " <> show key) $
-    assertBool "decode returned a value" $
-      isNothing (decode json :: Maybe a)
+decodeFails key json = testCase name . assertBool "decode returned a value" . isNothing $ (decode json :: Maybe a)
+ where
+  name = quotedType (typeRep (Proxy :: Proxy a)) <> " without " <> show key
 
 contains :: String -> String -> Assertion
 contains reported fragment =
