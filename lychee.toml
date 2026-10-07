@@ -6,8 +6,8 @@
 cache = true
 max_cache_age = "1w"
 
-# Give slow hosts (the amundsen.com spec page, shields.io badge
-# endpoints) room to answer before a link is declared dead.
+# Give slow hosts (shields.io badge endpoints) room to answer before a
+# link is declared dead.
 timeout = 20
 max_retries = 3
 retry_wait_time = 2

@@ -10,7 +10,7 @@ License     : MIT
 A collection of types and instances for @application/vnd.collection+json@.
 
 Full documentation for @application/vnd.collection+json@ can be found at
-<http://amundsen.com/media-types/collection/>.
+<https://github.com/collection-json/spec>.
 
 Every @href@ ('cHref', 'lHref', 'iHref', and 'qHref') decodes as a URI
 reference, so a relative address is valid. It resolves against the
