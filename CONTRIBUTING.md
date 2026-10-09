@@ -64,14 +64,14 @@ Fork the repository, branch from `main`, and open the PR against
 
 - Open it as a draft and mark it ready once CI is green and you want
   review.
-- Keep PRs focused. Unrelated cleanup goes in a separate PR.
+- Keep pull requests focused. Unrelated cleanup goes in a separate PR.
 
 Don't bump the `version:` field in `collection-json.cabal` in your
 PR; releases are cut by the maintainer.
 
 ### Commit messages
 
-PRs are squash-merged, so the PR title becomes the subject of the
+Pull requests are squash-merged, so the PR title becomes the subject of the
 single commit that lands on `main`, and the PR description becomes its
 body. Write the title as an imperative summary under 50 characters:
 `Accept URI references for href`, not `fixed the href parsing bug`.
