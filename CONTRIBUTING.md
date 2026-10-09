@@ -71,11 +71,10 @@ PR; releases are cut by the maintainer.
 
 ### Commit messages
 
-Pull requests are squash-merged, so the PR title becomes the subject
-of the single commit that lands on `main`, and the PR description
-becomes its body. Write the title as an imperative summary under 50
-characters: `Accept URI references for href`, not
-`fixed the href parsing bug`.
+Pull requests are squash-merged, so the PR title becomes the subject of the
+single commit that lands on `main`, and the PR description becomes its
+body. Write the title as an imperative summary under 50 characters:
+`Accept URI references for href`, not `fixed the href parsing bug`.
 Use the description for why the change is needed and anything a reader
 of the diff would find surprising.
 
