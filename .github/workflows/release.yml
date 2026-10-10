@@ -16,7 +16,7 @@ env:
 jobs:
   metadata:
     name: Read release metadata
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       version: ${{ steps.verify.outputs.version }}
       ghc-versions: ${{ steps.range.outputs.ghc-versions }}
@@ -56,7 +56,7 @@ jobs:
     name: Upload Hackage candidate
     needs: metadata
     if: github.event_name == 'push'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     environment: hackage
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -93,7 +93,7 @@ jobs:
   draft-release:
     name: Draft GitHub Release
     needs: [metadata, candidate]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: write
     steps:
@@ -131,7 +131,7 @@ jobs:
     name: Smoke-test candidate on GHC ${{ matrix.ghc }}
     needs: [metadata, candidate]
     if: ${{ !cancelled() && needs.metadata.result == 'success' && (needs.candidate.result == 'success' || github.event_name == 'workflow_dispatch') }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:
@@ -163,7 +163,7 @@ jobs:
     name: Publish to Hackage
     needs: smoke-test
     if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && needs.smoke-test.result == 'success' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     environment: hackage
     permissions:
       contents: read
@@ -208,7 +208,7 @@ jobs:
   publish-release:
     name: Publish GitHub Release
     needs: publish
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: write
     steps:
