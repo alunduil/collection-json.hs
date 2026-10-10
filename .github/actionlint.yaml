@@ -1,4 +1,4 @@
-# Remove once actionlint ships ubuntu-26.04: https://github.com/rhysd/actionlint/issues/682
+# GitHub-hosted labels newer than actionlint's built-in list.
 self-hosted-runner:
   labels:
     - ubuntu-26.04
