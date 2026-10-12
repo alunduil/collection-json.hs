@@ -97,16 +97,15 @@ ship; don't sit on bumps to batch them.
   publish:
   1. `gh release create v<version> --prerelease --target <sha>
      --notes-file <notes>` creates the tag and uploads a Hackage
-     candidate. `<notes>` holds the version's `CHANGELOG.md` section.
+     candidate. `<notes>` holds the version's `CHANGELOG.md` section;
+     empty notes fail the run, and publish refuses the tag.
   2. `gh workflow run release.yml --ref v<version>` publishes it and
      promotes the prerelease to latest.
-- A bare `v*` tag push starts nothing.
 - The tag must match `version:` in the cabal file. Both steps
   smoke-test the candidate as downloaded from Hackage, and publish runs
   only when it passes. Both deploy through the `hackage` environment
   and its `HACKAGE_TOKEN` secret.
-- A prerelease with empty notes fails the candidate run, and publish
-  refuses the tag. A prerelease left standing marks a stalled release.
+- A prerelease left standing marks a stalled release.
 
 ## Don't-touch list
 

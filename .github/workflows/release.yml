@@ -27,8 +27,8 @@ jobs:
           echo "::error::Dispatch on the release tag (--ref v<version>), not ${GITHUB_REF}"
           exit 1
 
-      # A failure here fails the candidate run, which publish requires to
-      # have succeeded.
+      # Publish promotes this Release unchanged, so empty notes must fail
+      # the candidate run it depends on.
       - name: Require release notes
         if: github.event_name == 'release'
         env:
