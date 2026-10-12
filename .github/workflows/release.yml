@@ -1,8 +1,8 @@
 name: Release
 
 on:
-  push:
-    tags: ['v*']
+  release:
+    types: [prereleased]
   # Environment deployment rules match the run's ref, so publish reads its
   # tag from the dispatch ref rather than an input.
   workflow_dispatch:
@@ -41,6 +41,18 @@ jobs:
           fi
           echo "version=$cabal_version" >> "$GITHUB_OUTPUT"
 
+      # A failure here fails the candidate run, which publish requires to
+      # have succeeded.
+      - name: Require release notes
+        if: github.event_name == 'release'
+        env:
+          BODY: ${{ github.event.release.body }}
+        run: |
+          if ! printf '%s' "$BODY" | grep -q '[^[:space:]]'; then
+            echo "::error::Release $GITHUB_REF_NAME has no notes; create it with --notes-file <CHANGELOG.md section>"
+            exit 1
+          fi
+
       # The ends of tested-with catch lower- and upper-bound solve
       # failures without paying for the full CI matrix on every release.
       - name: Read tested-with ends
@@ -55,7 +67,7 @@ jobs:
   candidate:
     name: Upload Hackage candidate
     needs: metadata
-    if: github.event_name == 'push'
+    if: github.event_name == 'release'
     runs-on: ubuntu-26.04
     environment: hackage
     steps:
@@ -89,36 +101,6 @@ jobs:
         env:
           HACKAGE_KEY: ${{ secrets.HACKAGE_TOKEN }}
         run: cabal upload --documentation dist-newstyle/*-docs.tar.gz
-
-  draft-release:
-    name: Draft GitHub Release
-    needs: [metadata, candidate]
-    runs-on: ubuntu-26.04
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      # The oldest entry ends at the link reference definitions.
-      - name: Extract changelog entry
-        env:
-          VERSION: ${{ needs.metadata.outputs.version }}
-        run: |
-          awk -v heading="## [$VERSION]" '
-            index($0, heading) == 1 { found = 1; next }
-            found && (/^## / || /^\[[^]]+\]: /) { exit }
-            found { print }
-          ' CHANGELOG.md > release-notes.md
-          if ! grep -q '[^[:space:]]' release-notes.md; then
-            echo "::error::CHANGELOG.md has no entry for $VERSION"
-            exit 1
-          fi
-
-      - name: Create draft release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
-        run: gh release create "$TAG" --draft --verify-tag --title "$TAG" --notes-file release-notes.md
 
   # The smoke test runs after the upload for early feedback and before
   # publish, which runs as a separate dispatch. Dispatch skips candidate.
@@ -176,7 +158,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          run_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release.yml/runs?event=push&branch=$GITHUB_REF_NAME&status=success" --jq '.workflow_runs[0].id // empty')"
+          run_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release.yml/runs?event=release&branch=$GITHUB_REF_NAME&status=success" --jq '.workflow_runs[0].id // empty')"
           if [ -z "$run_id" ]; then
             echo "::error::No successful candidate run found for $GITHUB_REF_NAME"
             exit 1
@@ -212,8 +194,8 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Publish draft release
+      - name: Promote prerelease to latest
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
-        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --prerelease=false --latest
