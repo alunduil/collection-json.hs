@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-26.04
     outputs:
       version: ${{ steps.verify.outputs.version }}
+      candidate-url: ${{ steps.verify.outputs.candidate-url }}
       ghc-versions: ${{ steps.range.outputs.ghc-versions }}
     steps:
       - name: Require a tag ref
@@ -33,7 +34,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
-            const tag = context.ref.replace('refs/tags/', '');
+            const tag = process.env.GITHUB_REF_NAME;
             const { data: release } = await github.rest.repos.getReleaseByTag({ ...context.repo, tag });
             if (!release.prerelease) {
               core.setFailed(`Release ${tag} is not a prerelease`);
@@ -63,7 +64,10 @@ jobs:
             echo "::error::Tag $GITHUB_REF_NAME resolves to version $tag_version but collection-json.cabal declares $cabal_version"
             exit 1
           fi
-          echo "version=$cabal_version" >> "$GITHUB_OUTPUT"
+          {
+            echo "version=$cabal_version"
+            echo "candidate-url=https://hackage.haskell.org/package/collection-json-$cabal_version/candidate/collection-json-$cabal_version.tar.gz"
+          } >> "$GITHUB_OUTPUT"
 
       # The ends of tested-with catch lower- and upper-bound solve
       # failures without paying for the full CI matrix on every release.
@@ -142,11 +146,10 @@ jobs:
       # non-local, and cabal won't build non-local test suites.
       - name: Download candidate
         env:
-          VERSION: ${{ needs.metadata.outputs.version }}
+          CANDIDATE_URL: ${{ needs.metadata.outputs.candidate-url }}
         run: |
           mkdir candidate
-          curl -fsSL "https://hackage.haskell.org/package/collection-json-$VERSION/candidate/collection-json-$VERSION.tar.gz" \
-            | tar xz -C candidate --strip-components=1
+          curl -fsSL "$CANDIDATE_URL" | tar xz -C candidate --strip-components=1
 
       # allow-newer mirrors ci.yml's network-arbitrary stopgap.
       - name: Build and test
@@ -162,6 +165,8 @@ jobs:
     permissions:
       contents: read
       actions: read
+    env:
+      SDIST: dist-newstyle/sdist/collection-json-${{ needs.metadata.outputs.version }}.tar.gz
     steps:
       # Hackage publishes are irreversible, so ship the exact bytes reviewed
       # as the candidate.
@@ -188,11 +193,11 @@ jobs:
       # artifact.
       - name: Require the artifact to match the Hackage candidate
         env:
-          VERSION: ${{ needs.metadata.outputs.version }}
+          CANDIDATE_URL: ${{ needs.metadata.outputs.candidate-url }}
         run: |
-          curl -fsSL "https://hackage.haskell.org/package/collection-json-$VERSION/candidate/collection-json-$VERSION.tar.gz" -o hackage-candidate.tar.gz
-          if ! cmp -s "dist-newstyle/sdist/collection-json-$VERSION.tar.gz" hackage-candidate.tar.gz; then
-            echo "::error::The Hackage candidate for $VERSION differs from the artifact built by the candidate run"
+          curl -fsSL "$CANDIDATE_URL" -o hackage-candidate.tar.gz
+          if ! cmp -s "$SDIST" hackage-candidate.tar.gz; then
+            echo "::error::$CANDIDATE_URL differs from the artifact built by the candidate run"
             exit 1
           fi
 
@@ -204,7 +209,7 @@ jobs:
       - name: Publish sdist
         env:
           HACKAGE_KEY: ${{ secrets.HACKAGE_TOKEN }}
-        run: cabal upload --publish dist-newstyle/sdist/*.tar.gz
+        run: cabal upload --publish "$SDIST"
 
       - name: Publish documentation
         env:
