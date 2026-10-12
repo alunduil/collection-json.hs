@@ -1,8 +1,8 @@
 name: Release
 
 on:
-  push:
-    tags: ['v*']
+  release:
+    types: [prereleased]
   # Environment deployment rules match the run's ref, so publish reads its
   # tag from the dispatch ref rather than an input.
   workflow_dispatch:
@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-26.04
     outputs:
       version: ${{ steps.verify.outputs.version }}
+      candidate-url: ${{ steps.verify.outputs.candidate-url }}
       ghc-versions: ${{ steps.range.outputs.ghc-versions }}
     steps:
       - name: Require a tag ref
@@ -26,6 +27,30 @@ jobs:
         run: |
           echo "::error::Dispatch on the release tag (--ref v<version>), not ${GITHUB_REF}"
           exit 1
+
+      # Read the Release live: a re-run reuses the event payload, and
+      # publish must see edits made since the candidate run.
+      - name: Require a prerelease with notes
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const tag = process.env.GITHUB_REF_NAME;
+            const { data: release } = await github.rest.repos.getReleaseByTag({ ...context.repo, tag });
+            if (!release.prerelease) {
+              core.setFailed(`Release ${tag} is not a prerelease`);
+            } else if (!release.body?.trim()) {
+              core.setFailed(`Release ${tag} has no notes`);
+            }
+
+      - name: Require the tag on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          status="$(gh api "repos/$GITHUB_REPOSITORY/compare/main...$GITHUB_SHA" --jq .status)"
+          if [ "$status" != identical ] && [ "$status" != behind ]; then
+            echo "::error::$GITHUB_REF_NAME points at $GITHUB_SHA, which is not on main"
+            exit 1
+          fi
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
@@ -39,7 +64,10 @@ jobs:
             echo "::error::Tag $GITHUB_REF_NAME resolves to version $tag_version but collection-json.cabal declares $cabal_version"
             exit 1
           fi
-          echo "version=$cabal_version" >> "$GITHUB_OUTPUT"
+          {
+            echo "version=$cabal_version"
+            echo "candidate-url=https://hackage.haskell.org/package/collection-json-$cabal_version/candidate/collection-json-$cabal_version.tar.gz"
+          } >> "$GITHUB_OUTPUT"
 
       # The ends of tested-with catch lower- and upper-bound solve
       # failures without paying for the full CI matrix on every release.
@@ -55,7 +83,7 @@ jobs:
   candidate:
     name: Upload Hackage candidate
     needs: metadata
-    if: github.event_name == 'push'
+    if: github.event_name == 'release'
     runs-on: ubuntu-26.04
     environment: hackage
     steps:
@@ -90,36 +118,6 @@ jobs:
           HACKAGE_KEY: ${{ secrets.HACKAGE_TOKEN }}
         run: cabal upload --documentation dist-newstyle/*-docs.tar.gz
 
-  draft-release:
-    name: Draft GitHub Release
-    needs: [metadata, candidate]
-    runs-on: ubuntu-26.04
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      # The oldest entry ends at the link reference definitions.
-      - name: Extract changelog entry
-        env:
-          VERSION: ${{ needs.metadata.outputs.version }}
-        run: |
-          awk -v heading="## [$VERSION]" '
-            index($0, heading) == 1 { found = 1; next }
-            found && (/^## / || /^\[[^]]+\]: /) { exit }
-            found { print }
-          ' CHANGELOG.md > release-notes.md
-          if ! grep -q '[^[:space:]]' release-notes.md; then
-            echo "::error::CHANGELOG.md has no entry for $VERSION"
-            exit 1
-          fi
-
-      - name: Create draft release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
-        run: gh release create "$TAG" --draft --verify-tag --title "$TAG" --notes-file release-notes.md
-
   # The smoke test runs after the upload for early feedback and before
   # publish, which runs as a separate dispatch. Dispatch skips candidate.
   # The implicit success() would then skip this job and publish, so both
@@ -148,11 +146,10 @@ jobs:
       # non-local, and cabal won't build non-local test suites.
       - name: Download candidate
         env:
-          VERSION: ${{ needs.metadata.outputs.version }}
+          CANDIDATE_URL: ${{ needs.metadata.outputs.candidate-url }}
         run: |
           mkdir candidate
-          curl -fsSL "https://hackage.haskell.org/package/collection-json-$VERSION/candidate/collection-json-$VERSION.tar.gz" \
-            | tar xz -C candidate --strip-components=1
+          curl -fsSL "$CANDIDATE_URL" | tar xz -C candidate --strip-components=1
 
       # allow-newer mirrors ci.yml's network-arbitrary stopgap.
       - name: Build and test
@@ -161,13 +158,15 @@ jobs:
 
   publish:
     name: Publish to Hackage
-    needs: smoke-test
+    needs: [metadata, smoke-test]
     if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && needs.smoke-test.result == 'success' }}
     runs-on: ubuntu-26.04
     environment: hackage
     permissions:
       contents: read
       actions: read
+    env:
+      SDIST: dist-newstyle/sdist/collection-json-${{ needs.metadata.outputs.version }}.tar.gz
     steps:
       # Hackage publishes are irreversible, so ship the exact bytes reviewed
       # as the candidate.
@@ -176,9 +175,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          run_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release.yml/runs?event=push&branch=$GITHUB_REF_NAME&status=success" --jq '.workflow_runs[0].id // empty')"
+          run_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release.yml/runs?event=release&branch=$GITHUB_REF_NAME&status=success&head_sha=$GITHUB_SHA" --jq '.workflow_runs[0].id // empty')"
           if [ -z "$run_id" ]; then
-            echo "::error::No successful candidate run found for $GITHUB_REF_NAME"
+            echo "::error::No successful candidate run found for $GITHUB_REF_NAME at $GITHUB_SHA"
             exit 1
           fi
           echo "run-id=$run_id" >> "$GITHUB_OUTPUT"
@@ -190,6 +189,17 @@ jobs:
           run-id: ${{ steps.candidate-run.outputs.run-id }}
           github-token: ${{ github.token }}
 
+      # The smoke test checked Hackage's copy; publish uploads the artifact.
+      - name: Require the artifact to match the Hackage candidate
+        env:
+          CANDIDATE_URL: ${{ needs.metadata.outputs.candidate-url }}
+        run: |
+          curl -fsSL "$CANDIDATE_URL" -o hackage-candidate.tar.gz
+          if ! cmp -s "$SDIST" hackage-candidate.tar.gz; then
+            echo "::error::$CANDIDATE_URL differs from the artifact built by the candidate run"
+            exit 1
+          fi
+
       - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
         with:
           ghc-version: 'latest'
@@ -198,22 +208,21 @@ jobs:
       - name: Publish sdist
         env:
           HACKAGE_KEY: ${{ secrets.HACKAGE_TOKEN }}
-        run: cabal upload --publish dist-newstyle/sdist/*.tar.gz
+        run: cabal upload --publish "$SDIST"
 
       - name: Publish documentation
         env:
           HACKAGE_KEY: ${{ secrets.HACKAGE_TOKEN }}
         run: cabal upload --publish --documentation dist-newstyle/*-docs.tar.gz
 
-  publish-release:
-    name: Publish GitHub Release
+  promote-release:
+    name: Promote GitHub Release
     needs: publish
     runs-on: ubuntu-26.04
     permissions:
       contents: write
     steps:
-      - name: Publish draft release
+      - name: Promote prerelease to latest
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
-        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
+        run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --prerelease=false --latest

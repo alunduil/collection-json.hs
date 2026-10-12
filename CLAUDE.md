@@ -93,18 +93,21 @@ ship; don't sit on bumps to batch them.
 
 - `main` is the integration branch and PR target.
 - Current version `1.3.1.3`; next `1.3.1.4`.
-- Tag-driven via `.github/workflows/release.yml`; read it before
-  touching publish:
-  1. A `v*` tag on `main` uploads a Hackage candidate.
-  2. `gh workflow run release.yml --ref v<version>` publishes it.
+- Driven by `.github/workflows/release.yml`; read it before touching
+  publish:
+  1. `gh release create v<version> --prerelease --target <sha>
+     --notes-file <notes>` creates the tag and uploads a Hackage
+     candidate. `<sha>` is on `main`; `<notes>` holds the version's
+     `CHANGELOG.md` section.
+  2. `gh workflow run release.yml --ref v<version>` publishes it and
+     promotes the prerelease to latest.
 - The tag must match `version:` in the cabal file. Both steps
   smoke-test the candidate as downloaded from Hackage, and publish runs
   only when it passes. Both deploy through the `hackage` environment
   and its `HACKAGE_TOKEN` secret.
-- The tagged commit's `CHANGELOG.md` needs a `## [<version>]` section:
-  the candidate run drafts a GitHub Release from it, and publish makes
-  that Release public. Without the section the candidate run fails and
-  publish refuses the tag.
+- Both steps require the Release to be a prerelease with notes. After
+  fixing the Release, re-run the failed run.
+- A prerelease left standing marks a stalled release.
 
 ## Don't-touch list
 
