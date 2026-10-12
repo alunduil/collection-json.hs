@@ -27,15 +27,32 @@ jobs:
           echo "::error::Dispatch on the release tag (--ref v<version>), not ${GITHUB_REF}"
           exit 1
 
-      # Publish promotes this Release unchanged, so empty notes must fail
-      # the candidate run it depends on.
-      - name: Require release notes
-        if: github.event_name == 'release'
+      # A re-run reuses the event payload, and publish must see changes
+      # made since the candidate run, so read the Release as it is now.
+      - name: Require a prerelease with notes
         env:
-          BODY: ${{ github.event.release.body }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if ! printf '%s' "$BODY" | grep -q '[^[:space:]]'; then
-            echo "::error::Release $GITHUB_REF_NAME has no notes; create it with --notes-file <CHANGELOG.md section>"
+          if ! problem="$(gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease,body --jq '
+            if .isDraft then "is a draft"
+            elif (.isPrerelease | not) then "is not a prerelease"
+            elif (.body | test("\\S") | not) then "has no notes"
+            else empty end')"; then
+            echo "::error::No GitHub Release for $GITHUB_REF_NAME"
+            exit 1
+          fi
+          if [ -n "$problem" ]; then
+            echo "::error::Release $GITHUB_REF_NAME $problem"
+            exit 1
+          fi
+
+      - name: Require the tag on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          status="$(gh api "repos/$GITHUB_REPOSITORY/compare/main...$GITHUB_SHA" --jq .status)"
+          if [ "$status" != identical ] && [ "$status" != behind ]; then
+            echo "::error::$GITHUB_REF_NAME points at $GITHUB_SHA, which is not on main"
             exit 1
           fi
 
@@ -143,7 +160,7 @@ jobs:
 
   publish:
     name: Publish to Hackage
-    needs: smoke-test
+    needs: [metadata, smoke-test]
     if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && needs.smoke-test.result == 'success' }}
     runs-on: ubuntu-26.04
     environment: hackage
@@ -158,9 +175,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          run_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release.yml/runs?event=release&branch=$GITHUB_REF_NAME&status=success" --jq '.workflow_runs[0].id // empty')"
+          run_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release.yml/runs?event=release&branch=$GITHUB_REF_NAME&status=success&head_sha=$GITHUB_SHA" --jq '.workflow_runs[0].id // empty')"
           if [ -z "$run_id" ]; then
-            echo "::error::No successful candidate run found for $GITHUB_REF_NAME"
+            echo "::error::No successful candidate run found for $GITHUB_REF_NAME at $GITHUB_SHA"
             exit 1
           fi
           echo "run-id=$run_id" >> "$GITHUB_OUTPUT"
@@ -171,6 +188,18 @@ jobs:
           path: dist-newstyle
           run-id: ${{ steps.candidate-run.outputs.run-id }}
           github-token: ${{ github.token }}
+
+      # The smoke test checked Hackage's copy, and publish uploads the
+      # artifact.
+      - name: Require the artifact to match the Hackage candidate
+        env:
+          VERSION: ${{ needs.metadata.outputs.version }}
+        run: |
+          curl -fsSL "https://hackage.haskell.org/package/collection-json-$VERSION/candidate/collection-json-$VERSION.tar.gz" -o hackage-candidate.tar.gz
+          if ! cmp -s "dist-newstyle/sdist/collection-json-$VERSION.tar.gz" hackage-candidate.tar.gz; then
+            echo "::error::The Hackage candidate for $VERSION differs from the artifact built by the candidate run"
+            exit 1
+          fi
 
       - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
         with:
