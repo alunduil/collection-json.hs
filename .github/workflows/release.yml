@@ -28,8 +28,8 @@ jobs:
           echo "::error::Dispatch on the release tag (--ref v<version>), not ${GITHUB_REF}"
           exit 1
 
-      # A re-run reuses the event payload, and publish must see changes
-      # made since the candidate run, so read the Release as it is now.
+      # Read the Release live: a re-run reuses the event payload, and
+      # publish must see edits made since the candidate run.
       - name: Require a prerelease with notes
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
@@ -189,8 +189,7 @@ jobs:
           run-id: ${{ steps.candidate-run.outputs.run-id }}
           github-token: ${{ github.token }}
 
-      # The smoke test checked Hackage's copy, and publish uploads the
-      # artifact.
+      # The smoke test checked Hackage's copy; publish uploads the artifact.
       - name: Require the artifact to match the Hackage candidate
         env:
           CANDIDATE_URL: ${{ needs.metadata.outputs.candidate-url }}
