@@ -30,21 +30,16 @@ jobs:
       # A re-run reuses the event payload, and publish must see changes
       # made since the candidate run, so read the Release as it is now.
       - name: Require a prerelease with notes
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if ! problem="$(gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease,body --jq '
-            if .isDraft then "is a draft"
-            elif (.isPrerelease | not) then "is not a prerelease"
-            elif (.body | test("\\S") | not) then "has no notes"
-            else empty end')"; then
-            echo "::error::No GitHub Release for $GITHUB_REF_NAME"
-            exit 1
-          fi
-          if [ -n "$problem" ]; then
-            echo "::error::Release $GITHUB_REF_NAME $problem"
-            exit 1
-          fi
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const tag = context.ref.replace('refs/tags/', '');
+            const { data: release } = await github.rest.repos.getReleaseByTag({ ...context.repo, tag });
+            if (!release.prerelease) {
+              core.setFailed(`Release ${tag} is not a prerelease`);
+            } else if (!release.body?.trim()) {
+              core.setFailed(`Release ${tag} has no notes`);
+            }
 
       - name: Require the tag on main
         env:
