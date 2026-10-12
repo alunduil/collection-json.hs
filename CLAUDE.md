@@ -92,7 +92,7 @@ ship; don't sit on bumps to batch them.
 ## Release process
 
 - `main` is the integration branch and PR target.
-- Current version `1.3.1.3`; next `1.3.1.4`.
+- Current version `1.3.1.3`; next `1.4.0.0`.
 - Tag-driven via `.github/workflows/release.yml`; read it before
   touching publish:
   1. A `v*` tag on `main` uploads a Hackage candidate.
