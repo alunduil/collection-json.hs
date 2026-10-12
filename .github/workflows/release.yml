@@ -27,6 +27,18 @@ jobs:
           echo "::error::Dispatch on the release tag (--ref v<version>), not ${GITHUB_REF}"
           exit 1
 
+      # A failure here fails the candidate run, which publish requires to
+      # have succeeded.
+      - name: Require release notes
+        if: github.event_name == 'release'
+        env:
+          BODY: ${{ github.event.release.body }}
+        run: |
+          if ! printf '%s' "$BODY" | grep -q '[^[:space:]]'; then
+            echo "::error::Release $GITHUB_REF_NAME has no notes; create it with --notes-file <CHANGELOG.md section>"
+            exit 1
+          fi
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Verify tag matches cabal version
@@ -40,18 +52,6 @@ jobs:
             exit 1
           fi
           echo "version=$cabal_version" >> "$GITHUB_OUTPUT"
-
-      # A failure here fails the candidate run, which publish requires to
-      # have succeeded.
-      - name: Require release notes
-        if: github.event_name == 'release'
-        env:
-          BODY: ${{ github.event.release.body }}
-        run: |
-          if ! printf '%s' "$BODY" | grep -q '[^[:space:]]'; then
-            echo "::error::Release $GITHUB_REF_NAME has no notes; create it with --notes-file <CHANGELOG.md section>"
-            exit 1
-          fi
 
       # The ends of tested-with catch lower- and upper-bound solve
       # failures without paying for the full CI matrix on every release.
@@ -187,8 +187,8 @@ jobs:
           HACKAGE_KEY: ${{ secrets.HACKAGE_TOKEN }}
         run: cabal upload --publish --documentation dist-newstyle/*-docs.tar.gz
 
-  publish-release:
-    name: Publish GitHub Release
+  promote-release:
+    name: Promote GitHub Release
     needs: publish
     runs-on: ubuntu-26.04
     permissions:
@@ -197,5 +197,4 @@ jobs:
       - name: Promote prerelease to latest
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
-        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --prerelease=false --latest
+        run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --prerelease=false --latest
