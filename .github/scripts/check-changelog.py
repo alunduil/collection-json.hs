@@ -36,7 +36,7 @@ class Release(NamedTuple):
             return None
 
 
-def releases(sections):
+def parse_releases(sections):
     return [
         Release(n, *release.groups())
         for n, line in sections
@@ -46,7 +46,7 @@ def releases(sections):
 
 def labels(sections):
     unreleased = {UNRELEASED: n for n, line in sections if line == UNRELEASED_HEADING}
-    return unreleased | {r.label: r.line for r in releases(sections)}
+    return unreleased | {r.label: r.line for r in parse_releases(sections)}
 
 
 def check_headings(sections):
@@ -77,24 +77,22 @@ def check_versions(releases):
             yield below.line, f"{below.label} is not below the version above it"
 
 
+def is_entry(line):
+    return not (line.startswith("#") or REFERENCE.fullmatch(line))
+
+
 def check_categories(lines, sections):
-    category = None
-    for n, line in lines:
-        if line.startswith("#") or REFERENCE.fullmatch(line):
-            if category is not None:
-                yield category, "empty category"
-            category = None
-        if line.startswith("### "):
-            name = line[len("### ") :]
-            if name not in CATEGORIES:
-                yield n, f"unknown category {name}"
-            if not sections or n < sections[0][0]:
-                yield n, "category outside any section"
-            category = n
-        elif line.strip() and not line.startswith("#"):
-            category = None
-    if category is not None:
-        yield category, "empty category"
+    for index, (n, line) in enumerate(lines):
+        if not line.startswith("### "):
+            continue
+        name = line.removeprefix("### ")
+        if name not in CATEGORIES:
+            yield n, f"unknown category {name}"
+        if not sections or n < sections[0][0]:
+            yield n, "category outside any section"
+        following = next((text for _, text in lines[index + 1 :] if text.strip()), "")
+        if not (following and is_entry(following)):
+            yield n, "empty category"
 
 
 def check_references(lines, labels):
@@ -117,8 +115,8 @@ def check_references(lines, labels):
 def check(lines):
     sections = [(n, line) for n, line in lines if line.startswith("## ")]
     yield from check_headings(sections)
-    yield from check_dates(releases(sections))
-    yield from check_versions(releases(sections))
+    yield from check_dates(parse_releases(sections))
+    yield from check_versions(parse_releases(sections))
     yield from check_categories(lines, sections)
     yield from check_references(lines, labels(sections))
 
