@@ -6,46 +6,75 @@ versions such as 1.3.1.3.
 """
 
 import datetime
+import itertools
 import re
 import sys
+from typing import NamedTuple
 
 CATEGORIES = {"Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"}
 
-UNRELEASED = re.compile(r"## \[(Unreleased)\]")
+UNRELEASED = "Unreleased"
+UNRELEASED_HEADING = f"## [{UNRELEASED}]"
 RELEASE = re.compile(r"## \[(\d+(?:\.\d+)+)\] - (\d{4}-\d{2}-\d{2})")
 REFERENCE = re.compile(r"\[([^\]]+)\]: \S+")
 
 
-def check_sections(sections, labels):
-    previous = None
-    previous_day = None
+class Release(NamedTuple):
+    line: int
+    label: str
+    date: str
+
+    @property
+    def version(self):
+        return tuple(int(c) for c in self.label.split("."))
+
+    @property
+    def day(self):
+        try:
+            return datetime.date.fromisoformat(self.date)
+        except ValueError:
+            return None
+
+
+def releases(sections):
+    return [
+        Release(n, *release.groups())
+        for n, line in sections
+        if (release := RELEASE.fullmatch(line))
+    ]
+
+
+def labels(sections):
+    unreleased = {UNRELEASED: n for n, line in sections if line == UNRELEASED_HEADING}
+    return unreleased | {r.label: r.line for r in releases(sections)}
+
+
+def check_headings(sections):
     for index, (n, line) in enumerate(sections):
-        unreleased = UNRELEASED.fullmatch(line)
-        if unreleased:
+        if line == UNRELEASED_HEADING:
             if index != 0:
-                yield n, "[Unreleased] must be the first section"
-            labels[unreleased.group(1)] = n
+                yield n, f"[{UNRELEASED}] must be the first section"
             continue
         if index == 0:
-            yield n, "first section must be ## [Unreleased]"
-        release = RELEASE.fullmatch(line)
-        if not release:
+            yield n, f"first section must be {UNRELEASED_HEADING}"
+        if not RELEASE.fullmatch(line):
             yield n, "expected ## [<version>] - YYYY-MM-DD"
-            continue
-        label, date = release.groups()
-        try:
-            day = datetime.date.fromisoformat(date)
-        except ValueError:
-            yield n, f"invalid date {date}"
-            day = None
-        if day is not None and previous_day is not None and day > previous_day:
-            yield n, f"{date} is later than the release above it"
-        previous_day = day or previous_day
-        version = tuple(int(c) for c in label.split("."))
-        if previous is not None and version >= previous:
-            yield n, f"{label} is not below the version above it"
-        previous = version
-        labels[label] = n
+
+
+def check_dates(releases):
+    for r in releases:
+        if r.day is None:
+            yield r.line, f"invalid date {r.date}"
+    dated = [r for r in releases if r.day is not None]
+    for above, below in itertools.pairwise(dated):
+        if below.day > above.day:
+            yield below.line, f"{below.date} is later than the release above it"
+
+
+def check_versions(releases):
+    for above, below in itertools.pairwise(releases):
+        if below.version >= above.version:
+            yield below.line, f"{below.label} is not below the version above it"
 
 
 def check_categories(lines, sections):
@@ -87,10 +116,11 @@ def check_references(lines, labels):
 
 def check(lines):
     sections = [(n, line) for n, line in lines if line.startswith("## ")]
-    labels = {}
-    yield from check_sections(sections, labels)
+    yield from check_headings(sections)
+    yield from check_dates(releases(sections))
+    yield from check_versions(releases(sections))
     yield from check_categories(lines, sections)
-    yield from check_references(lines, labels)
+    yield from check_references(lines, labels(sections))
 
 
 def read(path):
