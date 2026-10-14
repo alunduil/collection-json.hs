@@ -37,6 +37,7 @@ def check(path):
 
     labels = {}
     previous = None
+    previous_day = None
     for index, (n, line) in enumerate(sections):
         unreleased = UNRELEASED.fullmatch(line)
         if unreleased:
@@ -52,9 +53,13 @@ def check(path):
             continue
         label, date = release.groups()
         try:
-            datetime.date.fromisoformat(date)
+            day = datetime.date.fromisoformat(date)
         except ValueError:
             error(n, f"invalid date {date}")
+            day = None
+        if day is not None and previous_day is not None and day > previous_day:
+            error(n, f"{date} is later than the release above it")
+        previous_day = day or previous_day
         version = tuple(int(c) for c in label.split("."))
         if previous is not None and version >= previous:
             error(n, f"{label} is not below the version above it")
