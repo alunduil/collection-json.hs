@@ -35,7 +35,7 @@ and this project adheres to the [Haskell Package Versioning Policy
 - Integrate cloudbuild fixes from network-arbitrary.
 - Update sdist path for new-sdist.
 
-## [1.3.1.2] - 2018-02-05
+## [1.3.1.2] - 2019-02-05
 
 ### Changed
 
