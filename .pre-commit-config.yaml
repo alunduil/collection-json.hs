@@ -59,6 +59,11 @@ repos:
   # for these tools live in `.github/workflows/pre-commit.yml`.
   - repo: local
     hooks:
+      - id: check-changelog
+        name: check-changelog
+        entry: .github/scripts/check-changelog.py
+        language: python
+        files: ^CHANGELOG\.md$
       - id: fourmolu
         name: fourmolu
         entry: fourmolu --mode inplace
