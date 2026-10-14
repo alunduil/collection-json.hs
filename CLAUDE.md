@@ -22,9 +22,8 @@ Single-package project (`cabal.project`: `packages: .`).
   (`.markdownlint.jsonc`), Vale (`.vale.ini`; styles vendored under
   `.vale/styles`, no `vale sync`), actionlint, shellcheck, and
   `.github/scripts/check-changelog.py` (Keep a Changelog structure with
-  PVP versions). fourmolu/hlint run from
-  PATH, pinned in `.github/workflows/pre-commit.yml` (not the
-  pre-commit config).
+  PVP versions). fourmolu/hlint run from PATH, pinned in
+  `.github/workflows/pre-commit.yml` (not the pre-commit config).
 - **CI**: `ci.yml` (GHC matrix above × ubuntu/macos, builds from the
   sdist; `coverage` job → Codecov, `codecov.yml`; `prose` job → Vale
   warnings on PR-added lines via reviewdog), `pre-commit.yml`,

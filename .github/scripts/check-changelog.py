@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Validate CHANGELOG.md against Keep a Changelog 1.1.0 with PVP versions.
-
-Existing validators parse versions as semver and reject four-component PVP
-versions such as 1.3.1.3.
-"""
+"""Validate CHANGELOG.md against Keep a Changelog 1.1.0 with PVP versions."""
 
 import datetime
 import itertools
