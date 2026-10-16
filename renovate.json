@@ -3,8 +3,13 @@
   "extends": [
     "config:best-practices",
     "security:openssf-scorecard",
-    "customManagers:githubActionsVersions"
+    "customManagers:githubActionsVersions",
+    ":semanticCommitScopeDisabled"
   ],
+  // Titles must pass the pull request title check in CONTRIBUTING.md, whose
+  // subjects start with a capital the default lowercasing would drop.
+  "semanticCommits": "enabled",
+  "commitMessageLowerCase": "never",
   "timezone": "Europe/London",
   "reviewers": [
     "alunduil"
@@ -31,6 +36,14 @@
         "replacement"
       ],
       "minimumReleaseAge": null
+    },
+    // Cabal bounds ship in the Hackage package, so moving one is a change
+    // downstream sees. Test-suite bounds count too: packagers run the tests.
+    {
+      "matchManagers": [
+        "haskell-cabal"
+      ],
+      "semanticCommitType": "change"
     }
   ],
   "osvVulnerabilityAlerts": true,
