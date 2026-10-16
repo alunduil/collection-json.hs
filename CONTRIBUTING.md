@@ -78,22 +78,12 @@ body. Write the title as an imperative summary under 50 characters:
 Use the description for why the change is needed and anything a reader
 of the diff would find surprising.
 
-Prefix the title with a type naming its changelog category. The
-`Check pull request title` CI check rejects any other prefix. Editing
-the title doesn't re-run the check; push a commit to re-run it.
-
-| Type        | Changelog category | Example                                  |
-| ----------- | ------------------ | ---------------------------------------- |
-| `add`       | Added              | `add: Accept URI references for href`    |
-| `change`    | Changed            | `change: Widen the aeson upper bound`    |
-| `deprecate` | Deprecated         | `deprecate: Mark toHref for removal`     |
-| `remove`    | Removed            | `remove: Drop the GHC 9.4 build`         |
-| `fix`       | Fixed              | `fix: Reject an empty href on decode`    |
-| `security`  | Security           | `security: Bound template nesting depth` |
-| `chore`     | No entry           | `chore: Pin actionlint in CI`            |
-
-Use `chore` for work a Hackage user never builds against: CI, tooling,
-and docs outside the Haddock.
+Prefix the title with the verb for its Keep a Changelog category
+(`add`, `change`, `deprecate`, `remove`, `fix`, `security`), or `chore`
+for work a Hackage user never builds against: CI, tooling, and docs
+outside the Haddock. For example, `add: Accept URI references for href`.
+The `Check pull request title` CI check rejects any other prefix.
+Editing the title doesn't re-run the check; push a commit to re-run it.
 
 Mark a behaviour change behind an unchanged signature with `!` after
 the type, for example `fix!: Reject relative hrefs on decode`. It needs
