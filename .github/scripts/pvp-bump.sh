@@ -3,6 +3,10 @@
 # working tree, then the interface diff behind it: removed lines prefixed
 # "- ", added lines "+ ".
 #
+# The verdict covers the interface alone. Behaviour changes behind an
+# unchanged signature, and orphan instances a dependency adds, never
+# reach it.
+#
 # Old releases stop building as their dependencies move on, so the
 # published interface is Hackage's Hoogle file.
 set -euo pipefail
