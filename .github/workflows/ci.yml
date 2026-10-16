@@ -249,8 +249,8 @@ jobs:
             | reviewdog -f=rdjsonl -name=vale \
                 -reporter=github-pr-check -filter-mode=added -fail-level=warning
 
-  # Squash merge makes the title the commit subject the changelog generator
-  # reads; CONTRIBUTING.md maps each type to its changelog category. The step
+  # Squash merge makes the title the commit subject on `main`; CONTRIBUTING.md
+  # maps each type to its changelog category. The step
   # needs a pull request, so it is guarded like `prose`. The action re-fetches
   # the title, so re-running the job picks up a retitle; an `edited` trigger
   # would restart the whole matrix on every description edit instead.
