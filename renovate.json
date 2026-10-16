@@ -6,9 +6,8 @@
     "customManagers:githubActionsVersions",
     ":semanticCommitScopeDisabled"
   ],
-  // Titles follow the pull request title convention in CONTRIBUTING.md.
-  // `auto` would infer it from recent history, and the default lowercasing
-  // would break the capitalised subject.
+  // Titles must pass the pull request title check in CONTRIBUTING.md, whose
+  // subjects start with a capital the default lowercasing would drop.
   "semanticCommits": "enabled",
   "commitMessageLowerCase": "never",
   "timezone": "Europe/London",

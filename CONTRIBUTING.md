@@ -94,11 +94,11 @@ Prefix the title with a type naming its changelog category. The
 Use `chore` for work a Hackage user never builds against: CI, tooling,
 and docs outside the Haddock.
 
-The type picks the category, not the version bump. The bump follows
-the [PVP](https://pvp.haskell.org) from what changed in the exported
-interface. A behaviour change behind an unchanged signature still needs
-a major bump but leaves the interface untouched, so mark it with `!`
-after the type: `fix!: Reject relative hrefs on decode`.
+The version bump follows the [PVP](https://pvp.haskell.org) from what
+changed in the exported interface, whatever the type. A behaviour change
+behind an unchanged signature needs a major bump the interface doesn't
+show. Mark it with `!` after the type:
+`fix!: Reject relative hrefs on decode`.
 
 Commits inside the PR are collapsed on merge, so their messages only
 need to hold up under commit-by-commit review.
