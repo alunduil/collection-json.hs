@@ -79,7 +79,8 @@ Use the description for why the change is needed and anything a reader
 of the diff would find surprising.
 
 Prefix the title with a type naming its changelog category. The
-`Check pull request title` CI check rejects any other prefix.
+`Check pull request title` CI check rejects any other prefix. Editing
+the title doesn't re-run the check; push a commit to re-run it.
 
 | Type        | Changelog category | Example                                  |
 | ----------- | ------------------ | ---------------------------------------- |
@@ -94,11 +95,9 @@ Prefix the title with a type naming its changelog category. The
 Use `chore` for work a Hackage user never builds against: CI, tooling,
 and docs outside the Haddock.
 
-The version bump follows the [PVP](https://pvp.haskell.org) from what
-changed in the exported interface, whatever the type. A behaviour change
-behind an unchanged signature needs a major bump the interface doesn't
-show. Mark it with `!` after the type:
-`fix!: Reject relative hrefs on decode`.
+Mark a behaviour change behind an unchanged signature with `!` after
+the type, for example `fix!: Reject relative hrefs on decode`. It needs
+a major version bump that the exported interface doesn't show.
 
 Commits inside the PR are collapsed on merge, so their messages only
 need to hold up under commit-by-commit review.
