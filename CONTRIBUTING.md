@@ -78,6 +78,28 @@ body. Write the title as an imperative summary under 50 characters:
 Use the description for why the change is needed and anything a reader
 of the diff would find surprising.
 
+Prefix the title with a type naming its changelog category. The
+`Check pull request title` CI check rejects any other prefix.
+
+| Type        | Changelog category | Example                                  |
+| ----------- | ------------------ | ---------------------------------------- |
+| `add`       | Added              | `add: Accept URI references for href`    |
+| `change`    | Changed            | `change: Widen the aeson upper bound`    |
+| `deprecate` | Deprecated         | `deprecate: Mark toHref for removal`     |
+| `remove`    | Removed            | `remove: Drop the GHC 9.4 build`         |
+| `fix`       | Fixed              | `fix: Reject an empty href on decode`    |
+| `security`  | Security           | `security: Bound template nesting depth` |
+| `chore`     | No entry           | `chore: Pin actionlint in CI`            |
+
+Use `chore` for work a Hackage user never builds against: CI, tooling,
+and docs outside the Haddock.
+
+The type picks the category, not the version bump. The bump follows
+the [PVP](https://pvp.haskell.org) from what changed in the exported
+interface. A behaviour change behind an unchanged signature still needs
+a major bump but leaves the interface untouched, so mark it with `!`
+after the type: `fix!: Reject relative hrefs on decode`.
+
 Commits inside the PR are collapsed on merge, so their messages only
 need to hold up under commit-by-commit review.
 
