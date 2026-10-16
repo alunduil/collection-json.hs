@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Prints the PVP bump (A.B, C, or D) from the latest version Hackage
-# published to the working tree, then the interface diff it came from:
-# removed lines prefixed "- ", added lines "+ ".
+# Prints the PVP bump (A.B, C, or D) from Hackage's latest release to the
+# working tree, then the interface diff behind it: removed lines prefixed
+# "- ", added lines "+ ".
 #
-# The published interface is Hackage's Hoogle file rather than a rebuild:
-# old releases stop building as their dependencies move on.
+# Old releases stop building as their dependencies move on, so the
+# published interface is Hackage's Hoogle file.
 set -euo pipefail
 
 readonly HACKAGE="https://hackage.haskell.org"
@@ -37,9 +37,8 @@ build_head_hoogle() {
   printf '%s\n' "$hoogle"
 }
 
-# Module qualification comes off instance heads because it names the
-# defining package's internal module layout, which moves between
-# compiler and library versions without any consumer seeing it.
+# Qualification names the defining package's internal module layout,
+# which moves between compiler and library versions unseen by consumers.
 strip_qualification() {
   sed -E "/^instance /s/([A-Z][A-Za-z0-9_']*\.)+//g"
 }
@@ -51,9 +50,8 @@ normalise() {
     LC_ALL=C sort
 }
 
-# An instance is local when its head, context aside, names a class or
-# type from one of this package's modules. Matching on qualified names
-# keeps an external type that shares a local type's name foreign.
+# Matching qualified names keeps an external type that shares a local
+# type's name foreign.
 foreign_instances() {
   local modules local_name
   modules=$(sed -n 's/^module //p' "$1" | sed 's/\./\\./g' | paste -sd '|')
@@ -71,8 +69,7 @@ adds_orphan() {
   foreign_instances "$hoogle" | LC_ALL=C comm -12 - "$added" | grep -q .
 }
 
-# PVP: a removal breaks importers, and so does a new orphan instance,
-# which can collide with one a consumer already defines.
+# A new orphan instance can collide with one a consumer already defines.
 classify_bump() {
   local hoogle=$1 removed=$2 added=$3
   if [ -s "$removed" ] || adds_orphan "$hoogle" "$added"; then
