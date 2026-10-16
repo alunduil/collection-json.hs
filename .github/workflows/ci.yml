@@ -119,6 +119,11 @@ jobs:
         working-directory: sdist-build
         run: cabal haddock all
 
+      - name: Derive PVP bump
+        if: matrix.package-checks
+        working-directory: sdist-build
+        run: ../.github/scripts/pvp-bump.sh
+
   coverage:
     name: Coverage
     runs-on: ubuntu-26.04
