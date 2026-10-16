@@ -12,6 +12,31 @@ readonly HACKAGE="https://hackage.haskell.org"
 cabal_file=$(ls -- *.cabal)
 package=$(sed -n 's/^name:[[:space:]]*//p' "$cabal_file" | tr -d '[:space:]')
 
+published_version() {
+  curl -fsSL -H 'Accept: application/json' \
+    "$HACKAGE/package/$package/preferred" |
+    jq -er '."normal-version"[0]'
+}
+
+download_published_hoogle() {
+  local version=$1 out=$2
+  if ! curl -fsSL -o "$out" "$HACKAGE/package/$package-$version/docs/$package.txt"; then
+    echo "Hackage has no Hoogle docs for $package-$version" >&2
+    return 1
+  fi
+}
+
+build_head_hoogle() {
+  local hoogle
+  cabal haddock --haddock-hoogle >&2
+  hoogle=$(find dist-newstyle -path "*/doc/html/$package/$package.txt" -print -quit)
+  if [ -z "$hoogle" ]; then
+    echo "cabal haddock produced no Hoogle file for $package" >&2
+    return 1
+  fi
+  printf '%s\n' "$hoogle"
+}
+
 # Module qualification comes off instance heads because it names the
 # defining package's internal module layout, which moves between
 # compiler and library versions without any consumer seeing it.
@@ -30,54 +55,47 @@ normalise() {
 # type from one of this package's modules. Matching on qualified names
 # keeps an external type that shares a local type's name foreign.
 foreign_instances() {
-  local modules local_name line
+  local modules local_name
   modules=$(sed -n 's/^module //p' "$1" | sed 's/\./\\./g' | paste -sd '|')
   local_name="(^|[^A-Za-z0-9_'.])($modules)\.[A-Z][A-Za-z0-9_']*([^A-Za-z0-9_'.]|$)"
 
-  grep '^instance ' "$1" |
-    while IFS= read -r line; do
-      if ! sed -E 's/^instance .*=> //' <<<"$line" | grep -qE "$local_name"; then
-        strip_qualification <<<"$line"
-      fi
-    done |
+  awk -v local_name="$local_name" '
+    /^instance / { head = $0; sub(/^instance .*=> /, "", head); if (head !~ local_name) print }
+  ' "$1" |
+    strip_qualification |
     LC_ALL=C sort -u
 }
 
-published=$(curl -fsSL -H 'Accept: application/json' \
-  "$HACKAGE/package/$package/preferred" |
-  jq -er '."normal-version"[0]')
+adds_orphan() {
+  local hoogle=$1 added=$2
+  foreign_instances "$hoogle" | LC_ALL=C comm -12 - "$added" | grep -q .
+}
+
+# PVP: a removal breaks importers, and so does a new orphan instance,
+# which can collide with one a consumer already defines.
+classify_bump() {
+  local hoogle=$1 removed=$2 added=$3
+  if [ -s "$removed" ] || adds_orphan "$hoogle" "$added"; then
+    echo A.B
+  elif [ -s "$added" ]; then
+    echo C
+  else
+    echo D
+  fi
+}
 
 workdir=$(mktemp -d)
 trap 'rm -rf "$workdir"' EXIT
 
-if ! curl -fsSL -o "$workdir/published.txt" \
-  "$HACKAGE/package/$package-$published/docs/$package.txt"; then
-  echo "Hackage has no Hoogle docs for $package-$published" >&2
-  exit 1
-fi
-
-cabal haddock --haddock-hoogle >&2
-head_hoogle=$(find dist-newstyle -path "*/doc/html/$package/$package.txt" -print -quit)
-if [ -z "$head_hoogle" ]; then
-  echo "cabal haddock produced no Hoogle file for $package" >&2
-  exit 1
-fi
+published=$(published_version)
+download_published_hoogle "$published" "$workdir/published.txt"
+head_hoogle=$(build_head_hoogle)
 
 normalise "$workdir/published.txt" >"$workdir/published"
 normalise "$head_hoogle" >"$workdir/head"
 LC_ALL=C comm -23 "$workdir/published" "$workdir/head" >"$workdir/removed"
 LC_ALL=C comm -13 "$workdir/published" "$workdir/head" >"$workdir/added"
 
-# PVP: a removal breaks importers, and so does a new orphan instance,
-# which can collide with one a consumer already defines.
-if [ -s "$workdir/removed" ] ||
-  foreign_instances "$head_hoogle" | LC_ALL=C comm -12 - "$workdir/added" | grep -q .; then
-  echo A.B
-elif [ -s "$workdir/added" ]; then
-  echo C
-else
-  echo D
-fi
-
+classify_bump "$head_hoogle" "$workdir/removed" "$workdir/added"
 sed 's/^/- /' "$workdir/removed"
 sed 's/^/+ /' "$workdir/added"
