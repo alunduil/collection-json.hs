@@ -64,7 +64,9 @@ library
       Data.CollectionJSON
 
   other-extensions:
-      OverloadedStrings
+      DeriveTraversable
+    , FlexibleInstances
+    , OverloadedStrings
     , RecordWildCards
 
 test-suite collection-json-tests

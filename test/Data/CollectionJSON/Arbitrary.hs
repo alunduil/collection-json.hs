@@ -18,7 +18,7 @@ import Test.QuickCheck.Instances ()
 
 import Data.CollectionJSON
 
-instance Arbitrary Collection where
+instance Arbitrary a => Arbitrary (Collection a) where
   arbitrary =
     Collection (pack "1.0")
       <$> arbitrary

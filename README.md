@@ -38,7 +38,7 @@ Roundtrip a minimal collection through `aeson`:
 
 import Data.Aeson (decode, encode)
 import qualified Data.ByteString.Lazy.Char8 as BL
-import Data.CollectionJSON (Collection (..))
+import Data.CollectionJSON (Collection (..), Item)
 import Data.Maybe (fromJust)
 import Network.URI (parseURI)
 
@@ -49,7 +49,7 @@ main = do
           { cVersion = "1.0"
           , cHref = fromJust (parseURI "http://example.com/friends/")
           , cLinks = []
-          , cItems = []
+          , cItems = [] :: [Item]
           , cQueries = []
           , cTemplate = Nothing
           , cError = Nothing
@@ -59,7 +59,7 @@ main = do
   BL.putStrLn json
   -- {"collection":{"href":"http://example.com/friends/","version":"1.0"}}
 
-  print (decode json :: Maybe Collection)
+  print (decode json :: Maybe (Collection Item))
   -- Just (Collection {cVersion = "1.0", cHref = ..., ...})
 ```
 
