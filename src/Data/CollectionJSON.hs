@@ -62,6 +62,9 @@ Converting between it and a collection of domain values is 'traverse'
 or 'fmap' over the elements, with a per-'Item' conversion the caller
 supplies:
 
+> deserialise :: Item -> Either String Character
+> serialise   :: Character -> Item
+>
 > traverse deserialise :: Collection Item -> Either String (Collection Character)
 > fmap serialise       :: Collection Character -> Collection Item
 -}

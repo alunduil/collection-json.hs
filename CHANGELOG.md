@@ -18,9 +18,10 @@ and this project adheres to the [Haskell Package Versioning Policy
 - **Breaking:** `Collection` takes its element type as a parameter and
   derives `Functor`, `Foldable`, and `Traversable`. Decoding yields a
   `Collection Item`, and only that type has JSON instances. To migrate,
-  write `Collection Item` wherever a signature names `Collection`.
-  Convert to domain values with `traverse` or `fmap` and a per-`Item`
-  function.
+  write `Collection Item` wherever a signature names `Collection`, and
+  annotate decodes read only through a field such as `cHref`, whose
+  element type is otherwise ambiguous. Convert to domain values with
+  `traverse` or `fmap` and a per-`Item` function.
 - Compatible with `aeson` 2.2, `base` 4.22, and `network-uri-json` 0.4
   (no API changes).
 - Modernised `collection-json.cabal`: `cabal-version: 3.0`, `common

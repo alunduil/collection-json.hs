@@ -99,7 +99,7 @@ optionalKeysTests =
       , minimal (Query exampleURI "item" Nothing Nothing []) "{\"href\":\"http://example.com\",\"rel\":\"item\"}"
       , minimal (Item (Just exampleURI) [] []) "{\"href\":\"http://example.com\"}"
       , minimal (Link exampleURI "item" Nothing Nothing Nothing) "{\"href\":\"http://example.com\",\"rel\":\"item\"}"
-      , minimal (Collection "1.0" exampleURI [] ([] :: [Item]) [] Nothing Nothing) "{\"collection\":{\"href\":\"http://example.com\",\"version\":\"1.0\"}}"
+      , minimal (Collection @Item "1.0" exampleURI [] [] [] Nothing Nothing) "{\"collection\":{\"href\":\"http://example.com\",\"version\":\"1.0\"}}"
       ]
 
 {- Separate decode and encode tables would need a heterogeneous list,
