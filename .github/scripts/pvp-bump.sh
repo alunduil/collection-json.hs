@@ -47,7 +47,7 @@ strip_qualification() {
   sed -E "/^instance /s/($CAPITALISED_NAME\.)+//g"
 }
 
-readonly DEPRECATION='-- \| <i>(Deprecated|Warning): '
+readonly DEPRECATION='-- [|] <i>(Deprecated|Warning): '
 
 # Haddock renders DEPRECATED and WARNING pragmas as a doc comment, possibly
 # wrapped, directly above the declaration they mark. Normalising drops
