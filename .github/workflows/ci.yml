@@ -251,6 +251,35 @@ jobs:
             | reviewdog -f=rdjsonl -name=vale \
                 -reporter=github-pr-check -filter-mode=added -fail-level=warning
 
+  # Squash merge makes the title the commit subject on `main`. CONTRIBUTING.md
+  # defines each type. An `edited` trigger would rerun the matrix on every
+  # description edit; re-running this job picks up a retitle instead, because
+  # the action fetches the current title.
+  pull-request-title:
+    name: Check pull request title
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+
+    steps:
+      # A job-level guard would skip the job on pushes to `main`, and a skipped
+      # job fails `Check CI results`.
+      - name: Lint title
+        if: github.event_name == 'pull_request'
+        uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            add
+            change
+            deprecate
+            remove
+            fix
+            security
+            chore
+
   # The stable check name the default-branch ruleset pins: renaming this job
   # breaks the merge gate. Requiring the matrix legs directly would block
   # merges once a GHC version ages out and its check stops reporting.
@@ -258,7 +287,7 @@ jobs:
     name: Check CI results
     runs-on: ubuntu-26.04
     timeout-minutes: 5
-    needs: [build, coverage, prose]
+    needs: [build, coverage, prose, pull-request-title]
     if: always()
 
     steps:

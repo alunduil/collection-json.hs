@@ -3,8 +3,13 @@
   "extends": [
     "config:best-practices",
     "security:openssf-scorecard",
-    "customManagers:githubActionsVersions"
+    "customManagers:githubActionsVersions",
+    ":semanticCommits",
+    ":semanticCommitScopeDisabled"
   ],
+  // The title convention in CONTRIBUTING.md starts subjects with a capital
+  // that the default lowercasing would drop.
+  "commitMessageLowerCase": "never",
   "timezone": "Europe/London",
   "reviewers": [
     "alunduil"
@@ -31,6 +36,14 @@
         "replacement"
       ],
       "minimumReleaseAge": null
+    },
+    // Cabal bounds ship in the Hackage package, so moving one is a change
+    // downstream sees. Test-suite bounds count too: packagers run the tests.
+    {
+      "matchManagers": [
+        "haskell-cabal"
+      ],
+      "semanticCommitType": "change"
     },
     // GHC can't link on macos-26:
     // https://github.com/actions/runner-images/issues/14940
