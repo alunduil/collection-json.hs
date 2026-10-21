@@ -33,6 +33,11 @@ Single-package project (`cabal.project`: `packages: .`).
   series endoflife.date still lists as not end-of-life), `daily.yml`
   (closes quiet pull requests; Renovate's `dependencies`
   label exempts its pull requests).
+- **Changelog**: `CHANGELOG.md` is git-cliff output (`cliff.toml`);
+  regenerate with `uvx git-cliff@2.14.2 -o CHANGELOG.md`. Entries come
+  from squash-commit subjects. To change one, write the replacement
+  commit message to `.cliff/overrides/<full SHA>`; a `Migration:`
+  trailer renders as a paragraph under the entry.
 - **Publish**: `.github/workflows/release.yml` — see Release process.
 - **Deps / versioning**: `renovate.json`; Haskell PVP.
 
@@ -99,8 +104,10 @@ ship; don't sit on bumps to batch them.
   publish:
   1. `gh release create v<version> --prerelease --target <sha>
      --notes-file <notes>` creates the tag and uploads a Hackage
-     candidate. `<sha>` is on `main`; `<notes>` holds the version's
-     `CHANGELOG.md` section.
+     candidate. `<sha>` is the commit on `main` that sets `version:`,
+     since git-cliff drops tags outside its paths. `<notes>` is the
+     version's section without its heading: `uvx git-cliff@2.14.2
+     --unreleased --tag v<version> --strip all | tail -n +3`.
   2. `gh workflow run release.yml --ref v<version>` publishes it and
      promotes the prerelease to latest.
 - The tag must match `version:` in the cabal file. Both steps

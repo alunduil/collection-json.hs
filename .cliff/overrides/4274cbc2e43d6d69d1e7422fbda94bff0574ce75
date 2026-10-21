@@ -1,0 +1,1 @@
+add: Documented that a relative `href` is valid and resolves against the address the document came from (#268)

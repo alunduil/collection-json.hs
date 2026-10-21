@@ -1,0 +1,4 @@
+change: Bounds match the tested GHC matrix (#134)
+
+Migration: Requires `aeson` 2.0, `base` 4.18 (GHC 9.6), and `text` 2.0 or
+later.
