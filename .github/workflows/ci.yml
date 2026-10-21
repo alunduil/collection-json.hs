@@ -263,6 +263,8 @@ jobs:
       pull-requests: read
 
     steps:
+      # Guarded per step, not per job: a skipped job fails `Check CI results`
+      # on every push to `main`.
       - name: Lint title
         if: github.event_name == 'pull_request'
         uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
