@@ -25,7 +25,8 @@ Single-package project (`cabal.project`: `packages: .`).
   PVP versions). fourmolu/hlint run from PATH, pinned in
   `.github/workflows/pre-commit.yml` (not the pre-commit config).
 - **CI**: `ci.yml` (GHC matrix above × ubuntu/macos, builds from the
-  sdist; `coverage` job → Codecov, `codecov.yml`; `prose` job → Vale
+  sdist; its package-checks leg runs `.github/scripts/pvp-bump.sh`;
+  `coverage` job → Codecov, `codecov.yml`; `prose` job → Vale
   warnings on PR-added lines via reviewdog), `pre-commit.yml`,
   `links.yml` (lychee, `lychee.toml`), `ghc-matrix.yml` (weekly:
   files/refreshes a tracking issue when the matrix drifts from the GHC
