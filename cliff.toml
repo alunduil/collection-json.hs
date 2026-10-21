@@ -2,7 +2,7 @@
 # https://git-cliff.org/docs/configuration
 #
 # 1.3.1.3 and earlier predate the generator and live verbatim in the
-# footer, so render with the range `1.3.1.3..`.
+# footer; skip_tags keeps their commits out.
 
 [changelog]
 header = """
@@ -24,7 +24,7 @@ body = """
 {% for group, commits in commits | group_by(attribute="group") %}
 ### {{ group | striptags | trim }}
 {% for commit in commits %}
-- {{ commit.message | split(pat="\n") | first | trim | upper_first }}
+- {{ commit.message | trim | upper_first }}
 {%- for footer in commit.footers | filter(attribute="token", value="Migration") %}
 
   Migration: {{ footer.value | trim | replace(from="\n", to="\n  ") }}
@@ -164,11 +164,12 @@ footer = '''
 - Update README.
 - Other Package Updates.
 {% endraw %}
+{% set compare = "https://github.com/alunduil/collection-json.hs/compare" -%}
 {% for release in releases -%}
 {% if release.version -%}
-[{{ release.version | trim_start_matches(pat="v") }}]: https://github.com/alunduil/collection-json.hs/compare/{{ release.previous.version }}...{{ release.version }}
+[{{ release.version | trim_start_matches(pat="v") }}]: {{ compare }}/{{ release.previous.version }}...{{ release.version }}
 {% else -%}
-[Unreleased]: https://github.com/alunduil/collection-json.hs/compare/{{ release.previous.version }}...HEAD
+[Unreleased]: {{ compare }}/{{ release.previous.version }}...HEAD
 {% endif -%}
 {% endfor -%}
 {% raw %}[1.3.1.3]: https://github.com/alunduil/collection-json.hs/compare/1.3.1.2...1.3.1.3
@@ -195,6 +196,7 @@ filter_commits = true
 # file avoids.
 include_paths = ["src/**", "collection-json.cabal"]
 tag_pattern = "^v?[0-9]"
+skip_tags = "^[0-9]"
 sort_commits = "oldest"
 # A file in .cliff/overrides named for a commit's full SHA replaces that
 # commit's message, curating commits from before the title convention. A
