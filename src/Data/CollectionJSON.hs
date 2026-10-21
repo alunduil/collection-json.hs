@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -50,8 +52,23 @@ import Network.URI (URI, parseURIReference)
 
 -- * Core Data Types
 
--- | The top-level object for an @application/vnd.collection+json@ resource.
-data Collection = Collection
+{- |
+The top-level object for an @application/vnd.collection+json@ resource,
+holding elements of type @a@.
+
+Decoding yields a @'Collection' 'Item'@, and only that type has JSON
+instances.
+Converting between it and a collection of domain values is 'traverse'
+or 'fmap' over the elements, with a per-'Item' conversion the caller
+supplies:
+
+> deserialise :: Item -> Either String Character
+> serialise   :: Character -> Item
+>
+> traverse deserialise :: Collection Item -> Either String (Collection Character)
+> fmap serialise       :: Collection Character -> Collection Item
+-}
+data Collection a = Collection
   { cVersion :: Text
   {- ^ Version the document declares, or "1.0" when it declares none.
   Checking it is the caller's job.
@@ -61,14 +78,19 @@ data Collection = Collection
   and to add new elements.
   -}
   , cLinks :: [Link]
-  , cItems :: [Item]
+  , cItems :: [a]
   , cQueries :: [Query]
   , cTemplate :: Maybe Template
   , cError :: Maybe Error
   }
-  deriving (Eq, Show)
+  deriving (Eq, Foldable, Functor, Show, Traversable)
 
-instance FromJSON Collection where
+{- The JSON instances name 'Item' rather than taking a @FromJSON a@ or
+@ToJSON a@ constraint. A domain type's own JSON instances describe its
+plain shape, not an item, so a constrained instance would encode an
+invalid document without a type error.
+-}
+instance FromJSON (Collection Item) where
   parseJSON = withObject "Collection" $ \c -> do
     v <- c .: "collection"
 
@@ -85,7 +107,7 @@ instance FromJSON Collection where
 
     pure Collection{..}
 
-instance ToJSON Collection where
+instance ToJSON (Collection Item) where
   toJSON Collection{..} =
     object
       [ "collection"
@@ -349,16 +371,16 @@ instance ToJSON DatumValue where
 
 -- | A type that can be converted from 'Collection'.
 class FromCollection a where
-  fromCollection :: Collection -> a
+  fromCollection :: Collection Item -> a
 
-instance FromCollection Collection where
+instance FromCollection (Collection Item) where
   fromCollection = id
 
 -- | A type that can be converted to 'Collection'.
 class ToCollection a where
-  toCollection :: a -> Collection
+  toCollection :: a -> Collection Item
 
-instance ToCollection Collection where
+instance ToCollection (Collection Item) where
   toCollection = id
 
 always :: ToJSON a => Key -> a -> Maybe Pair

@@ -85,7 +85,7 @@ optionalKeysTests =
     "absent optional keys"
     [ testGroup "decode succeeds" $
         [ decodeSucceeds @Template "{}"
-        , decodeSucceeds @Collection "{\"collection\":{}}"
+        , decodeSucceeds @(Collection Item) "{\"collection\":{}}"
         ]
           <> decodeTests
     , testGroup "encode omits them" encodeTests
@@ -99,7 +99,7 @@ optionalKeysTests =
       , minimal (Query exampleURI "item" Nothing Nothing []) "{\"href\":\"http://example.com\",\"rel\":\"item\"}"
       , minimal (Item (Just exampleURI) [] []) "{\"href\":\"http://example.com\"}"
       , minimal (Link exampleURI "item" Nothing Nothing Nothing) "{\"href\":\"http://example.com\",\"rel\":\"item\"}"
-      , minimal (Collection "1.0" exampleURI [] [] [] Nothing Nothing) "{\"collection\":{\"href\":\"http://example.com\",\"version\":\"1.0\"}}"
+      , minimal (Collection @Item "1.0" exampleURI [] [] [] Nothing Nothing) "{\"collection\":{\"href\":\"http://example.com\",\"version\":\"1.0\"}}"
       ]
 
 {- Separate decode and encode tables would need a heterogeneous list,
@@ -116,7 +116,7 @@ requiredKeysTests =
     "absent required keys"
     [ testGroup
         "decode fails"
-        [ decodeFails @Collection "collection" "{}"
+        [ decodeFails @(Collection Item) "collection" "{}"
         , decodeFails @Link "href" withoutHref
         , decodeFails @Link "rel" withoutRel
         , decodeFails @Query "href" withoutHref
@@ -137,12 +137,12 @@ hrefTests =
         [ testCase "'Link'" $ decodeField lHref relativeLink @?= Just relativeURI
         , testCase "'Item'" $ decodeField iHref relativeItem @?= Just (Just relativeURI)
         , testCase "'Query'" $ decodeField qHref relativeQuery @?= Just relativeURI
-        , testCase "'Collection'" $ decodeField cHref relativeCollection @?= Just relativeURI
+        , testCase "'Collection'" $ decodeField (cHref @Item) relativeCollection @?= Just relativeURI
         ]
     , testGroup
         "decode resolves an absent or empty 'Collection' href to the empty reference"
-        [ testCase "absent" $ decodeField cHref absentHref @?= Just nullURI
-        , testCase "empty" $ decodeField cHref emptyHref @?= Just nullURI
+        [ testCase "absent" $ decodeField (cHref @Item) absentHref @?= Just nullURI
+        , testCase "empty" $ decodeField (cHref @Item) emptyHref @?= Just nullURI
         ]
     , testGroup
         "'Item' href is optional"
@@ -213,9 +213,9 @@ versionTests =
   testGroup
     "'Collection' version"
     [ testCase "decode defaults an absent version to 1.0" $
-        decodeField cVersion "{\"collection\":{}}" @?= Just "1.0"
+        decodeField (cVersion @Item) "{\"collection\":{}}" @?= Just "1.0"
     , testCase "decode passes through a version other than 1.0" $
-        decodeField cVersion "{\"collection\":{\"version\":\"1.1\"}}" @?= Just "1.1"
+        decodeField (cVersion @Item) "{\"collection\":{\"version\":\"1.1\"}}" @?= Just "1.1"
     ]
 
 roundTripTests :: TestTree
@@ -230,7 +230,7 @@ roundTripTests =
         , testProperty "Query" (roundtrips :: Query -> Bool)
         , testProperty "Item" (roundtrips :: Item -> Bool)
         , testProperty "Link" (roundtrips :: Link -> Bool)
-        , testProperty "Collection" (roundtrips :: Collection -> Bool)
+        , testProperty "Collection" (roundtrips :: Collection Item -> Bool)
         ]
     ]
 

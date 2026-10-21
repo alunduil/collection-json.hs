@@ -38,7 +38,7 @@ Roundtrip a minimal collection through `aeson`:
 
 import Data.Aeson (decode, encode)
 import qualified Data.ByteString.Lazy.Char8 as BL
-import Data.CollectionJSON (Collection (..))
+import Data.CollectionJSON (Collection (..), Item)
 import Data.Maybe (fromJust)
 import Network.URI (parseURI)
 
@@ -49,7 +49,7 @@ main = do
           { cVersion = "1.0"
           , cHref = fromJust (parseURI "http://example.com/friends/")
           , cLinks = []
-          , cItems = []
+          , cItems = [] :: [Item]
           , cQueries = []
           , cTemplate = Nothing
           , cError = Nothing
@@ -59,7 +59,7 @@ main = do
   BL.putStrLn json
   -- {"collection":{"href":"http://example.com/friends/","version":"1.0"}}
 
-  print (decode json :: Maybe Collection)
+  print (decode json :: Maybe (Collection Item))
   -- Just (Collection {cVersion = "1.0", cHref = ..., ...})
 ```
 
@@ -69,7 +69,7 @@ Full API reference on [Hackage]. The Collection+JSON specification is at
 ## Scope
 
 `collection-json` stops at the wire format: it models the envelope and
-bridges your domain types through `FromCollection`/`ToCollection`, but
+converts its items to your domain types with `traverse` or `fmap`, but
 leaves content negotiation, profile semantics, and request-shape
 validation to adjacent layers. For `href` values, [`network-uri-json`]
 provides `Network.URI` JSON instances that compose with these types.
