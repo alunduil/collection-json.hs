@@ -47,8 +47,24 @@ strip_qualification() {
   sed -E "/^instance /s/([A-Z][A-Za-z0-9_']*\.)+//g"
 }
 
+readonly DEPRECATION='-- \| <i>(Deprecated|Warning): '
+
+# Haddock renders DEPRECATED and WARNING pragmas as a doc comment, possibly
+# wrapped, directly above the declaration they mark. Folding the comment
+# onto that declaration keeps it through the comment strip and ties it to
+# its entity.
+fold_deprecations() {
+  awk -v deprecation="^$DEPRECATION" '
+    $0 ~ deprecation { pending = $0; wrapped = $0 !~ /<\/i>$/; next }
+    wrapped { sub(/^--[[:space:]]*/, ""); pending = pending " " $0; wrapped = $0 !~ /<\/i>$/; next }
+    pending != "" && /^[^-[:space:]]/ { print $0 " " pending; pending = ""; next }
+    { print }
+  ' "$1"
+}
+
 normalise() {
-  grep -vE '^(--|@version )' "$1" |
+  fold_deprecations "$1" |
+    grep -vE '^(--|@version )' |
     sed '/^[[:space:]]*$/d' |
     strip_qualification |
     LC_ALL=C sort
@@ -73,10 +89,15 @@ adds_orphan() {
   foreign_instances "$hoogle" | LC_ALL=C comm -12 - "$added" | grep -q .
 }
 
+adds_deprecation() {
+  grep -qE " $DEPRECATION" "$1"
+}
+
 # A new orphan instance can collide with one a consumer already defines.
+# PVP treats a new deprecation as a removal.
 classify_bump() {
   local hoogle=$1 removed=$2 added=$3
-  if [ -s "$removed" ] || adds_orphan "$hoogle" "$added"; then
+  if [ -s "$removed" ] || adds_orphan "$hoogle" "$added" || adds_deprecation "$added"; then
     echo A.B
   elif [ -s "$added" ]; then
     echo C
