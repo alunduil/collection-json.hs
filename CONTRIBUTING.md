@@ -86,9 +86,7 @@ The `Check pull request title` CI check rejects any other prefix.
 Editing the title doesn't re-run the check, so push a commit to re-run it.
 
 Mark a behaviour change behind an unchanged signature with `!` after
-the type, for example `fix!: Reject relative hrefs on decode`. The
-exported interface doesn't show such a change, but it still needs a
-major version bump.
+the type, for example `fix!: Reject relative hrefs on decode`.
 
 Commits inside the PR are collapsed on merge, so their messages only
 need to hold up under commit-by-commit review.
