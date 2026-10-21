@@ -12,9 +12,9 @@
 set -euo pipefail
 
 readonly HACKAGE="https://hackage.haskell.org"
+readonly CAPITALISED_NAME="[A-Z][A-Za-z0-9_']*"
 
-cabal_file=$(ls -- *.cabal)
-package=$(sed -n 's/^name:[[:space:]]*//p' "$cabal_file" | tr -d '[:space:]')
+package=$(sed -n 's/^name:[[:space:]]*//p' -- *.cabal | tr -d '[:space:]')
 
 published_version() {
   curl -fsSL -H 'Accept: application/json' \
@@ -30,21 +30,21 @@ download_published_hoogle() {
   fi
 }
 
-build_head_hoogle() {
-  local hoogle
+build_working_hoogle() {
+  local out=$1 hoogle
   cabal haddock --haddock-hoogle >&2
   hoogle=$(find dist-newstyle -path "*/doc/html/$package/$package.txt" -print -quit)
   if [ -z "$hoogle" ]; then
     echo "cabal haddock produced no Hoogle file for $package" >&2
     return 1
   fi
-  printf '%s\n' "$hoogle"
+  cp -- "$hoogle" "$out"
 }
 
 # Qualification names the defining package's internal module layout,
 # which moves between compiler and library versions unseen by consumers.
 strip_qualification() {
-  sed -E "/^instance /s/([A-Z][A-Za-z0-9_']*\.)+//g"
+  sed -E "/^instance /s/($CAPITALISED_NAME\.)+//g"
 }
 
 readonly DEPRECATION='-- \| <i>(Deprecated|Warning): '
@@ -75,7 +75,7 @@ normalise() {
 foreign_instances() {
   local modules local_name
   modules=$(sed -n 's/^module //p' "$1" | sed 's/\./\\./g' | paste -sd '|')
-  local_name="(^|[^A-Za-z0-9_'.])($modules)\.[A-Z][A-Za-z0-9_']*([^A-Za-z0-9_'.]|$)"
+  local_name="(^|[^A-Za-z0-9_'.])($modules)\.$CAPITALISED_NAME([^A-Za-z0-9_'.]|$)"
 
   awk -v local_name="$local_name" '
     /^instance / { head = $0; sub(/^instance .*=> /, "", head); if (head !~ local_name) print }
@@ -84,11 +84,13 @@ foreign_instances() {
     LC_ALL=C sort -u
 }
 
+# A new orphan instance can collide with one a consumer already defines.
 adds_orphan() {
   local hoogle=$1 added=$2
   foreign_instances "$hoogle" | LC_ALL=C comm -12 - "$added" | grep -q .
 }
 
+# PVP treats a new deprecation as a removal.
 adds_deprecation() {
   grep -qE " $DEPRECATION" "$1"
 }
@@ -100,11 +102,11 @@ removes_entity() {
     LC_ALL=C comm -23 - "$added" | grep -q .
 }
 
-# A new orphan instance can collide with one a consumer already defines.
-# PVP treats a new deprecation as a removal.
 classify_bump() {
   local hoogle=$1 removed=$2 added=$3
-  if removes_entity "$removed" "$added" || adds_orphan "$hoogle" "$added" || adds_deprecation "$added"; then
+  if removes_entity "$removed" "$added" ||
+    adds_orphan "$hoogle" "$added" ||
+    adds_deprecation "$added"; then
     echo A.B
   elif [ -s "$added" ]; then
     echo C
@@ -118,13 +120,13 @@ trap 'rm -rf "$workdir"' EXIT
 
 published=$(published_version)
 download_published_hoogle "$published" "$workdir/published.txt"
-head_hoogle=$(build_head_hoogle)
+build_working_hoogle "$workdir/working.txt"
 
 normalise "$workdir/published.txt" >"$workdir/published"
-normalise "$head_hoogle" >"$workdir/head"
-LC_ALL=C comm -23 "$workdir/published" "$workdir/head" >"$workdir/removed"
-LC_ALL=C comm -13 "$workdir/published" "$workdir/head" >"$workdir/added"
+normalise "$workdir/working.txt" >"$workdir/working"
+LC_ALL=C comm -23 "$workdir/published" "$workdir/working" >"$workdir/removed"
+LC_ALL=C comm -13 "$workdir/published" "$workdir/working" >"$workdir/added"
 
-classify_bump "$head_hoogle" "$workdir/removed" "$workdir/added"
+classify_bump "$workdir/working.txt" "$workdir/removed" "$workdir/added"
 sed 's/^/- /' "$workdir/removed"
 sed 's/^/+ /' "$workdir/added"
