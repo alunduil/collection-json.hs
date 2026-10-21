@@ -50,9 +50,8 @@ strip_qualification() {
 readonly DEPRECATION='-- \| <i>(Deprecated|Warning): '
 
 # Haddock renders DEPRECATED and WARNING pragmas as a doc comment, possibly
-# wrapped, directly above the declaration they mark. Folding the comment
-# onto that declaration keeps it through the comment strip and ties it to
-# its entity.
+# wrapped, directly above the declaration they mark. Normalising drops
+# comments, and a warning apart from its declaration names no entity.
 fold_deprecations() {
   awk -v deprecation="^$DEPRECATION" '
     $0 ~ deprecation { pending = $0; wrapped = $0 !~ /<\/i>$/; next }
@@ -70,8 +69,8 @@ normalise() {
     LC_ALL=C sort
 }
 
-# Matching qualified names keeps an external type that shares a local
-# type's name foreign.
+# Only qualified names tell a local type from an external one of the same
+# name.
 foreign_instances() {
   local modules local_name
   modules=$(sed -n 's/^module //p' "$1" | sed 's/\./\\./g' | paste -sd '|')
@@ -90,7 +89,7 @@ adds_orphan() {
   foreign_instances "$hoogle" | LC_ALL=C comm -12 - "$added" | grep -q .
 }
 
-# PVP treats a new deprecation as a removal.
+# A new deprecation breaks consumers that build with -Werror.
 adds_deprecation() {
   grep -qE " $DEPRECATION" "$1"
 }
