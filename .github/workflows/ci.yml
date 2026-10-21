@@ -28,8 +28,10 @@ jobs:
             # renovate: datasource=github-runners depName=ubuntu
             OS_VERSION: "26.04"
           - os: macos
+            # Held below 26 by renovate.json until
+            # https://github.com/actions/runner-images/issues/14940 is fixed.
             # renovate: datasource=github-runners depName=macos
-            OS_VERSION: "26"
+            OS_VERSION: "15"
           # Metadata and docs don't vary by GHC or OS, and haddock is slow:
           # it rebuilds every dependency with documentation.
           - os: ubuntu

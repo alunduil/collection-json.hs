@@ -31,6 +31,18 @@
         "replacement"
       ],
       "minimumReleaseAge": null
+    },
+    // GHC fails to link on macos-26 images that pair the Command Line
+    // Tools 27 SDK with Xcode 26's linker:
+    // https://github.com/actions/runner-images/issues/14940
+    {
+      "matchDatasources": [
+        "github-runners"
+      ],
+      "matchPackageNames": [
+        "macos"
+      ],
+      "allowedVersions": "<26"
     }
   ],
   "osvVulnerabilityAlerts": true,
