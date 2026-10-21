@@ -93,11 +93,18 @@ adds_deprecation() {
   grep -qE " $DEPRECATION" "$1"
 }
 
+# Dropping only the pragma leaves the entity exported.
+removes_entity() {
+  local removed=$1 added=$2
+  sed -E "s/ $DEPRECATION.*//" "$removed" | LC_ALL=C sort -u |
+    LC_ALL=C comm -23 - "$added" | grep -q .
+}
+
 # A new orphan instance can collide with one a consumer already defines.
 # PVP treats a new deprecation as a removal.
 classify_bump() {
   local hoogle=$1 removed=$2 added=$3
-  if [ -s "$removed" ] || adds_orphan "$hoogle" "$added" || adds_deprecation "$added"; then
+  if removes_entity "$removed" "$added" || adds_orphan "$hoogle" "$added" || adds_deprecation "$added"; then
     echo A.B
   elif [ -s "$added" ]; then
     echo C
