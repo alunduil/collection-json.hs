@@ -31,6 +31,17 @@
         "replacement"
       ],
       "minimumReleaseAge": null
+    },
+    // GHC can't link on macos-26:
+    // https://github.com/actions/runner-images/issues/14940
+    {
+      "matchDatasources": [
+        "github-runners"
+      ],
+      "matchPackageNames": [
+        "macos"
+      ],
+      "allowedVersions": "<26"
     }
   ],
   "osvVulnerabilityAlerts": true,
