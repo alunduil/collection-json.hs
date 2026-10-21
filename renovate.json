@@ -4,11 +4,11 @@
     "config:best-practices",
     "security:openssf-scorecard",
     "customManagers:githubActionsVersions",
+    ":semanticCommits",
     ":semanticCommitScopeDisabled"
   ],
-  // Titles must pass the pull request title check in CONTRIBUTING.md, whose
-  // subjects start with a capital the default lowercasing would drop.
-  "semanticCommits": "enabled",
+  // The title convention in CONTRIBUTING.md starts subjects with a capital
+  // that the default lowercasing would drop.
   "commitMessageLowerCase": "never",
   "timezone": "Europe/London",
   "reviewers": [
