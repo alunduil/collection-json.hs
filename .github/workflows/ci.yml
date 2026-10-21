@@ -251,10 +251,10 @@ jobs:
             | reviewdog -f=rdjsonl -name=vale \
                 -reporter=github-pr-check -filter-mode=added -fail-level=warning
 
-  # Squash merge makes the title the commit subject on `main`; CONTRIBUTING.md
-  # maps each type to its changelog category. Re-run the job after a retitle:
-  # the action fetches the current title, and an `edited` trigger would restart
-  # the matrix on every description edit.
+  # Squash merge makes the title the commit subject on `main`. CONTRIBUTING.md
+  # defines each type. An `edited` trigger would rerun the matrix on every
+  # description edit; re-running this job picks up a retitle instead, because
+  # the action fetches the current title.
   pull-request-title:
     name: Check pull request title
     runs-on: ubuntu-26.04
@@ -263,8 +263,8 @@ jobs:
       pull-requests: read
 
     steps:
-      # Guarded per step, not per job: a skipped job fails `Check CI results`
-      # on every push to `main`.
+      # A job-level guard would skip the job on pushes to `main`, and a skipped
+      # job fails `Check CI results`.
       - name: Lint title
         if: github.event_name == 'pull_request'
         uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1

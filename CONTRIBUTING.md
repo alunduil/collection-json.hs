@@ -78,16 +78,17 @@ body. Write the title as an imperative summary under 50 characters:
 Use the description for why the change is needed and anything a reader
 of the diff would find surprising.
 
-Prefix the title with the verb for its Keep a Changelog category
-(`add`, `change`, `deprecate`, `remove`, `fix`, `security`), or `chore`
-for work a Hackage user never builds against: CI, tooling, and docs
+Prefix the title with the verb for its Keep a Changelog category: `add`,
+`change`, `deprecate`, `remove`, `fix`, or `security`. Use `chore` for
+work a Hackage user never builds against, such as CI, tooling, and docs
 outside the Haddock. For example, `add: Accept URI references for href`.
 The `Check pull request title` CI check rejects any other prefix.
-Editing the title doesn't re-run the check; push a commit to re-run it.
+Editing the title doesn't re-run the check, so push a commit to re-run it.
 
 Mark a behaviour change behind an unchanged signature with `!` after
-the type, for example `fix!: Reject relative hrefs on decode`. It needs
-a major version bump that the exported interface doesn't show.
+the type, for example `fix!: Reject relative hrefs on decode`. The
+exported interface doesn't show such a change, but it still needs a
+major version bump.
 
 Commits inside the PR are collapsed on merge, so their messages only
 need to hold up under commit-by-commit review.
