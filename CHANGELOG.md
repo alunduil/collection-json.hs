@@ -10,22 +10,37 @@ and this project adheres to the [Haskell Package Versioning Policy
 
 ### Added
 
-- Documented `href` decoding: a relative address is valid and resolves
-  against the address the document was retrieved from.
+- `FromCollection` and `ToCollection` instances for `Collection` (#117)
+- Document that a relative `href` is valid and resolves against the address the document came from (#268)
 
 ### Changed
 
-- Compatible with `aeson` 2.2, `base` 4.22, and `network-uri-json` 0.4
-  (no API changes).
-- Modernised `collection-json.cabal`: `cabal-version: 3.0`, `common
-  warnings`/`common language` stanzas, `tested-with` set to GHC 9.6 /
-  9.8 / 9.10 / 9.12, and dependency bounds tightened to honest ranges
-  for that matrix. Test-suite no longer recompiles `src/`; depends on
-  the `collection-json` library directly.
+- Compatible with `aeson` 2.2
+- Compatible with `base` 4.22
+- Bounds match the tested GHC matrix (#134)
+
+  Migration: Requires `aeson` 2.0, `base` 4.18 (GHC 9.6), and `text` 2.0 or
+  later.
+- Compatible with `aeson` 2.3 (#183)
+- Decoders accept spec-valid data they rejected (#271)
+
+  Migration: `dValue` is `Maybe DatumValue` instead of `Maybe Text`; match on
+  `DatumString`, `DatumNumber`, or `DatumBool`. `iHref` is `Maybe URI` instead
+  of `URI`. `lRender` is `Maybe Render` instead of `Maybe Text`; match on
+  `RenderImage` or `RenderLink`, and a `render` other than `image` or `link`
+  fails to decode.
+
+### Removed
+
+- Dependency on `network-uri-json` (#135)
+
+  Migration: Requires `aeson` 2.2 or later, which supplies the `FromJSON` and
+  `ToJSON` instances for `URI`.
 
 ### Fixed
 
-- `cabal get -s` clones the source repository.
+- `cabal get -s` clones the source repository (#267)
+- Module documentation links to the live Collection+JSON specification (#389)
 
 ## [1.3.1.3] - 2019-02-21
 

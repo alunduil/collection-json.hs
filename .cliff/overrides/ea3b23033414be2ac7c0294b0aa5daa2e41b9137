@@ -1,0 +1,4 @@
+remove: Dependency on `network-uri-json` (#135)
+
+Migration: Requires `aeson` 2.2 or later, which supplies the `FromJSON` and
+`ToJSON` instances for `URI`.

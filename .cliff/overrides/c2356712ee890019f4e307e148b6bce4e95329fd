@@ -1,0 +1,7 @@
+change: Decoders accept spec-valid data they rejected (#271)
+
+Migration: `dValue` is `Maybe DatumValue` instead of `Maybe Text`; match on
+`DatumString`, `DatumNumber`, or `DatumBool`. `iHref` is `Maybe URI` instead
+of `URI`. `lRender` is `Maybe Render` instead of `Maybe Text`; match on
+`RenderImage` or `RenderLink`, and a `render` other than `image` or `link`
+fails to decode.

@@ -1,0 +1,1 @@
+fix: `cabal get -s` clones the source repository (#267)
