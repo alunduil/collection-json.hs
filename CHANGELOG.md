@@ -11,7 +11,7 @@ and this project adheres to the [Haskell Package Versioning Policy
 ### Added
 
 - `FromCollection` and `ToCollection` instances for `Collection` (#117)
-- Document that a relative `href` is valid and resolves against the address the document came from (#268)
+- Documented that a relative `href` is valid and resolves against the address the document came from (#268)
 
 ### Changed
 
