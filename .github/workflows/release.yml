@@ -12,6 +12,10 @@ permissions:
 
 env:
   CANDIDATE_ARTIFACT: hackage-candidate
+  # renovate: datasource=github-tags depName=ghc/ghc extractVersion=^ghc-(?<version>\d+\.\d+\.\d+)-release$
+  GHC_VERSION: "9.14.1"
+  # renovate: datasource=github-tags depName=haskell/cabal versioning=loose extractVersion=^cabal-install-v(?<version>\d+\.\d+\.\d+\.\d+)$
+  CABAL_VERSION: "3.18.2.0"
 
 jobs:
   metadata:
@@ -91,8 +95,8 @@ jobs:
 
       - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
         with:
-          ghc-version: 'latest'
-          cabal-version: 'latest'
+          ghc-version: ${{ env.GHC_VERSION }}
+          cabal-version: ${{ env.CABAL_VERSION }}
 
       - run: cabal update
 
@@ -138,7 +142,7 @@ jobs:
       - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
         with:
           ghc-version: ${{ matrix.ghc }}
-          cabal-version: 'latest'
+          cabal-version: ${{ env.CABAL_VERSION }}
 
       - run: cabal update
 
@@ -202,8 +206,8 @@ jobs:
 
       - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
         with:
-          ghc-version: 'latest'
-          cabal-version: 'latest'
+          ghc-version: ${{ env.GHC_VERSION }}
+          cabal-version: ${{ env.CABAL_VERSION }}
 
       - name: Publish sdist
         env:
