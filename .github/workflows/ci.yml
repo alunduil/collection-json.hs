@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+env:
+  # renovate: datasource=github-tags depName=haskell/cabal versioning=loose extractVersion=^cabal-install-v(?<version>\d+\.\d+\.\d+\.\d+)$
+  CABAL_VERSION: "3.18.2.0"
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
@@ -47,7 +51,7 @@ jobs:
         uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2.12.1
         with:
           ghc-version: ${{ matrix.ghc }}
-          cabal-version: latest
+          cabal-version: ${{ env.CABAL_VERSION }}
 
       - name: Update Hackage index
         run: cabal update
@@ -130,6 +134,9 @@ jobs:
     name: Coverage
     runs-on: ubuntu-26.04
     timeout-minutes: 30
+    env:
+      # renovate: datasource=github-tags depName=ghc/ghc extractVersion=^ghc-(?<version>\d+\.\d+\.\d+)-release$
+      GHC_VERSION: "9.14.1"
 
     steps:
       - name: Checkout
@@ -139,8 +146,8 @@ jobs:
         id: setup
         uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2.12.1
         with:
-          ghc-version: "9.14"
-          cabal-version: latest
+          ghc-version: ${{ env.GHC_VERSION }}
+          cabal-version: ${{ env.CABAL_VERSION }}
 
       - name: Update Hackage index
         run: cabal update
