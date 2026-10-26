@@ -1,11 +1,9 @@
 name: Set up GHC
 description: Install GHC and cabal-install with haskell-actions/setup, restoring both from the Actions cache.
 
-# Callers may name a GHC series, but setup reports the exact release only
-# after installing it. Resolving the release first puts it in the cache
-# key, so a new patch release misses the cache instead of restoring the
-# previous one. The runner image version is in the key for the same
-# reason.
+# setup reports the exact GHC release only after installing it, so a key
+# built from a series would restore the previous patch release after a
+# new one ships.
 inputs:
   ghc-version:
     description: A GHC major series such as 9.12, or an exact release.
@@ -34,8 +32,8 @@ runs:
       run: |
         ghc=$("$GITHUB_ACTION_PATH/../../scripts/resolve-ghc.sh" "$GHC")
         ghcup="${GHCUP_INSTALL_BASE_PREFIX:-$HOME}/.ghcup"
-        # A GHC the runner image ships is already on disk; caching it
-        # would spend the repository's cache budget restoring it again.
+        # A GHC the runner image ships is already on disk, so caching it
+        # only spends cache budget.
         paths="$ghcup/cabal/$CABAL"
         if [ ! -d "$ghcup/ghc/$ghc" ]; then
           paths+=$'\n'"$ghcup/ghc/$ghc"
@@ -47,8 +45,8 @@ runs:
           echo "$paths"
           echo "EOF"
         } >> "$GITHUB_OUTPUT"
-        # setup treats a ghcup toolchain as installed only when this
-        # directory exists, and a restore doesn't create it.
+        # setup counts a restored toolchain as installed only if this
+        # directory exists, and restoring doesn't create it.
         mkdir -p "$HOME/.ghcup/bin"
 
     - name: Restore toolchain

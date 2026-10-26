@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Prints the newest GHC release in the major series given as $1 (such as
-# 9.12), read from the metadata ghcup installs from. An exact version
-# passes through unchanged. Fails when the series has no release.
+# Prints the newest GHC release in the major series $1, from the metadata
+# ghcup installs from. Prints an exact version unchanged. Fails when the
+# series has no release.
 set -euo pipefail
 
 if [[ ! $1 =~ ^[0-9]+\.[0-9]+$ ]]; then
