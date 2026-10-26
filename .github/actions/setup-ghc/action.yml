@@ -34,17 +34,17 @@ runs:
         ghcup="${GHCUP_INSTALL_BASE_PREFIX:-$HOME}/.ghcup"
         # ghcup treats cabal-install without its db records as not
         # installed, then fails to reinstall over the restored files.
-        paths="$ghcup/cabal/$CABAL"$'\n'"$ghcup/db/cabal/$CABAL*"
+        paths=("$ghcup/cabal/$CABAL" "$ghcup/db/cabal/$CABAL*")
         # A GHC the runner image ships is already on disk, so caching it
         # only spends cache budget.
         if [ ! -d "$ghcup/ghc/$ghc" ]; then
-          paths+=$'\n'"$ghcup/ghc/$ghc"
+          paths+=("$ghcup/ghc/$ghc")
         fi
         {
           echo "ghc=$ghc"
           echo "key=ghcup-${ImageOS:?}-${ImageVersion:?}-$RUNNER_ARCH-ghc-$ghc-cabal-$CABAL"
           echo "paths<<EOF"
-          echo "$paths"
+          printf '%s\n' "${paths[@]}"
           echo "EOF"
         } >> "$GITHUB_OUTPUT"
         # setup counts a restored toolchain as installed only if this
