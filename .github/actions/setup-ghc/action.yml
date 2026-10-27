@@ -1,0 +1,73 @@
+name: Set up GHC
+description: Install GHC and cabal-install with haskell-actions/setup, restoring both from the Actions cache.
+
+# setup reports the exact GHC release only after installing it, so a key
+# built from a series would restore the previous patch release after a
+# new one ships.
+inputs:
+  ghc-version:
+    description: A GHC major series such as 9.12, or an exact release.
+    required: true
+  cabal-version:
+    description: An exact cabal-install release.
+    required: true
+
+outputs:
+  ghc-version:
+    value: ${{ steps.setup.outputs.ghc-version }}
+  cabal-version:
+    value: ${{ steps.setup.outputs.cabal-version }}
+  cabal-store:
+    value: ${{ steps.setup.outputs.cabal-store }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve GHC release
+      id: resolve
+      shell: bash
+      env:
+        GHC: ${{ inputs.ghc-version }}
+        CABAL: ${{ inputs.cabal-version }}
+      run: |
+        ghc=$("$GITHUB_ACTION_PATH/../../scripts/resolve-ghc.sh" "$GHC")
+        ghcup="${GHCUP_INSTALL_BASE_PREFIX:-$HOME}/.ghcup"
+        # ghcup treats cabal-install without its db records as not
+        # installed, then fails to reinstall over the restored files.
+        paths=("$ghcup/cabal/$CABAL" "$ghcup/db/cabal/$CABAL*")
+        # A GHC the runner image ships is already on disk, so caching it
+        # only spends cache budget.
+        if [ ! -d "$ghcup/ghc/$ghc" ]; then
+          paths+=("$ghcup/ghc/$ghc")
+        fi
+        {
+          echo "ghc=$ghc"
+          echo "key=ghcup-${ImageOS:?}-${ImageVersion:?}-$RUNNER_ARCH-ghc-$ghc-cabal-$CABAL"
+          echo "paths<<EOF"
+          printf '%s\n' "${paths[@]}"
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
+        # setup counts a restored toolchain as installed only if this
+        # directory exists, and restoring doesn't create it.
+        mkdir -p "$HOME/.ghcup/bin"
+
+    - name: Restore toolchain
+      id: cache
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ steps.resolve.outputs.paths }}
+        key: ${{ steps.resolve.outputs.key }}
+
+    - name: Install toolchain
+      id: setup
+      uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2.12.1
+      with:
+        ghc-version: ${{ steps.resolve.outputs.ghc }}
+        cabal-version: ${{ inputs.cabal-version }}
+
+    - name: Save toolchain
+      if: steps.cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ steps.resolve.outputs.paths }}
+        key: ${{ steps.cache.outputs.cache-primary-key }}
