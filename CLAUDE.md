@@ -22,13 +22,13 @@ Single-package project (`cabal.project`: `packages: .`).
   (`.markdownlint.jsonc`), Vale (`.vale.ini`; styles vendored under
   `.vale/styles`, no `vale sync`), actionlint, shellcheck, and
   `.github/scripts/check-changelog.py` (Keep a Changelog structure with
-  PVP versions). fourmolu/hlint run from PATH, pinned in
-  `.github/workflows/pre-commit.yml` (not the pre-commit config).
+  PVP versions). fourmolu/hlint run from PATH, pinned in `ci.yml`'s
+  `hooks` job (not the pre-commit config).
 - **CI**: `ci.yml` (GHC matrix above × ubuntu/macos, builds from the
   sdist; its package-checks leg runs `.github/scripts/pvp-bump.sh`;
   `coverage` job → Codecov, `codecov.yml`; `prose` job → Vale
-  warnings on PR-added lines via reviewdog), `pre-commit.yml`,
-  `links.yml` (lychee, `lychee.toml`), `ghc-matrix.yml` (weekly:
+  warnings on PR-added lines via reviewdog; `hooks` job → pre-commit;
+  `Check CI results` aggregates every job), `links.yml` (lychee, `lychee.toml`), `ghc-matrix.yml` (weekly:
   files/refreshes a tracking issue when the matrix drifts from the GHC
   series endoflife.date still lists as not end-of-life), `daily.yml`
   (closes quiet pull requests; Renovate's `dependencies`

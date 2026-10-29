@@ -54,9 +54,9 @@ repos:
         args: [--strict, --no-global]
 
   # fourmolu and hlint are installed in the dev environment (or in CI by the
-  # Pre-commit workflow) and invoked from PATH. Renovate's pre-commit manager
-  # only tracks third-party hooks with a `rev:` field, so the pinned versions
-  # for these tools live in `.github/workflows/pre-commit.yml`.
+  # CI workflow's hooks job) and invoked from PATH. Renovate's pre-commit
+  # manager only tracks third-party hooks with a `rev:` field, so the pinned
+  # versions for these tools live in `.github/workflows/ci.yml`.
   - repo: local
     hooks:
       - id: check-changelog
