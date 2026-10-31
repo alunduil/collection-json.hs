@@ -1,42 +1,22 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:best-practices",
-    "security:openssf-scorecard",
-    "customManagers:githubActionsVersions",
+    "github>alunduil/renovate-config",
     ":semanticCommits",
     ":semanticCommitScopeDisabled"
   ],
   // The title convention in CONTRIBUTING.md starts subjects with a capital
   // that the default lowercasing would drop.
   "commitMessageLowerCase": "never",
-  "timezone": "Europe/London",
-  "reviewers": [
-    "alunduil"
-  ],
   // The Daily workflow exempts this label from stale closing.
   "labels": [
     "dependencies"
   ],
-  "minimumReleaseAge": "3 days",
   // hackage reports no release timestamps, so the default
   // timestamp-required mode holds every cabal update forever rather than
   // for three days. Datasources that do report them keep the full bake.
   "minimumReleaseAgeBehaviour": "timestamp-optional",
   "packageRules": [
-    {
-      "matchUpdateTypes": [
-        "pin",
-        "pinDigest",
-        "digest",
-        "lockFileMaintenance",
-        "lockfileUpdate",
-        "rollback",
-        "bump",
-        "replacement"
-      ],
-      "minimumReleaseAge": null
-    },
     // Cabal bounds ship in the Hackage package, so moving one is a change
     // downstream sees. Test-suite bounds count too: packagers run the tests.
     {
@@ -56,9 +36,5 @@
       ],
       "allowedVersions": "<26"
     }
-  ],
-  "osvVulnerabilityAlerts": true,
-  "pre-commit": {
-    "enabled": true
-  }
+  ]
 }
