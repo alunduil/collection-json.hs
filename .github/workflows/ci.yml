@@ -204,6 +204,41 @@ jobs:
           files: ${{ steps.report.outputs.report }}
           fail_ci_if_error: true
 
+  hooks:
+    name: Run pre-commit hooks
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+
+    env:
+      # Both tools version with PVP, whose four-component releases the default
+      # semver-coerced versioning reports as unstable — `ignoreUnstable` then
+      # hides every update. `loose` compares them component-wise instead.
+      # renovate: datasource=github-releases depName=fourmolu/fourmolu versioning=loose extractVersion=^v(?<version>.+)$
+      FOURMOLU_VERSION: "0.21.0.0"
+      # renovate: datasource=github-releases depName=ndmitchell/hlint versioning=loose extractVersion=^v(?<version>.+)$
+      HLINT_VERSION: "3.10"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Fourmolu
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL -o /tmp/fourmolu.zip \
+            "https://github.com/fourmolu/fourmolu/releases/download/v${FOURMOLU_VERSION}/fourmolu-${FOURMOLU_VERSION}-linux-x86_64.zip"
+          unzip -j /tmp/fourmolu.zip '*/fourmolu' -d "$HOME/.local/bin"
+          chmod +x "$HOME/.local/bin/fourmolu"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Set up HLint
+        uses: haskell-actions/hlint-setup@fe9cd1cd1af94a23900c06738e73f6ddb092966a # v2
+        with:
+          version: ${{ env.HLINT_VERSION }}
+
+      - name: Run pre-commit
+        uses: tox-dev/action-pre-commit-uv@4de52c139ed1a6963bcc4c30042c4ef9d75d8b11 # v1.1.0
+
   # vale exits zero on warnings, so reviewdog gates them; the pre-commit hook
   # gates errors tree-wide. reviewdog needs a PR diff, so only its step is
   # guarded: on push the job succeeds empty and `results` can still require it.
@@ -262,41 +297,6 @@ jobs:
               }' \
             | reviewdog -f=rdjsonl -name=vale \
                 -reporter=github-pr-check -filter-mode=added -fail-level=warning
-
-  hooks:
-    name: Run pre-commit hooks
-    runs-on: ubuntu-26.04
-    timeout-minutes: 10
-
-    env:
-      # Both tools version with PVP, whose four-component releases the default
-      # semver-coerced versioning reports as unstable — `ignoreUnstable` then
-      # hides every update. `loose` compares them component-wise instead.
-      # renovate: datasource=github-releases depName=fourmolu/fourmolu versioning=loose extractVersion=^v(?<version>.+)$
-      FOURMOLU_VERSION: "0.21.0.0"
-      # renovate: datasource=github-releases depName=ndmitchell/hlint versioning=loose extractVersion=^v(?<version>.+)$
-      HLINT_VERSION: "3.10"
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Install Fourmolu
-        run: |
-          mkdir -p "$HOME/.local/bin"
-          curl -fsSL -o /tmp/fourmolu.zip \
-            "https://github.com/fourmolu/fourmolu/releases/download/v${FOURMOLU_VERSION}/fourmolu-${FOURMOLU_VERSION}-linux-x86_64.zip"
-          unzip -j /tmp/fourmolu.zip '*/fourmolu' -d "$HOME/.local/bin"
-          chmod +x "$HOME/.local/bin/fourmolu"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-
-      - name: Set up HLint
-        uses: haskell-actions/hlint-setup@fe9cd1cd1af94a23900c06738e73f6ddb092966a # v2
-        with:
-          version: ${{ env.HLINT_VERSION }}
-
-      - name: Run pre-commit
-        uses: tox-dev/action-pre-commit-uv@4de52c139ed1a6963bcc4c30042c4ef9d75d8b11 # v1.1.0
 
   # Squash merge makes the title the commit subject on `main`. CONTRIBUTING.md
   # defines each type. An `edited` trigger would rerun the matrix on every

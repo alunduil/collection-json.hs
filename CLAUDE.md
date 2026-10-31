@@ -28,11 +28,11 @@ Single-package project (`cabal.project`: `packages: .`).
   sdist; its package-checks leg runs `.github/scripts/pvp-bump.sh`;
   `coverage` job → Codecov, `codecov.yml`; `prose` job → Vale
   warnings on PR-added lines via reviewdog; `hooks` job → pre-commit;
-  `Check CI results` aggregates every job), `links.yml` (lychee, `lychee.toml`), `ghc-matrix.yml` (weekly:
-  files/refreshes a tracking issue when the matrix drifts from the GHC
-  series endoflife.date still lists as not end-of-life), `daily.yml`
-  (closes quiet pull requests; Renovate's `dependencies`
-  label exempts its pull requests).
+  `Check CI results` aggregates every job), `links.yml` (lychee,
+  `lychee.toml`), `ghc-matrix.yml` (weekly: files/refreshes a tracking
+  issue when the matrix drifts from the GHC series endoflife.date still
+  lists as not end-of-life), `daily.yml` (closes quiet pull requests;
+  Renovate's `dependencies` label exempts its pull requests).
 - **Changelog**: `CHANGELOG.md` is git-cliff output (`cliff.toml`);
   regenerate with `uvx git-cliff@2.14.2 -o CHANGELOG.md`. Entries come
   from squash-commit subjects. To change one, write the replacement
