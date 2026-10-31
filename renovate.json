@@ -12,9 +12,9 @@
   "labels": [
     "dependencies"
   ],
-  // hackage reports no release timestamps, so the default
-  // timestamp-required mode holds every cabal update forever rather than
-  // for three days. Datasources that do report them keep the full bake.
+  // Hackage reports no release timestamps, so without this every cabal
+  // update waits out the bake forever. Datasources that report timestamps
+  // keep the full bake.
   "minimumReleaseAgeBehaviour": "timestamp-optional",
   "packageRules": [
     {
