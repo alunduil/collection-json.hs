@@ -28,7 +28,7 @@ Single-package project (`cabal.project`: `packages: .`).
   sdist; its package-checks leg runs `.github/scripts/pvp-bump.sh`;
   `coverage` job → Codecov, `codecov.yml`; `prose` job → Vale
   warnings on PR-added lines via reviewdog; `hooks` job → pre-commit;
-  `Check CI results` aggregates every job), `links.yml` (lychee,
+  a new job joins `Check CI results`' `needs:`), `links.yml` (lychee,
   `lychee.toml`), `ghc-matrix.yml` (weekly: files/refreshes a tracking
   issue when the matrix drifts from the GHC series endoflife.date still
   lists as not end-of-life), `daily.yml` (closes quiet pull requests;
