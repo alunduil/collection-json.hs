@@ -5,14 +5,17 @@ on:
   schedule:
     - cron: "0 18 * * 5"
       timezone: "Europe/London"
+  # Pull requests run drift detection so changes here are tested before merge.
+  # No paths filter: a required check must report on every pull request.
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read
-  # The drift check files a tracking issue when the matrix ages out.
-  issues: write
 
 concurrency:
-  group: ${{ github.workflow }}
+  # Pull request runs group apart so they never queue behind the scheduled run.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 
 jobs:
@@ -20,6 +23,11 @@ jobs:
     name: Check GHC matrix drift
     runs-on: ubuntu-26.04
     timeout-minutes: 10
+    outputs:
+      drift: ${{ steps.check.outputs.drift }}
+      expected: ${{ steps.check.outputs.expected }}
+      matrix: ${{ steps.check.outputs.matrix }}
+      tested: ${{ steps.check.outputs.tested }}
 
     steps:
       - name: Checkout
@@ -62,7 +70,32 @@ jobs:
           echo "drift=$drift" >> "$GITHUB_OUTPUT"
 
           join() { printf '%s' "$1" | paste -sd, -; }
-          # create-an-issue reads the title and labels from front matter.
+          {
+            echo "expected=$(join "$expected")"
+            echo "matrix=$(join "$matrix")"
+            echo "tested=$(join "$tested")"
+          } >> "$GITHUB_OUTPUT"
+
+  # A separate job keeps issues: write out of the detection pull requests run.
+  file-drift-issue:
+    name: File GHC matrix drift issue
+    needs: drift
+    if: >-
+      needs.drift.outputs.drift == 'true'
+      && github.event_name != 'pull_request'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    permissions:
+      issues: write
+
+    steps:
+      # create-an-issue reads the title and labels from front matter.
+      - name: Write drift issue
+        env:
+          EXPECTED: ${{ needs.drift.outputs.expected }}
+          MATRIX: ${{ needs.drift.outputs.matrix }}
+          TESTED: ${{ needs.drift.outputs.tested }}
+        run: |
           {
             echo "---"
             echo "title: GHC version matrix out of date"
@@ -74,9 +107,9 @@ jobs:
             echo
             echo "| Source | Series |"
             echo "| --- | --- |"
-            echo "| Expected (endoflife.date, not end-of-life) | $(join "$expected") |"
-            echo "| CI matrix (\`.github/workflows/ci.yml\`) | $(join "$matrix") |"
-            echo "| \`tested-with\` (\`collection-json.cabal\`) | $(join "$tested") |"
+            echo "| Expected (endoflife.date, not end-of-life) | $EXPECTED |"
+            echo "| CI matrix (\`.github/workflows/ci.yml\`) | $MATRIX |"
+            echo "| \`tested-with\` (\`collection-json.cabal\`) | $TESTED |"
             echo
             echo "Update the matrix and \`tested-with\`, then bump per PVP"
             echo "(CI/packaging-only is a patch)."
@@ -84,9 +117,8 @@ jobs:
 
       # update_existing overwrites the open tracking issue with the same
       # title rather than filing a duplicate, and files a fresh one only
-      # when none is open. Title and labels come from the front matter above.
+      # when none is open.
       - name: File or refresh drift issue
-        if: steps.check.outputs.drift == 'true'
         uses: JasonEtco/create-an-issue@1b14a70e4d8dc185e5cc76d3bec9eab20257b2c5 # v2.9.2
         env:
           GITHUB_TOKEN: ${{ github.token }}
