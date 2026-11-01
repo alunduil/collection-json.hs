@@ -26,7 +26,9 @@ jobs:
     timeout-minutes: 10
     outputs:
       drift: ${{ steps.check.outputs.drift }}
-      issue: ${{ steps.check.outputs.issue }}
+      expected: ${{ steps.check.outputs.expected }}
+      matrix: ${{ steps.check.outputs.matrix }}
+      tested: ${{ steps.check.outputs.tested }}
 
     steps:
       - name: Checkout
@@ -69,31 +71,10 @@ jobs:
           echo "drift=$drift" >> "$GITHUB_OUTPUT"
 
           join() { printf '%s' "$1" | paste -sd, -; }
-          # create-an-issue reads the title and labels from front matter.
           {
-            echo "---"
-            echo "title: GHC version matrix out of date"
-            echo "labels:"
-            echo "  - infrastructure"
-            echo "---"
-            echo "The CI matrix and \`tested-with\` should track every GHC major"
-            echo "series upstream hasn't end-of-lifed (policy: #141)."
-            echo
-            echo "| Source | Series |"
-            echo "| --- | --- |"
-            echo "| Expected (endoflife.date, not end-of-life) | $(join "$expected") |"
-            echo "| CI matrix (\`.github/workflows/ci.yml\`) | $(join "$matrix") |"
-            echo "| \`tested-with\` (\`collection-json.cabal\`) | $(join "$tested") |"
-            echo
-            echo "Update the matrix and \`tested-with\`, then bump per PVP"
-            echo "(CI/packaging-only is a patch)."
-          } > ghc-drift-issue.md
-
-          delimiter=$(openssl rand -hex 16)
-          {
-            echo "issue<<$delimiter"
-            cat ghc-drift-issue.md
-            echo "$delimiter"
+            echo "expected=$(join "$expected")"
+            echo "matrix=$(join "$matrix")"
+            echo "tested=$(join "$tested")"
           } >> "$GITHUB_OUTPUT"
 
   # Filing is its own job so detection, which pull requests run, never holds
@@ -112,12 +93,33 @@ jobs:
     steps:
       - name: Write drift issue
         env:
-          ISSUE: ${{ needs.drift.outputs.issue }}
-        run: printf '%s\n' "$ISSUE" > ghc-drift-issue.md
+          EXPECTED: ${{ needs.drift.outputs.expected }}
+          MATRIX: ${{ needs.drift.outputs.matrix }}
+          TESTED: ${{ needs.drift.outputs.tested }}
+        # create-an-issue reads the title and labels from front matter.
+        run: |
+          {
+            echo "---"
+            echo "title: GHC version matrix out of date"
+            echo "labels:"
+            echo "  - infrastructure"
+            echo "---"
+            echo "The CI matrix and \`tested-with\` should track every GHC major"
+            echo "series upstream hasn't end-of-lifed (policy: #141)."
+            echo
+            echo "| Source | Series |"
+            echo "| --- | --- |"
+            echo "| Expected (endoflife.date, not end-of-life) | $EXPECTED |"
+            echo "| CI matrix (\`.github/workflows/ci.yml\`) | $MATRIX |"
+            echo "| \`tested-with\` (\`collection-json.cabal\`) | $TESTED |"
+            echo
+            echo "Update the matrix and \`tested-with\`, then bump per PVP"
+            echo "(CI/packaging-only is a patch)."
+          } > ghc-drift-issue.md
 
       # update_existing overwrites the open tracking issue with the same
       # title rather than filing a duplicate, and files a fresh one only
-      # when none is open. Title and labels come from the drift job's front matter.
+      # when none is open. Title and labels come from the front matter above.
       - name: File or refresh drift issue
         uses: JasonEtco/create-an-issue@1b14a70e4d8dc185e5cc76d3bec9eab20257b2c5 # v2.9.2
         env:

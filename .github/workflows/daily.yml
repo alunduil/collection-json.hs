@@ -30,11 +30,10 @@ jobs:
     env:
       STALE_DAYS: 30
       CLOSE_DAYS: 14
-      DRY_RUN: ${{ github.event_name == 'pull_request' }}
     steps:
       - uses: actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93 # v11
         with:
-          debug-only: ${{ env.DRY_RUN }}
+          debug-only: ${{ github.event_name == 'pull_request' }}
           # With only staling disabled, issues already carrying the stale
           # label would still close.
           days-before-issue-stale: -1
