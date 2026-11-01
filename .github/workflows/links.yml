@@ -37,21 +37,32 @@ jobs:
           key: lychee-${{ github.sha }}
           restore-keys: lychee-
 
+      - name: Set up lychee
+        uses: jdx/mise-action@6612f0ef07ed2a736cd1e00a94a065522dd41195 # v5.2.5
+        with:
+          install_args: lychee
+
+      # Fail the job on PR and push so a dead link blocks the merge; on the
+      # scheduled run continue, so the next step can file a tracking issue.
+      # The token lifts GitHub's anonymous rate limit on github.com links.
       - name: Check links
         id: lychee
-        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
-        with:
-          args: --config lychee.toml --no-progress "./**/*.md"
-          # Fail the job on PR and push so a dead link blocks the merge; on the
-          # scheduled run continue, so the next step can file a tracking issue.
-          fail: ${{ github.event_name != 'schedule' }}
+        continue-on-error: ${{ github.event_name == 'schedule' }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        # Explicit bash enables pipefail; without it tee masks lychee's exit.
+        shell: bash
+        run: |
+          mkdir -p lychee
+          lychee --config lychee.toml --no-progress --mode task --format markdown './**/*.md' \
+            | tee lychee/out.md "$GITHUB_STEP_SUMMARY"
 
-      # Only reached on the scheduled run (PR/push already failed above). lychee
-      # writes its Markdown report to lychee/out.md. Refresh the open tracking
-      # issue if one exists rather than filing a fresh duplicate each Friday;
-      # create-issue-from-file can't update, so drive gh directly.
+      # Only reached on the scheduled run (PR/push already failed above).
+      # Refresh the open tracking issue if one exists rather than filing a fresh
+      # duplicate each Friday; create-issue-from-file can't update, so drive gh
+      # directly.
       - name: File or refresh broken-links issue
-        if: github.event_name == 'schedule' && steps.lychee.outputs.exit_code != 0
+        if: github.event_name == 'schedule' && steps.lychee.outcome == 'failure'
         env:
           GH_TOKEN: ${{ github.token }}
           TITLE: Broken links detected

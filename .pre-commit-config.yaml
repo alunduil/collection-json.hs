@@ -54,7 +54,7 @@ repos:
         args: [--strict, --no-global]
 
   # Renovate's pre-commit manager tracks only hooks with a `rev:`, so the
-  # fourmolu and hlint pins live in the hooks job of `.github/workflows/ci.yml`.
+  # fourmolu and hlint pins live in `mise.toml`.
   - repo: local
     hooks:
       - id: check-changelog
