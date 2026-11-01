@@ -25,7 +25,7 @@
       "semanticCommitType": "change"
     },
     {
-      "description": "Default versioning treats four-component PVP versions as unstable and never offers them; loose compares them component-wise. Release tags carry a v that mise.toml versions don't.",
+      "description": "Default versioning never offers four-component PVP versions, and release tags carry a v that mise.toml omits.",
       "matchManagers": [
         "mise"
       ],

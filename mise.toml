@@ -2,9 +2,7 @@
 locked = true
 lockfile_platforms = ["linux-x64"]
 
-# mise's registry has no aqua entry for fourmolu or hlint. The github:
-# backend fetches the same upstream release binaries, checksummed in
-# mise.lock.
+# mise's registry has no aqua entry for fourmolu or hlint.
 [tools]
 "github:fourmolu/fourmolu" = "0.21.0.0"
 "github:ndmitchell/hlint" = "3.10"

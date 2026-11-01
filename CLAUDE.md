@@ -22,8 +22,8 @@ Single-package project (`cabal.project`: `packages: .`).
   (`.markdownlint.jsonc`), Vale (`.vale.ini`; styles vendored under
   `.vale/styles`, no `vale sync`), actionlint, shellcheck, and
   `.github/scripts/check-changelog.py` (Keep a Changelog structure with
-  PVP versions). fourmolu/hlint run from PATH, pinned in `mise.toml`
-  (not the pre-commit config); `mise install` provides them.
+  PVP versions). fourmolu/hlint run from PATH; `mise install` provides
+  them at the `mise.toml` pins.
 - **CI**: `ci.yml` (GHC matrix above × ubuntu/macos, builds from the
   sdist; its package-checks leg runs `.github/scripts/pvp-bump.sh`;
   `coverage` job → Codecov, `codecov.yml`; `prose` job → Vale
