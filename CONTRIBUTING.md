@@ -44,10 +44,8 @@ pre-commit run --all-files    # run all hooks against the repo
 pre-commit autoupdate         # bump third-party hook revs
 ```
 
-The Haskell hooks shell out to `fourmolu` and `hlint` from `PATH`,
-so install them locally (`cabal install fourmolu hlint`, or via
-`ghcup`). CI pins their versions in the `hooks` job of
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+The Haskell hooks call `fourmolu` and `hlint` from `PATH`. Run
+`mise install` to get the versions CI uses.
 Vale, by contrast, is built and its styles fetched by pre-commit, so
 it needs no local install.
 

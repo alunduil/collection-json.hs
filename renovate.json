@@ -25,6 +25,18 @@
       "semanticCommitType": "change"
     },
     {
+      "description": "Default versioning never offers four-component PVP versions, and release tags carry a v that mise.toml omits.",
+      "matchManagers": [
+        "mise"
+      ],
+      "matchPackageNames": [
+        "fourmolu/fourmolu",
+        "ndmitchell/hlint"
+      ],
+      "versioning": "loose",
+      "extractVersion": "^v(?<version>.+)$"
+    },
+    {
       "description": "GHC can't link on macos-26: https://github.com/actions/runner-images/issues/14940",
       "matchDatasources": [
         "github-runners"
