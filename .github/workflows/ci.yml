@@ -32,10 +32,8 @@ jobs:
             # renovate: datasource=github-runners depName=ubuntu
             OS_VERSION: "26.04"
           - os: macos
-            # GHC can't link on macos-26:
-            # https://github.com/actions/runner-images/issues/14940
             # renovate: datasource=github-runners depName=macos
-            OS_VERSION: "15"
+            OS_VERSION: "26"
           # Metadata and docs don't vary by GHC or OS, and haddock is slow:
           # it rebuilds every dependency with documentation.
           - os: ubuntu
