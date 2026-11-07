@@ -75,13 +75,20 @@ jobs:
 
       # The ends of tested-with catch lower- and upper-bound solve
       # failures without paying for the full CI matrix on every release.
+      # Each series resolves to the release CI's matrix pins, so the
+      # smoke test installs what CI tested.
       - name: Read tested-with ends
         id: range
         run: |
           set -euo pipefail
+          pins=$(yq -o=json '
+            [.jobs.build.strategy.matrix.include[] | select(.GHC_VERSION)]
+          ' .github/workflows/ci.yml)
           ghc_versions=$(.github/scripts/tested-with-ghc.sh < collection-json.cabal \
             | sed -n '1p;$p' | uniq \
-            | jq -Rnc '[inputs]')
+            | jq -Rnc --argjson pins "$pins" '[inputs | . as $s
+                | ([$pins[] | select(.ghc == $s) | .GHC_VERSION][0]
+                   // error("ci.yml pins no GHC release for series \($s)"))]')
           echo "ghc-versions=$ghc_versions" >> "$GITHUB_OUTPUT"
 
   candidate:
