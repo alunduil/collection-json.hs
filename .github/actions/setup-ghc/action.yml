@@ -37,12 +37,20 @@ runs:
         paths=("$ghcup/cabal/$CABAL" "$ghcup/db/cabal/$CABAL*")
         # A GHC the runner image ships is already on disk, so caching it
         # only spends cache budget.
-        if [ ! -d "$ghcup/ghc/$ghc" ]; then
+        if [ -d "$ghcup/ghc/$ghc" ]; then
+          ghc_source=image
+        else
+          ghc_source=cache
           paths+=("$ghcup/ghc/$ghc")
         fi
+        # Pull requests share only caches saved on main, so a key per
+        # weekly image patch misses on every pull request until main runs
+        # on that patch. Recording where GHC comes from makes an image
+        # that drops it miss instead of restoring an entry without GHC.
+        key="ghcup-${ImageOS:?}-$RUNNER_ARCH-ghc-$ghc-$ghc_source-cabal-$CABAL"
         {
           echo "ghc=$ghc"
-          echo "key=ghcup-${ImageOS:?}-${ImageVersion:?}-$RUNNER_ARCH-ghc-$ghc-cabal-$CABAL"
+          echo "key=$key"
           echo "paths<<EOF"
           printf '%s\n' "${paths[@]}"
           echo "EOF"
