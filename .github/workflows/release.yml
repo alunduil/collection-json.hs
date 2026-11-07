@@ -24,7 +24,7 @@ jobs:
     outputs:
       version: ${{ steps.verify.outputs.version }}
       candidate-url: ${{ steps.verify.outputs.candidate-url }}
-      ghc-versions: ${{ steps.range.outputs.ghc-versions }}
+      ghc-versions: ${{ steps.smoke-ghc.outputs.ghc-versions }}
     steps:
       - name: Require a tag ref
         if: github.ref_type != 'tag'
@@ -75,13 +75,20 @@ jobs:
 
       # The ends of tested-with catch lower- and upper-bound solve
       # failures without paying for the full CI matrix on every release.
-      - name: Read tested-with ends
-        id: range
+      # Taking releases from ci.yml smoke-tests what CI tested.
+      - name: Resolve smoke-test GHC releases
+        id: smoke-ghc
         run: |
           set -euo pipefail
-          ghc_versions=$(.github/scripts/tested-with-ghc.sh < collection-json.cabal \
-            | sed -n '1p;$p' | uniq \
-            | jq -Rnc '[inputs]')
+          ends=$(.github/scripts/tested-with-ghc.sh < collection-json.cabal \
+            | sed -n '1p;$p' | uniq)
+          pins=$(yq -o=json '
+            [.jobs.build.strategy.matrix.include[] | select(.GHC_VERSION)
+              | {"key": .ghc, "value": .GHC_VERSION}] | from_entries
+          ' .github/workflows/ci.yml)
+          ghc_versions=$(jq -Rnc --argjson pins "$pins" '[inputs
+            | $pins[.] // error("ci.yml pins no GHC release for series \(.)")]' \
+            <<< "$ends")
           echo "ghc-versions=$ghc_versions" >> "$GITHUB_OUTPUT"
 
   candidate:

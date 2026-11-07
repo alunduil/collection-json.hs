@@ -34,6 +34,23 @@ jobs:
           - os: macos
             # renovate: datasource=github-runners depName=macos
             OS_VERSION: "26"
+          # Without a per-series extractVersion, Renovate moves every cell
+          # to the newest series.
+          - ghc: "9.6"
+            # renovate: datasource=github-tags depName=ghc/ghc extractVersion=^ghc-(?<version>9\.6\.\d+)-release$
+            GHC_VERSION: "9.6.7"
+          - ghc: "9.8"
+            # renovate: datasource=github-tags depName=ghc/ghc extractVersion=^ghc-(?<version>9\.8\.\d+)-release$
+            GHC_VERSION: "9.8.4"
+          - ghc: "9.10"
+            # renovate: datasource=github-tags depName=ghc/ghc extractVersion=^ghc-(?<version>9\.10\.\d+)-release$
+            GHC_VERSION: "9.10.3"
+          - ghc: "9.12"
+            # renovate: datasource=github-tags depName=ghc/ghc extractVersion=^ghc-(?<version>9\.12\.\d+)-release$
+            GHC_VERSION: "9.12.4"
+          - ghc: "9.14"
+            # renovate: datasource=github-tags depName=ghc/ghc extractVersion=^ghc-(?<version>9\.14\.\d+)-release$
+            GHC_VERSION: "9.14.1"
           # Metadata and docs don't vary by GHC or OS, and haddock is slow:
           # it rebuilds every dependency with documentation.
           - os: ubuntu
@@ -48,7 +65,7 @@ jobs:
         id: setup
         uses: ./.github/actions/setup-ghc
         with:
-          ghc-version: ${{ matrix.ghc }}
+          ghc-version: ${{ matrix.GHC_VERSION }}
           cabal-version: ${{ env.CABAL_VERSION }}
 
       - name: Update Hackage index

@@ -1,12 +1,11 @@
 name: Set up GHC
 description: Install GHC and cabal-install with haskell-actions/setup, restoring both from the Actions cache.
 
-# setup reports the exact GHC release only after installing it, so a key
-# built from a series would restore the previous patch release after a
-# new one ships.
+# The cache key is built before setup installs, so a key from a series
+# would restore the previous patch release after a new one ships.
 inputs:
   ghc-version:
-    description: A GHC major series such as 9.12, or an exact release.
+    description: An exact GHC release such as 9.12.4.
     required: true
   cabal-version:
     description: An exact cabal-install release.
@@ -23,33 +22,31 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Resolve GHC release
-      id: resolve
+    - name: Plan toolchain cache
+      id: plan
       shell: bash
       env:
         GHC: ${{ inputs.ghc-version }}
         CABAL: ${{ inputs.cabal-version }}
       run: |
-        ghc=$("$GITHUB_ACTION_PATH/../../scripts/resolve-ghc.sh" "$GHC")
         ghcup="${GHCUP_INSTALL_BASE_PREFIX:-$HOME}/.ghcup"
         # ghcup treats cabal-install without its db records as not
         # installed, then fails to reinstall over the restored files.
         paths=("$ghcup/cabal/$CABAL" "$ghcup/db/cabal/$CABAL*")
         # A GHC the runner image ships is already on disk, so caching it
         # only spends cache budget.
-        if [ -d "$ghcup/ghc/$ghc" ]; then
+        if [ -d "$ghcup/ghc/$GHC" ]; then
           ghc_source=image
         else
           ghc_source=cache
-          paths+=("$ghcup/ghc/$ghc")
+          paths+=("$ghcup/ghc/$GHC")
         fi
         # Pull requests share only caches saved on main, so a key per
         # weekly image patch misses on every pull request until main runs
         # on that patch. Recording where GHC comes from makes an image
         # that drops it miss instead of restoring an entry without GHC.
-        key="ghcup-${ImageOS:?}-$RUNNER_ARCH-ghc-$ghc-$ghc_source-cabal-$CABAL"
+        key="ghcup-${ImageOS:?}-$RUNNER_ARCH-ghc-$GHC-$ghc_source-cabal-$CABAL"
         {
-          echo "ghc=$ghc"
           echo "key=$key"
           echo "paths<<EOF"
           printf '%s\n' "${paths[@]}"
@@ -63,19 +60,19 @@ runs:
       id: cache
       uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
-        path: ${{ steps.resolve.outputs.paths }}
-        key: ${{ steps.resolve.outputs.key }}
+        path: ${{ steps.plan.outputs.paths }}
+        key: ${{ steps.plan.outputs.key }}
 
     - name: Install toolchain
       id: setup
       uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2.12.1
       with:
-        ghc-version: ${{ steps.resolve.outputs.ghc }}
+        ghc-version: ${{ inputs.ghc-version }}
         cabal-version: ${{ inputs.cabal-version }}
 
     - name: Save toolchain
       if: steps.cache.outputs.cache-hit != 'true'
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
-        path: ${{ steps.resolve.outputs.paths }}
+        path: ${{ steps.plan.outputs.paths }}
         key: ${{ steps.cache.outputs.cache-primary-key }}
