@@ -36,9 +36,7 @@ runs:
         # installed, then fails to reinstall over the restored files.
         paths=("$ghcup/cabal/$CABAL" "$ghcup/db/cabal/$CABAL*")
         # A GHC the runner image ships is already on disk, so caching it
-        # only spends cache budget. The key records which kind of entry
-        # this is: an image that stops shipping the GHC must miss rather
-        # than restore an entry without it.
+        # only spends cache budget.
         if [ -d "$ghcup/ghc/$ghc" ]; then
           ghc_source=image
         else
@@ -48,10 +46,12 @@ runs:
         # ImageOS names the OS release. ImageVersion would miss every cell
         # for days after each weekly image rollout: pull requests share
         # only caches saved on main, and main may not run on the new image
-        # for a while.
+        # for a while. ghc_source makes an image that stops shipping the
+        # GHC miss rather than restore an entry without it.
+        key="ghcup-${ImageOS:?}-$RUNNER_ARCH-ghc-$ghc-$ghc_source-cabal-$CABAL"
         {
           echo "ghc=$ghc"
-          echo "key=ghcup-${ImageOS:?}-$RUNNER_ARCH-ghc-$ghc-$ghc_source-cabal-$CABAL"
+          echo "key=$key"
           echo "paths<<EOF"
           printf '%s\n' "${paths[@]}"
           echo "EOF"
