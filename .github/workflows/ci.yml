@@ -217,7 +217,7 @@ jobs:
           install_args: github:fourmolu/fourmolu github:ndmitchell/hlint
 
       - name: Run pre-commit
-        uses: tox-dev/action-pre-commit-uv@ae5b217f46f65d48b20a76b902d7950c745171af # v1.1.1
+        uses: tox-dev/action-pre-commit-uv@9316eafda3550b0365575c60b9f53725a81d0cfd # v1.1.2
 
   # vale exits zero on warnings, so reviewdog gates them; the pre-commit hook
   # gates errors tree-wide. reviewdog needs a PR diff, so only its step is
