@@ -1,8 +1,8 @@
 name: Set up GHC
 description: Install GHC and cabal-install with haskell-actions/setup, restoring both from the Actions cache.
 
-# The cache key is built before setup installs anything, so only an exact
-# release keys it on what setup installs.
+# The cache key is built before setup installs, so a key from a series
+# would restore the previous patch release after a new one ships.
 inputs:
   ghc-version:
     description: An exact GHC release such as 9.12.4.

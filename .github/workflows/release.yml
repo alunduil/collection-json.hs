@@ -75,8 +75,7 @@ jobs:
 
       # The ends of tested-with catch lower- and upper-bound solve
       # failures without paying for the full CI matrix on every release.
-      # Each end resolves to the release ci.yml's matrix pins for its
-      # series, so the smoke test installs what CI tested.
+      # Taking releases from ci.yml smoke-tests what CI tested.
       - name: Resolve smoke-test GHC releases
         id: smoke-ghc
         run: |
