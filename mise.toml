@@ -7,4 +7,4 @@ lockfile_platforms = ["linux-x64"]
 "github:fourmolu/fourmolu" = "0.21.0.0"
 "github:ndmitchell/hlint" = "3.10"
 lychee = "0.24.2"
-reviewdog = "0.21.2"
+reviewdog = "0.21.3"
