@@ -33,11 +33,12 @@ url = "https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.2/ly
 url_api = "https://api.github.com/repos/lycheeverse/lychee/releases/assets/409959156"
 
 [[tools.reviewdog]]
-version = "0.21.2"
+version = "0.21.3"
 backend = "aqua:reviewdog/reviewdog"
-specifiers = ["0.21.2"]
+specifiers = ["0.21.3"]
 
 [tools.reviewdog."platforms.linux-x64"]
-checksum = "sha256:30413aa3c7443e9c3c157fe5766cad40e3bb39a32e210ee69b710a8d5c4b8e51"
-url = "https://github.com/reviewdog/reviewdog/releases/download/v0.21.2/reviewdog_0.21.2_Linux_x86_64.tar.gz"
-url_api = "https://api.github.com/repos/reviewdog/reviewdog/releases/assets/573154534"
+checksum = "sha256:7029c2faf54e1237454cae8f1adf876c965b3d13d054f1a392206459091af4a1"
+checksum_source = "mise-versions"
+url = "https://github.com/reviewdog/reviewdog/releases/download/v0.21.3/reviewdog_0.21.3_Linux_x86_64.tar.gz"
+url_api = "https://api.github.com/repos/reviewdog/reviewdog/releases/assets/720779739"
