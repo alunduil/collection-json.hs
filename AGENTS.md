@@ -1,5 +1,11 @@
 # collection-json — agent guide
 
+Canonical rules for every coding agent. A tool that reads `AGENTS.md`
+needs no file of its own. A tool that reads only its own path gets a
+file that imports or points here and adds only rules false for every
+other agent; `CLAUDE.md` is that file for Claude Code. A new tool's file
+also joins the instruction-file section of `.vale.ini`.
+
 ## Project summary
 
 Haskell library: types, `FromJSON`/`ToJSON` instances, and
@@ -70,14 +76,14 @@ repeated on each.
 PVP-classified API surface makes out-of-scope edits expensive — an
 incidental export change forces a major bump. Keep issue work tight:
 
+- Before implementing an issue, read its comments, linked PRs, and
+  recent commits in the area. If any show the issue is stale or
+  already covered, raise that before writing code.
 - Before opening a PR, check the diff doesn't bleed into linked or
   sibling issues; revert incidental edits before review.
 - Blocked by unshipped prerequisites: propose deferral with a
   `blocked-by` edge, don't write premature code.
 - File unrelated problems found mid-task as their own issues.
-
-The `issue-work` skill encodes the full flow; this is the reminder to
-apply it.
 
 ## PVP obligations
 
