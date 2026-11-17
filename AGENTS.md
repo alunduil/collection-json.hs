@@ -134,5 +134,5 @@ This file holds the rules for every coding agent. A tool that reads
 `AGENTS.md` needs no file of its own. A tool that reads only its own
 path gets a file that imports or points here and adds only rules false
 for every other agent; `CLAUDE.md` does this for Claude Code. Add that
-file to the `AGENTS.md` glob in `.vale.ini`, or Vale lints its terse
+file to the AI-guidance section of `.vale.ini`, or Vale lints its terse
 register as prose.
