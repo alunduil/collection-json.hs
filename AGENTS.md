@@ -1,11 +1,5 @@
 # collection-json — agent guide
 
-Canonical rules for every coding agent. A tool that reads `AGENTS.md`
-needs no file of its own. A tool that reads only its own path gets a
-file that imports or points here and adds only rules false for every
-other agent; `CLAUDE.md` is that file for Claude Code. A new tool's file
-also joins the instruction-file section of `.vale.ini`.
-
 ## Project summary
 
 Haskell library: types, `FromJSON`/`ToJSON` instances, and
@@ -133,3 +127,12 @@ ship; don't sit on bumps to batch them.
   vocabulary lives in `.vale/styles/config`.
 - `~/.cabal/packages/`, `~/.cabal/store/` — Hackage index and global
   build cache outside the repo. Never `rm -rf` to "fix" a build.
+
+## Agent instruction files
+
+This file holds the rules for every coding agent. A tool that reads
+`AGENTS.md` needs no file of its own. A tool that reads only its own
+path gets a file that imports or points here and adds only rules false
+for every other agent; `CLAUDE.md` does this for Claude Code. Add that
+file to the `AGENTS.md` glob in `.vale.ini`, or Vale lints its terse
+register as prose.
