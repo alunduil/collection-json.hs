@@ -70,9 +70,9 @@ repeated on each.
 PVP-classified API surface makes out-of-scope edits expensive — an
 incidental export change forces a major bump. Keep issue work tight:
 
-- Before implementing an issue, read its comments, linked PRs, and
-  recent commits in the area. If any show the issue is stale or
-  already covered, raise that before writing code.
+- Before implementing an issue, read its comments, its linked PRs, and
+  recent commits to the files it touches. If any show the issue is
+  stale or already done, say so before writing code.
 - Before opening a PR, check the diff doesn't bleed into linked or
   sibling issues; revert incidental edits before review.
 - Blocked by unshipped prerequisites: propose deferral with a
@@ -128,11 +128,10 @@ ship; don't sit on bumps to batch them.
 - `~/.cabal/packages/`, `~/.cabal/store/` — Hackage index and global
   build cache outside the repo. Never `rm -rf` to "fix" a build.
 
-## Agent instruction files
+## Add an instruction file for another tool
 
-This file holds the rules for every coding agent. A tool that reads
-`AGENTS.md` needs no file of its own. A tool that reads only its own
-path gets a file that imports or points here and adds only rules false
-for every other agent; `CLAUDE.md` does this for Claude Code. Add that
-file to the AI-guidance section of `.vale.ini`, or Vale lints its terse
-register as prose.
+A tool that reads `AGENTS.md` needs no file of its own. A tool that
+reads only its own path, as Claude Code reads `CLAUDE.md`, gets a file
+that imports `AGENTS.md` or points to it. That file holds only rules
+that apply to that tool alone. List it in the AI-guidance section of
+`.vale.ini`, which exempts it from the prose rules.
