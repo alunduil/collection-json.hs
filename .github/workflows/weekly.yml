@@ -130,7 +130,7 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 10
     outputs:
-      issue: ${{ steps.compose.outputs.issue }}
+      report: ${{ steps.report.outputs.report }}
 
     steps:
       - name: Checkout
@@ -159,31 +159,17 @@ jobs:
         run: |
           set -euo pipefail
 
-          mkdir -p lychee
           lychee --config lychee.toml --no-progress --mode task --format markdown './**/*.md' \
-            | tee lychee/out.md "$GITHUB_STEP_SUMMARY"
+            | tee lychee.md "$GITHUB_STEP_SUMMARY"
 
-      # create-an-issue reads the title and labels from front matter, which
-      # lychee's report has no way to carry.
-      - name: Compose broken-links issue
-        id: compose
+      - name: Export broken-links report
+        id: report
         if: steps.lychee.outcome == 'failure'
         run: |
-          set -euo pipefail
-
-          cat > broken-links-issue.md <<'MD'
-          ---
-          title: Broken links detected
-          labels:
-            - documentation
-          ---
-          MD
-          cat lychee/out.md >> broken-links-issue.md
-
           delimiter=$(openssl rand -hex 16)
           {
-            echo "issue<<$delimiter"
-            cat broken-links-issue.md
+            echo "report<<$delimiter"
+            cat lychee.md
             echo "$delimiter"
           } >> "$GITHUB_OUTPUT"
 
@@ -191,7 +177,7 @@ jobs:
     name: File broken-links issue
     needs: links
     if: >-
-      needs.links.outputs.issue != ''
+      needs.links.outputs.report != ''
       && github.event_name != 'pull_request'
     runs-on: ubuntu-26.04
     timeout-minutes: 10
@@ -201,8 +187,16 @@ jobs:
     steps:
       - name: Write broken-links issue
         env:
-          ISSUE: ${{ needs.links.outputs.issue }}
-        run: printf '%s\n' "$ISSUE" > broken-links-issue.md
+          REPORT: ${{ needs.links.outputs.report }}
+        run: |
+          {
+            echo "---"
+            echo "title: Broken links detected"
+            echo "labels:"
+            echo "  - documentation"
+            echo "---"
+            printf '%s\n' "$REPORT"
+          } > broken-links-issue.md
 
       - name: File or refresh broken-links issue
         uses: JasonEtco/create-an-issue@1b14a70e4d8dc185e5cc76d3bec9eab20257b2c5 # v2.9.2
