@@ -22,8 +22,6 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 10
     env:
-      # renovate: datasource=github-releases depName=Kleidukos/get-tested extractVersion=^v(?<version>.+)$
-      GET_TESTED_VERSION: "0.1.10.0"
       # renovate: datasource=github-runners depName=ubuntu
       UBUNTU_VERSION: "26.04"
       # renovate: datasource=github-runners depName=macos
@@ -33,21 +31,20 @@ jobs:
       newest: ${{ fromJSON(steps.newest.outputs.matrix)[0] }}
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
       - name: Build the matrix from tested-with
         id: matrix
-        uses: Kleidukos/get-tested@66e7d3233e529aee4a22ff5096288faa26f3fc28
+        uses: ./.github/actions/tested-ghc
         with:
-          cabal-file: collection-json.cabal
-          version: ${{ env.GET_TESTED_VERSION }}
           ubuntu-version: ${{ env.UBUNTU_VERSION }}
           macos-version: ${{ env.MACOS_VERSION }}
 
       - name: Find the newest tested GHC
         id: newest
-        uses: Kleidukos/get-tested@66e7d3233e529aee4a22ff5096288faa26f3fc28
+        uses: ./.github/actions/tested-ghc
         with:
-          cabal-file: collection-json.cabal
-          version: ${{ env.GET_TESTED_VERSION }}
           newest: true
           versions-only: true
 

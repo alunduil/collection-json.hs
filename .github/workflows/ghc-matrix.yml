@@ -23,21 +23,19 @@ jobs:
     name: Check GHC matrix drift
     runs-on: ubuntu-26.04
     timeout-minutes: 10
-    env:
-      # renovate: datasource=github-releases depName=Kleidukos/get-tested extractVersion=^v(?<version>.+)$
-      GET_TESTED_VERSION: "0.1.10.0"
     outputs:
       drift: ${{ steps.check.outputs.drift }}
       expected: ${{ steps.check.outputs.expected }}
       tested: ${{ steps.check.outputs.tested }}
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
       - name: Read tested GHC versions
         id: tested-with
-        uses: Kleidukos/get-tested@66e7d3233e529aee4a22ff5096288faa26f3fc28
+        uses: ./.github/actions/tested-ghc
         with:
-          cabal-file: collection-json.cabal
-          version: ${{ env.GET_TESTED_VERSION }}
           versions-only: true
 
       # Policy (#141): test every GHC major series upstream hasn't end-of-
