@@ -12,8 +12,6 @@ permissions:
 
 env:
   CANDIDATE_ARTIFACT: hackage-candidate
-  # renovate: datasource=github-tags depName=ghc/ghc extractVersion=^ghc-(?<version>\d+\.\d+\.\d+)-release$
-  GHC_VERSION: "9.14.1"
   # renovate: datasource=github-tags depName=haskell/cabal versioning=loose extractVersion=^cabal-install-v(?<version>\d+\.\d+\.\d+\.\d+)$
   CABAL_VERSION: "3.18.2.0"
 
@@ -25,6 +23,7 @@ jobs:
       version: ${{ steps.verify.outputs.version }}
       candidate-url: ${{ steps.verify.outputs.candidate-url }}
       ghc-versions: ${{ steps.smoke-ghc.outputs.ghc-versions }}
+      ghc-newest: ${{ fromJSON(steps.newest.outputs.matrix)[0] }}
     steps:
       - name: Require a tag ref
         if: github.ref_type != 'tag'
@@ -73,22 +72,29 @@ jobs:
             echo "candidate-url=https://hackage.haskell.org/package/collection-json-$cabal_version/candidate/collection-json-$cabal_version.tar.gz"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Find the oldest tested GHC
+        id: oldest
+        uses: ./.github/actions/tested-ghc
+        with:
+          oldest: true
+          versions-only: true
+
+      - name: Find the newest tested GHC
+        id: newest
+        uses: ./.github/actions/tested-ghc
+        with:
+          newest: true
+          versions-only: true
+
       # The ends of tested-with catch lower- and upper-bound solve
       # failures without paying for the full CI matrix on every release.
-      # Taking releases from ci.yml smoke-tests what CI tested.
       - name: Resolve smoke-test GHC releases
         id: smoke-ghc
+        env:
+          OLDEST: ${{ steps.oldest.outputs.matrix }}
+          NEWEST: ${{ steps.newest.outputs.matrix }}
         run: |
-          set -euo pipefail
-          ends=$(.github/scripts/tested-with-ghc.sh < collection-json.cabal \
-            | sed -n '1p;$p' | uniq)
-          pins=$(yq -o=json '
-            [.jobs.build.strategy.matrix.include[] | select(.GHC_VERSION)
-              | {"key": .ghc, "value": .GHC_VERSION}] | from_entries
-          ' .github/workflows/ci.yml)
-          ghc_versions=$(jq -Rnc --argjson pins "$pins" '[inputs
-            | $pins[.] // error("ci.yml pins no GHC release for series \(.)")]' \
-            <<< "$ends")
+          ghc_versions=$(jq -nc --argjson o "$OLDEST" --argjson n "$NEWEST" '$o + $n | unique')
           echo "ghc-versions=$ghc_versions" >> "$GITHUB_OUTPUT"
 
   candidate:
@@ -102,7 +108,7 @@ jobs:
 
       - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
         with:
-          ghc-version: ${{ env.GHC_VERSION }}
+          ghc-version: ${{ needs.metadata.outputs.ghc-newest }}
           cabal-version: ${{ env.CABAL_VERSION }}
 
       - run: cabal update
@@ -213,7 +219,7 @@ jobs:
 
       - uses: haskell-actions/setup@0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d # v2
         with:
-          ghc-version: ${{ env.GHC_VERSION }}
+          ghc-version: ${{ needs.metadata.outputs.ghc-newest }}
           cabal-version: ${{ env.CABAL_VERSION }}
 
       - name: Publish sdist

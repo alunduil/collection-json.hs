@@ -26,18 +26,25 @@ jobs:
     outputs:
       drift: ${{ steps.check.outputs.drift }}
       expected: ${{ steps.check.outputs.expected }}
-      matrix: ${{ steps.check.outputs.matrix }}
       tested: ${{ steps.check.outputs.tested }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Read tested GHC versions
+        id: tested-with
+        uses: ./.github/actions/tested-ghc
+        with:
+          versions-only: true
+
       # Policy (#141): test every GHC major series upstream hasn't end-of-
       # lifed (endoflife.date `eol: false`), so the matrix spans the full
       # still-alive range rather than a hardcoded count.
       - name: Detect drift
         id: check
+        env:
+          TESTED_VERSIONS: ${{ steps.tested-with.outputs.matrix }}
         run: |
           set -euo pipefail
 
@@ -52,27 +59,16 @@ jobs:
             exit 1
           fi
 
-          matrix=$(yq '.jobs.build.strategy.matrix.ghc[]' \
-            .github/workflows/ci.yml | sort -V)
-
-          tested=$(.github/scripts/tested-with-ghc.sh < collection-json.cabal)
-
-          # An empty matrix means a parse failure or a moved field; abort
-          # rather than file a spurious drift issue.
-          if [ -z "$matrix" ]; then
-            echo "could not parse the CI matrix; aborting" >&2
-            exit 1
-          fi
+          tested=$(jq -r '.[] | split(".")[:2] | join(".")' \
+            <<< "$TESTED_VERSIONS" | sort -uV)
 
           drift=false
-          [ "$expected" = "$matrix" ] || drift=true
           [ "$expected" = "$tested" ] || drift=true
           echo "drift=$drift" >> "$GITHUB_OUTPUT"
 
           join() { printf '%s' "$1" | paste -sd, -; }
           {
             echo "expected=$(join "$expected")"
-            echo "matrix=$(join "$matrix")"
             echo "tested=$(join "$tested")"
           } >> "$GITHUB_OUTPUT"
 
@@ -93,7 +89,6 @@ jobs:
       - name: Write drift issue
         env:
           EXPECTED: ${{ needs.drift.outputs.expected }}
-          MATRIX: ${{ needs.drift.outputs.matrix }}
           TESTED: ${{ needs.drift.outputs.tested }}
         run: |
           {
@@ -102,16 +97,15 @@ jobs:
             echo "labels:"
             echo "  - infrastructure"
             echo "---"
-            echo "The CI matrix and \`tested-with\` should track every GHC major"
-            echo "series upstream hasn't end-of-lifed (policy: #141)."
+            echo "\`tested-with\` should list every GHC major series that"
+            echo "upstream still supports (policy: #141)."
             echo
             echo "| Source | Series |"
             echo "| --- | --- |"
             echo "| Expected (endoflife.date, not end-of-life) | $EXPECTED |"
-            echo "| CI matrix (\`.github/workflows/ci.yml\`) | $MATRIX |"
             echo "| \`tested-with\` (\`collection-json.cabal\`) | $TESTED |"
             echo
-            echo "Update the matrix and \`tested-with\`, then bump per PVP"
+            echo "Update \`tested-with\`, then bump per PVP"
             echo "(CI/packaging-only is a patch)."
           } > ghc-drift-issue.md
 

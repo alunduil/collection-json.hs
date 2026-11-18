@@ -17,45 +17,50 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
+  ghc-versions:
+    name: Read tested GHC versions
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    env:
+      # renovate: datasource=github-runners depName=ubuntu
+      UBUNTU_VERSION: "26.04"
+      # renovate: datasource=github-runners depName=macos
+      MACOS_VERSION: "26"
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      ghc-newest: ${{ fromJSON(steps.newest.outputs.matrix)[0] }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build the matrix from tested-with
+        id: matrix
+        uses: ./.github/actions/tested-ghc
+        with:
+          ubuntu-version: ${{ env.UBUNTU_VERSION }}
+          macos-version: ${{ env.MACOS_VERSION }}
+
+      - name: Find the newest tested GHC
+        id: newest
+        uses: ./.github/actions/tested-ghc
+        with:
+          newest: true
+          versions-only: true
+
   build:
     name: GHC ${{ matrix.ghc }} / ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}-${{ matrix.OS_VERSION }}
+    needs: ghc-versions
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+    env:
+      # Metadata and docs don't vary by GHC or OS, and haddock is slow:
+      # it rebuilds every dependency with documentation.
+      PACKAGE_CHECKS: ${{ matrix.newest && startsWith(matrix.os, 'ubuntu-') }}
 
     strategy:
       fail-fast: false
-      matrix:
-        os: [ubuntu, macos]
-        ghc: ["9.6", "9.8", "9.10", "9.12", "9.14"]
-        include:
-          - os: ubuntu
-            # renovate: datasource=github-runners depName=ubuntu
-            OS_VERSION: "26.04"
-          - os: macos
-            # renovate: datasource=github-runners depName=macos
-            OS_VERSION: "26"
-          # Without a per-series extractVersion, Renovate moves every cell
-          # to the newest series.
-          - ghc: "9.6"
-            # renovate: datasource=github-tags depName=ghc/ghc extractVersion=^ghc-(?<version>9\.6\.\d+)-release$
-            GHC_VERSION: "9.6.7"
-          - ghc: "9.8"
-            # renovate: datasource=github-tags depName=ghc/ghc extractVersion=^ghc-(?<version>9\.8\.\d+)-release$
-            GHC_VERSION: "9.8.4"
-          - ghc: "9.10"
-            # renovate: datasource=github-tags depName=ghc/ghc extractVersion=^ghc-(?<version>9\.10\.\d+)-release$
-            GHC_VERSION: "9.10.3"
-          - ghc: "9.12"
-            # renovate: datasource=github-tags depName=ghc/ghc extractVersion=^ghc-(?<version>9\.12\.\d+)-release$
-            GHC_VERSION: "9.12.4"
-          - ghc: "9.14"
-            # renovate: datasource=github-tags depName=ghc/ghc extractVersion=^ghc-(?<version>9\.14\.\d+)-release$
-            GHC_VERSION: "9.14.1"
-          # Metadata and docs don't vary by GHC or OS, and haddock is slow:
-          # it rebuilds every dependency with documentation.
-          - os: ubuntu
-            ghc: "9.14"
-            package-checks: true
+      matrix: ${{ fromJSON(needs.ghc-versions.outputs.matrix) }}
 
     steps:
       - name: Checkout
@@ -65,7 +70,7 @@ jobs:
         id: setup
         uses: ./.github/actions/setup-ghc
         with:
-          ghc-version: ${{ matrix.GHC_VERSION }}
+          ghc-version: ${{ matrix.ghc }}
           cabal-version: ${{ env.CABAL_VERSION }}
 
       - name: Update Hackage index
@@ -131,27 +136,27 @@ jobs:
         run: cabal test all --test-show-details=direct
 
       - name: Check package metadata
-        if: matrix.package-checks
+        if: env.PACKAGE_CHECKS == 'true'
         working-directory: sdist-build
         run: cabal check
 
       - name: Haddock
-        if: matrix.package-checks
+        if: env.PACKAGE_CHECKS == 'true'
         working-directory: sdist-build
         run: cabal haddock all
 
       - name: Derive PVP bump
-        if: matrix.package-checks
+        if: env.PACKAGE_CHECKS == 'true'
         working-directory: sdist-build
         run: ../.github/scripts/pvp-bump.sh
 
   coverage:
     name: Coverage
+    needs: ghc-versions
     runs-on: ubuntu-26.04
     timeout-minutes: 30
     env:
-      # renovate: datasource=github-tags depName=ghc/ghc extractVersion=^ghc-(?<version>\d+\.\d+\.\d+)-release$
-      GHC_VERSION: "9.14.1"
+      GHC_VERSION: ${{ needs.ghc-versions.outputs.ghc-newest }}
 
     steps:
       - name: Checkout
@@ -329,7 +334,7 @@ jobs:
     name: Check CI results
     runs-on: ubuntu-26.04
     timeout-minutes: 5
-    needs: [build, coverage, hooks, prose, pull-request-title]
+    needs: [ghc-versions, build, coverage, hooks, prose, pull-request-title]
     if: always()
 
     steps:

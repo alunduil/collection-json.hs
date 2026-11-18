@@ -1,0 +1,47 @@
+name: Read tested GHC versions
+description: Read the GHC versions in collection-json.cabal's tested-with through get-tested.
+
+inputs:
+  ubuntu-version:
+    description: Ubuntu runner versions to pair with each GHC in the matrix, comma separated.
+    required: false
+    default: ""
+  macos-version:
+    description: macOS runner versions to pair with each GHC in the matrix, comma separated.
+    required: false
+    default: ""
+  oldest:
+    description: Keep only the oldest GHC.
+    required: false
+    default: "false"
+  newest:
+    description: Keep only the newest GHC.
+    required: false
+    default: "false"
+  versions-only:
+    description: Return a JSON array of GHC versions instead of a matrix.
+    required: false
+    default: "false"
+
+outputs:
+  matrix:
+    description: A GitHub Actions matrix. Under versions-only, a JSON array of GHC versions.
+    value: ${{ steps.get-tested.outputs.matrix }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run get-tested
+      id: get-tested
+      uses: Kleidukos/get-tested@66e7d3233e529aee4a22ff5096288faa26f3fc28
+      env:
+        # renovate: datasource=github-releases depName=Kleidukos/get-tested extractVersion=^v(?<version>.+)$
+        GET_TESTED_VERSION: "0.1.10.0"
+      with:
+        cabal-file: collection-json.cabal
+        version: ${{ env.GET_TESTED_VERSION }}
+        ubuntu-version: ${{ inputs.ubuntu-version }}
+        macos-version: ${{ inputs.macos-version }}
+        oldest: ${{ inputs.oldest }}
+        newest: ${{ inputs.newest }}
+        versions-only: ${{ inputs.versions-only }}

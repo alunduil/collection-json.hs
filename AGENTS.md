@@ -15,8 +15,9 @@ Single-package project (`cabal.project`: `packages: .`).
 - **Build / test**: `cabal update` (first run or after a gap), then
   `cabal build`, `cabal test` (tasty). No Nix or direnv — plain
   `cabal`. Wire a new test module into both `test/Main.hs` and
-  `other-modules`. Supported GHC: `ci.yml`'s matrix, mirrored by the
-  cabal file's `tested-with:` — update both together.
+  `other-modules`. Supported GHC: the exact versions in the cabal
+  file's `tested-with:`. CI and release read them from there, so a GHC
+  change edits only `tested-with:`.
 - **Lint / format**: `pre-commit` (`.pre-commit-config.yaml`) runs
   fourmolu (`fourmolu.yaml`), hlint (`hlint.yaml`), markdownlint
   (`.markdownlint.jsonc`), Vale (`.vale.ini`; styles vendored under
@@ -30,7 +31,7 @@ Single-package project (`cabal.project`: `packages: .`).
   warnings on PR-added lines via reviewdog; `hooks` job → pre-commit;
   a new job joins `Check CI results`' `needs:`), `links.yml` (lychee,
   `lychee.toml`), `ghc-matrix.yml` (weekly: files/refreshes a tracking
-  issue when the matrix drifts from the GHC series endoflife.date still
+  issue when `tested-with` drifts from the GHC series endoflife.date still
   lists as not end-of-life), `daily.yml` (closes quiet pull requests;
   Renovate's `dependencies` label exempts its pull requests).
 - **Changelog**: `CHANGELOG.md` is git-cliff output (`cliff.toml`);
