@@ -16,8 +16,8 @@ Single-package project (`cabal.project`: `packages: .`).
   `cabal build`, `cabal test` (tasty). No Nix or direnv — plain
   `cabal`. Wire a new test module into both `test/Main.hs` and
   `other-modules`. Supported GHC: the exact versions in the cabal
-  file's `tested-with:`. CI and release read them through get-tested,
-  so no workflow names a GHC version.
+  file's `tested-with:`. CI and release read them from there, so a GHC
+  change edits only `tested-with:`.
 - **Lint / format**: `pre-commit` (`.pre-commit-config.yaml`) runs
   fourmolu (`fourmolu.yaml`), hlint (`hlint.yaml`), markdownlint
   (`.markdownlint.jsonc`), Vale (`.vale.ini`; styles vendored under

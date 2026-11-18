@@ -97,8 +97,8 @@ jobs:
             echo "labels:"
             echo "  - infrastructure"
             echo "---"
-            echo "\`tested-with\`, which sets the CI matrix, should track every"
-            echo "GHC major series upstream hasn't end-of-lifed (policy: #141)."
+            echo "\`tested-with\` should list every GHC major series that"
+            echo "upstream still supports (policy: #141)."
             echo
             echo "| Source | Series |"
             echo "| --- | --- |"
