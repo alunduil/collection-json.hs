@@ -72,8 +72,6 @@ jobs:
             echo "candidate-url=https://hackage.haskell.org/package/collection-json-$cabal_version/candidate/collection-json-$cabal_version.tar.gz"
           } >> "$GITHUB_OUTPUT"
 
-      # The ends of tested-with catch lower- and upper-bound solve
-      # failures without paying for the full CI matrix on every release.
       - name: Find the oldest tested GHC
         id: oldest
         uses: ./.github/actions/tested-ghc
@@ -88,6 +86,8 @@ jobs:
           newest: true
           versions-only: true
 
+      # The ends of tested-with catch lower- and upper-bound solve
+      # failures without paying for the full CI matrix on every release.
       - name: Resolve smoke-test GHC releases
         id: smoke-ghc
         env:
