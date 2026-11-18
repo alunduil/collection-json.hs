@@ -28,7 +28,7 @@ jobs:
       MACOS_VERSION: "26"
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
-      newest: ${{ fromJSON(steps.newest.outputs.matrix)[0] }}
+      ghc-newest: ${{ fromJSON(steps.newest.outputs.matrix)[0] }}
 
     steps:
       - name: Checkout
@@ -156,7 +156,7 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 30
     env:
-      GHC_VERSION: ${{ needs.ghc-versions.outputs.newest }}
+      GHC_VERSION: ${{ needs.ghc-versions.outputs.ghc-newest }}
 
     steps:
       - name: Checkout
