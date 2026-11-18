@@ -53,7 +53,7 @@ repos:
       - id: renovate-config-validator
         args: [--strict, --no-global]
 
-  # fourmolu and hlint are pinned in `mise.toml`.
+  # fourmolu, hlint, and lychee are pinned in `mise.toml`.
   - repo: local
     hooks:
       - id: check-changelog
@@ -71,3 +71,11 @@ repos:
         entry: hlint
         language: system
         types: [haskell]
+      # --offline gates on the relative links, which break with the diff that
+      # renames their target. External URLs rot on their own schedule, so the
+      # weekly job owns those.
+      - id: lychee
+        name: lychee
+        entry: lychee --config lychee.toml --offline
+        language: system
+        types: [markdown]
