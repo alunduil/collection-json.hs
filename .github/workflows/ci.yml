@@ -233,10 +233,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Set up Fourmolu and HLint
+      - name: Set up Fourmolu, HLint, and lychee
         uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5.2.9
         with:
-          install_args: github:fourmolu/fourmolu github:ndmitchell/hlint
+          install_args: github:fourmolu/fourmolu github:ndmitchell/hlint lychee
 
       - name: Run pre-commit
         uses: tox-dev/action-pre-commit-uv@9316eafda3550b0365575c60b9f53725a81d0cfd # v1.1.2

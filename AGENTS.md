@@ -21,19 +21,20 @@ Single-package project (`cabal.project`: `packages: .`).
 - **Lint / format**: `pre-commit` (`.pre-commit-config.yaml`) runs
   fourmolu (`fourmolu.yaml`), hlint (`hlint.yaml`), markdownlint
   (`.markdownlint.jsonc`), Vale (`.vale.ini`; styles vendored under
-  `.vale/styles`, no `vale sync`), actionlint, shellcheck, and
+  `.vale/styles`, no `vale sync`), actionlint, shellcheck, lychee
+  offline (relative links only; `lychee.toml`), and
   `.github/scripts/check-changelog.py` (Keep a Changelog structure with
-  PVP versions). fourmolu/hlint run from PATH; `mise install` provides
-  them at the `mise.toml` pins.
+  PVP versions). fourmolu/hlint/lychee run from PATH; `mise install`
+  provides them at the `mise.toml` pins.
 - **CI**: `ci.yml` (GHC matrix above × ubuntu/macos, builds from the
   sdist; its package-checks leg runs `.github/scripts/pvp-bump.sh`;
   `coverage` job → Codecov, `codecov.yml`; `prose` job → Vale
   warnings on PR-added lines via reviewdog; `hooks` job → pre-commit;
-  a new job joins `Check CI results`' `needs:`), `links.yml` (lychee,
-  `lychee.toml`), `ghc-matrix.yml` (weekly: files/refreshes a tracking
-  issue when `tested-with` drifts from the GHC series endoflife.date still
-  lists as not end-of-life), `daily.yml` (closes quiet pull requests;
-  Renovate's `dependencies` label exempts its pull requests).
+  a new job joins `Check CI results`' `needs:`), `weekly.yml` (files or
+  refreshes a tracking issue when `tested-with` drifts from
+  endoflife.date's live GHC series or lychee finds a dead link),
+  `daily.yml` (closes quiet pull requests; Renovate's `dependencies`
+  label exempts its pull requests).
 - **Changelog**: `CHANGELOG.md` is git-cliff output (`cliff.toml`);
   regenerate with `uvx git-cliff@2.14.2 -o CHANGELOG.md`. Entries come
   from squash-commit subjects. To change one, write the replacement

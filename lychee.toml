@@ -1,5 +1,5 @@
-# Configuration for the lychee link checker, run in CI by
-# .github/workflows/links.yml. See https://lychee.cli.rs.
+# Configuration for the lychee link checker, which the pre-commit hook and
+# .github/workflows/weekly.yml run. See https://lychee.cli.rs.
 
 # Cache results between runs so unchanged links aren't re-fetched; the
 # workflow persists .lycheecache across runs.

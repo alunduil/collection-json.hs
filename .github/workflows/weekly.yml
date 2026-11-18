@@ -1,11 +1,15 @@
-name: GHC matrix
+name: Weekly
+
+# These checks watch state that changes without a commit: GHC end-of-life
+# dates and external URLs. Nobody waits on a scheduled run, so it reports
+# through a tracking issue instead of failing.
 
 on:
   workflow_dispatch:
   schedule:
     - cron: "0 18 * * 5"
       timezone: "Europe/London"
-  # Pull requests run drift detection so changes here are tested before merge.
+  # Pull requests run the checks so changes here are tested before merge.
   # No paths filter: a required check must report on every pull request.
   pull_request:
     branches: [main]
@@ -72,7 +76,8 @@ jobs:
             echo "tested=$(join "$tested")"
           } >> "$GITHUB_OUTPUT"
 
-  # A separate job keeps issues: write out of the detection pull requests run.
+  # Pull requests never reach the filing jobs, so only those jobs hold
+  # issues: write.
   file-drift-issue:
     name: File GHC matrix drift issue
     needs: drift
@@ -118,4 +123,85 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           filename: ghc-drift-issue.md
+          update_existing: true
+
+  links:
+    name: Check links
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    outputs:
+      report: ${{ steps.report.outputs.report }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Restore lychee cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .lycheecache
+          key: lychee-${{ github.sha }}
+          restore-keys: lychee-
+
+      - name: Set up lychee
+        uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5.2.9
+        with:
+          install_args: lychee
+
+      # Only a pull request fails on a dead link; other runs go on to file an
+      # issue. The token lifts GitHub's anonymous rate limit on github.com
+      # links.
+      - name: Check links
+        id: lychee
+        continue-on-error: ${{ github.event_name != 'pull_request' }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          lychee --config lychee.toml --no-progress --mode task --format markdown './**/*.md' \
+            | tee lychee.md "$GITHUB_STEP_SUMMARY"
+
+      - name: Export broken-links report
+        id: report
+        if: steps.lychee.outcome == 'failure'
+        run: |
+          delimiter=$(openssl rand -hex 16)
+          {
+            echo "report<<$delimiter"
+            cat lychee.md
+            echo "$delimiter"
+          } >> "$GITHUB_OUTPUT"
+
+  file-links-issue:
+    name: File broken-links issue
+    needs: links
+    if: >-
+      needs.links.outputs.report != ''
+      && github.event_name != 'pull_request'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    permissions:
+      issues: write
+
+    steps:
+      - name: Write broken-links issue
+        env:
+          REPORT: ${{ needs.links.outputs.report }}
+        run: |
+          {
+            echo "---"
+            echo "title: Broken links detected"
+            echo "labels:"
+            echo "  - documentation"
+            echo "---"
+            printf '%s\n' "$REPORT"
+          } > broken-links-issue.md
+
+      - name: File or refresh broken-links issue
+        uses: JasonEtco/create-an-issue@1b14a70e4d8dc185e5cc76d3bec9eab20257b2c5 # v2.9.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          filename: broken-links-issue.md
           update_existing: true
