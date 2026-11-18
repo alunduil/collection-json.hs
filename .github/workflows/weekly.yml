@@ -1,8 +1,8 @@
 name: Weekly
 
-# These sensors watch state that changes without a commit. Nobody is waiting
-# on a scheduled run, so each reports through a tracking issue instead of
-# failing, refreshing the standing one rather than filing a new one weekly.
+# These checks watch state that changes without a commit: GHC end-of-life
+# dates and external URLs. Nobody waits on a scheduled run, so it reports
+# through a tracking issue instead of failing.
 
 on:
   workflow_dispatch:
@@ -76,7 +76,7 @@ jobs:
             echo "tested=$(join "$tested")"
           } >> "$GITHUB_OUTPUT"
 
-  # Filing jobs are separate so the checks, which pull requests run, never hold
+  # Pull requests never reach the filing jobs, so only those jobs hold
   # issues: write.
   file-drift-issue:
     name: File GHC matrix drift issue

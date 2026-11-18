@@ -71,9 +71,9 @@ repos:
         entry: hlint
         language: system
         types: [haskell]
-      # --offline gates on the relative links, which break with the diff that
-      # renames their target. External URLs rot on their own schedule, so the
-      # weekly job owns those.
+      # Relative links break in the commit that moves their target, so this
+      # hook checks them offline. External URLs break without a commit, so the
+      # weekly workflow checks those.
       - id: lychee
         name: lychee
         entry: lychee --config lychee.toml --offline

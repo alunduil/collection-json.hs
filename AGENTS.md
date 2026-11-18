@@ -30,11 +30,11 @@ Single-package project (`cabal.project`: `packages: .`).
   sdist; its package-checks leg runs `.github/scripts/pvp-bump.sh`;
   `coverage` job → Codecov, `codecov.yml`; `prose` job → Vale
   warnings on PR-added lines via reviewdog; `hooks` job → pre-commit;
-  a new job joins `Check CI results`' `needs:`), `weekly.yml` (pull
-  requests run its checks; scheduled runs file/refresh a tracking issue
-  when `tested-with` drifts from the GHC series endoflife.date still
-  lists as not end-of-life, or when lychee finds a dead link), `daily.yml` (closes quiet pull requests;
-  Renovate's `dependencies` label exempts its pull requests).
+  a new job joins `Check CI results`' `needs:`), `weekly.yml` (files or
+  refreshes a tracking issue when `tested-with` drifts from
+  endoflife.date's live GHC series or lychee finds a dead link),
+  `daily.yml` (closes quiet pull requests; Renovate's `dependencies`
+  label exempts its pull requests).
 - **Changelog**: `CHANGELOG.md` is git-cliff output (`cliff.toml`);
   regenerate with `uvx git-cliff@2.14.2 -o CHANGELOG.md`. Entries come
   from squash-commit subjects. To change one, write the replacement
