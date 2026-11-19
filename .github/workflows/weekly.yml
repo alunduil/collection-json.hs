@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   drift:
-    name: Check GHC matrix drift
+    name: Check GHC series drift
     runs-on: ubuntu-26.04
     timeout-minutes: 10
     outputs:
@@ -42,9 +42,7 @@ jobs:
         with:
           versions-only: true
 
-      # Policy (#141): test every GHC major series upstream hasn't end-of-
-      # lifed (endoflife.date `eol: false`), so the matrix spans the full
-      # still-alive range rather than a hardcoded count.
+      # tested-with lists every GHC major series upstream still supports (#141).
       - name: Detect drift
         id: check
         env:
@@ -56,8 +54,8 @@ jobs:
             | jq -r 'map(select(.eol == false)) | .[].cycle' \
             | sort -V)
 
-          # Guard against an upstream schema change or empty response: an
-          # empty set would spuriously flag every series as drift.
+          # An upstream schema change yields an empty set, which would flag
+          # every series as drift.
           if [ -z "$expected" ]; then
             echo "endoflife.date returned no live GHC series; aborting" >&2
             exit 1
@@ -79,7 +77,7 @@ jobs:
   # Pull requests never reach the filing jobs, so only those jobs hold
   # issues: write.
   file-drift-issue:
-    name: File GHC matrix drift issue
+    name: File GHC series drift issue
     needs: drift
     if: >-
       needs.drift.outputs.drift == 'true'
@@ -90,7 +88,6 @@ jobs:
       issues: write
 
     steps:
-      # create-an-issue reads the title and labels from front matter.
       - name: Write drift issue
         env:
           EXPECTED: ${{ needs.drift.outputs.expected }}
@@ -98,7 +95,7 @@ jobs:
         run: |
           {
             echo "---"
-            echo "title: GHC version matrix out of date"
+            echo "title: GHC series in tested-with out of date"
             echo "labels:"
             echo "  - infrastructure"
             echo "---"
@@ -114,9 +111,8 @@ jobs:
             echo "(CI/packaging-only is a patch)."
           } > ghc-drift-issue.md
 
-      # update_existing overwrites the open tracking issue with the same
-      # title rather than filing a duplicate, and files a fresh one only
-      # when none is open.
+      # update_existing matches the open issue by title, so a retitle
+      # orphans an open drift issue.
       - name: File or refresh drift issue
         uses: JasonEtco/create-an-issue@1b14a70e4d8dc185e5cc76d3bec9eab20257b2c5 # v2.9.2
         env:
