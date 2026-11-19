@@ -43,7 +43,7 @@ jobs:
           versions-only: true
 
       # Policy (#141): test every GHC major series upstream hasn't end-of-
-      # lifed (endoflife.date `eol: false`), so the matrix spans the full
+      # lifed (endoflife.date `eol: false`), so tested-with spans the full
       # still-alive range rather than a hardcoded count.
       - name: Detect drift
         id: check
@@ -79,7 +79,7 @@ jobs:
   # Pull requests never reach the filing jobs, so only those jobs hold
   # issues: write.
   file-drift-issue:
-    name: File GHC matrix drift issue
+    name: File GHC series drift issue
     needs: drift
     if: >-
       needs.drift.outputs.drift == 'true'
@@ -98,7 +98,7 @@ jobs:
         run: |
           {
             echo "---"
-            echo "title: GHC version matrix out of date"
+            echo "title: GHC series in tested-with out of date"
             echo "labels:"
             echo "  - infrastructure"
             echo "---"
