@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   drift:
-    name: Check GHC matrix drift
+    name: Check GHC series drift
     runs-on: ubuntu-26.04
     timeout-minutes: 10
     outputs:
