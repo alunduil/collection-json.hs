@@ -159,10 +159,6 @@ jobs:
       GHC_VERSION: ${{ needs.ghc-versions.outputs.ghc-newest }}
 
     steps:
-      - name: Fail Renovate branches for the automerge gate test
-        if: startsWith(github.head_ref, 'renovate/')
-        run: exit 1
-
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
