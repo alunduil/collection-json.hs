@@ -3,6 +3,7 @@
   "extends": [
     "github>alunduil/renovate-config",
     "github>alunduil/renovate-config:automerge-minor",
+    "github>alunduil/renovate-config:hold-release-tool(ghc/ghc)",
     "github>alunduil/renovate-config:haskell",
     ":semanticCommits",
     ":semanticCommitScopeDisabled"
