@@ -30,7 +30,8 @@ Single-package project (`cabal.project`: `packages: .`).
   sdist; its package-checks leg runs `.github/scripts/pvp-bump.sh`;
   `coverage` job → Codecov, `codecov.yml`; `prose` job → Vale
   warnings on PR-added lines via reviewdog; `hooks` job → pre-commit;
-  a new job joins `Check CI results`' `needs:` unless it can skip),
+  a new job joins `Check CI results`' `needs:`, and a job that can be
+  skipped goes in the ruleset instead),
   `review.yml` (re-runs the Renovate commit check on the owner's
   approval), `weekly.yml` (files or
   refreshes a tracking issue when `tested-with` drifts from

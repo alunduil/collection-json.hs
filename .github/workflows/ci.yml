@@ -327,9 +327,8 @@ jobs:
             security
             chore
 
-  # Required on its own, not through `results`: it skips outside Renovate
-  # branches, and `results` fails on a skipped job. review.yml re-runs it when
-  # the owner approves.
+  # This job skips outside Renovate branches, and `results` fails on a skipped
+  # job, so the ruleset requires this job directly.
   check-renovate-commits:
     name: Check Renovate branch commits
     uses: alunduil/renovate-config/.github/workflows/check-renovate-commits.yml@6052341d076d02929cd58ba8a5245d4cf13955af # main
